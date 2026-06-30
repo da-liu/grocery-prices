@@ -1,0 +1,32 @@
+[
+  {
+    "id": "hua_sheng",
+    "store": "Hua Sheng Supermarket",
+    "maps_url": "https://maps.app.goo.gl/wneauC4mmendbLyt9",
+    "address": "222 Spadina Ave, Toronto, ON M5T 3B3",
+    "area": "Kensington-Chinatown, Toronto",
+    "latitude": 43.65349,
+    "longitude": -79.39821,
+    "match_radius_m": 150
+  },
+  {
+    "id": "lucky_moose",
+    "store": "Lucky Moose Food Mart",
+    "maps_url": "https://www.google.com/maps/search/?api=1&query=Lucky+Moose+Food+Mart+393+Dundas+St+W+Toronto",
+    "address": "393 Dundas St W, Toronto, ON M5T 1G6",
+    "area": "Kensington-Chinatown, Toronto",
+    "latitude": 43.6539,
+    "longitude": -79.3942,
+    "match_radius_m": 120
+  },
+  {
+    "id": "tt_downtown",
+    "store": "T&T Supermarket (Downtown)",
+    "maps_url": "https://www.google.com/maps/search/?api=1&query=T%26T+Supermarket+297+College+St+Toronto",
+    "address": "297 College St, Toronto, ON M5T 1S2",
+    "area": "Downtown Toronto",
+    "latitude": 43.6574,
+    "longitude": -79.4067,
+    "match_radius_m": 120
+  }
+]

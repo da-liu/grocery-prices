@@ -1,0 +1,5 @@
+.DS_Store
+.tmp-jpg/
+.meta.json
+viewer/node_modules/
+viewer/dist/
