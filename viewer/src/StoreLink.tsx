@@ -16,7 +16,7 @@ export function StoreLink({ location }: { location: Location }) {
   const mapsUrl = storeMapsUrl(location);
   const name =
     location.store.startsWith("http://") || location.store.startsWith("https://")
-      ? location.address
+      ? "Store"
       : location.store;
 
   if (mapsUrl) {

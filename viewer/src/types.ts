@@ -1,10 +1,25 @@
 export interface Location {
   store: string;
-  address: string;
-  area: string;
   maps_url?: string;
   latitude?: number;
   longitude?: number;
+  store_location_id?: string;
+}
+
+export interface StoreLocation {
+  id: string;
+  name: string;
+  latitude: number;
+  longitude: number;
+  match_radius_m: number;
+  maps_url: string | null;
+}
+
+export interface StoreLabelRequest {
+  imageId: string;
+  thumbnailUrl: string;
+  latitude: number | null;
+  longitude: number | null;
 }
 
 export interface Product {

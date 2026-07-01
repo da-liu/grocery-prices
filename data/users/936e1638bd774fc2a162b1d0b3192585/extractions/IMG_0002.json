@@ -1,0 +1,31 @@
+{
+  "image_id": "IMG_0002",
+  "user_id": "936e1638bd774fc2a162b1d0b3192585",
+  "source": "upload",
+  "extracted_at": "2026-07-01T01:36:40-04:00",
+  "extractor": "cursor_sdk",
+  "image_path": "data/2026_06_30/jpg/IMG_0002.jpg",
+  "meta": {
+    "image_id": "IMG_0002",
+    "source_file": "/Users/daliu/workspace/ep/grocery-prices/data/users/936e1638bd774fc2a162b1d0b3192585/photos/2026_06_30/IMG_0002.jpg",
+    "gps_latitude": 43.6423944444444,
+    "gps_longitude": -79.3811805555556,
+    "captured_at": "2026-06-30T19:52:45",
+    "date_folder": "2026_06_30"
+  },
+  "products": [
+    {
+      "product_name": "Value Pack Boneless Pork Loin Centre Cut Fast Fry",
+      "brand": "Longo's",
+      "price": 4.58,
+      "unit_price": 7.69,
+      "unit_price_per_100g": 0.769,
+      "barcode": "208210004584",
+      "net_weight": 0.596,
+      "net_weight_lb": 1.314,
+      "category": "meat",
+      "notes": "Local Ontario corn-fed pork; no added hormones; best before 2026-07-06",
+      "location_override": "longos"
+    }
+  ]
+}

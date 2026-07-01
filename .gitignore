@@ -1,5 +1,13 @@
 .DS_Store
 .tmp-jpg/
 .meta.json
+__pycache__/
+*.pyc
+target/
 viewer/node_modules/
 viewer/dist/
+extract_server/.venv/
+extract_server/.env
+extract_server/data/
+extract_server/.extract_cache/
+extract_server/benchmark_*.json

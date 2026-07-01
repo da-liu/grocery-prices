@@ -1,150 +1,95 @@
-import { useEffect, useMemo, useState } from "react";
-import { MapCoordinateLink } from "./MapCoordinateLink";
-import { PhotoLightbox } from "./PhotoLightbox";
-import { StoreLink } from "./StoreLink";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { AuthProvider, useAuth } from "./AuthContext";
+import { fetchProducts, deleteProduct, completeOnboarding, productImageUrl } from "./api";
+import { BrowsePage } from "./BrowsePage";
+import { ComparePage } from "./ComparePage";
+import { OnboardingGuide } from "./OnboardingGuide";
+import { SettingsPage } from "./SettingsPage";
+import { SignInPage } from "./SignInPage";
+import { StoreLabelModal } from "./StoreLabelModal";
+import { TopBar } from "./TopBar";
+import { UploadPage } from "./UploadPage";
+import { UploadQueueProvider, useUploadQueue } from "./UploadQueueContext";
+import { UploadStatusBar } from "./UploadStatusBar";
 import type { Product } from "./types";
 import "./App.css";
 
-function formatPrice(price: number | null | undefined, currency = "CAD") {
-  if (price == null) return "—";
+type Page = "browse" | "upload" | "compare" | "settings";
+
+function pageFromHash(): Page {
+  const hash = window.location.hash.replace(/^#\/?/, "");
+  if (hash === "upload" || hash === "compare" || hash === "settings") return hash;
+  return "browse";
+}
+
+function formatPrice(price: number) {
   return new Intl.NumberFormat("en-CA", {
     style: "currency",
-    currency,
+    currency: "CAD",
   }).format(price);
 }
 
-function ProductCard({ product }: { product: Product }) {
-  const imgSrc = `/${product.image_path}`;
-  const { latitude, longitude } = product.location;
-  const [lightboxOpen, setLightboxOpen] = useState(false);
-
-  return (
-    <article className="card">
-      <button
-        type="button"
-        className="card-image-wrap"
-        aria-label={`View full photo of ${product.product_name}`}
-        onClick={() => setLightboxOpen(true)}
-      >
-        <img src={imgSrc} alt={product.product_name} loading="lazy" />
-        {product.is_special && <span className="badge special">Special</span>}
-      </button>
-      {lightboxOpen && (
-        <PhotoLightbox
-          src={imgSrc}
-          alt={product.product_name}
-          onClose={() => setLightboxOpen(false)}
-        />
-      )}
-      <div className="card-body">
-        <h2>{product.product_name}</h2>
-        {product.product_name_zh && (
-          <p className="zh">{product.product_name_zh}</p>
-        )}
-        <div className="price-row">
-          <span className="price">{formatPrice(product.price, product.price_currency)}</span>
-          {product.unit && <span className="unit">/ {product.unit}</span>}
-          {product.regular_price != null && product.is_special && (
-            <span className="was">was {formatPrice(product.regular_price)}</span>
-          )}
-        </div>
-        {product.promo && <p className="promo">{product.promo}</p>}
-        <dl className="meta">
-          {product.brand && (
-            <>
-              <dt>Brand</dt>
-              <dd>{product.brand}</dd>
-            </>
-          )}
-          {product.size && (
-            <>
-              <dt>Size</dt>
-              <dd>{product.size}</dd>
-            </>
-          )}
-          {product.unit_price != null && (
-            <>
-              <dt>Unit price</dt>
-              <dd>{formatPrice(product.unit_price)}/{product.unit ?? "unit"}</dd>
-            </>
-          )}
-          {product.barcode && (
-            <>
-              <dt>Barcode</dt>
-              <dd className="mono">{product.barcode}</dd>
-            </>
-          )}
-          {product.packed_on && (
-            <>
-              <dt>Packed on</dt>
-              <dd>{product.packed_on}</dd>
-            </>
-          )}
-          <dt>Store</dt>
-          <dd>
-            <StoreLink location={product.location} />
-          </dd>
-          <dt>Address</dt>
-          <dd>{product.location.address}</dd>
-          {latitude != null && longitude != null && (
-            <>
-              <dt>Map</dt>
-              <dd>
-                <MapCoordinateLink lat={latitude} lon={longitude} />
-              </dd>
-            </>
-          )}
-          <dt>Category</dt>
-          <dd>{product.category}</dd>
-          <dt>Photo</dt>
-          <dd className="mono">{product.image_id}</dd>
-        </dl>
-      </div>
-    </article>
-  );
-}
-
-function App() {
+function AppShell() {
+  const { user, loading: authLoading, logout, refresh } = useAuth();
+  const [page, setPage] = useState<Page>(pageFromHash);
   const [products, setProducts] = useState<Product[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [productsLoading, setProductsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [search, setSearch] = useState("");
-  const [store, setStore] = useState("all");
-  const [category, setCategory] = useState("all");
+  const [showOnboarding, setShowOnboarding] = useState(false);
+  const [browseSearch, setBrowseSearch] = useState("");
+  const [browseStore, setBrowseStore] = useState("all");
+  const [compareQuery, setCompareQuery] = useState("");
+  const [deletingId, setDeletingId] = useState<string | null>(null);
 
-  useEffect(() => {
-    fetch("/products.jsonl")
-      .then((r) => {
-        if (!r.ok) throw new Error(`Failed to load products (${r.status})`);
-        return r.text();
-      })
-      .then((text) => {
-        const rows = text
-          .trim()
-          .split("\n")
-          .filter(Boolean)
-          .map((line) => JSON.parse(line) as Product);
+  const refreshProducts = useCallback((options?: { silent?: boolean }) => {
+    if (!user) return Promise.resolve();
+    if (!options?.silent) setProductsLoading(true);
+    setError(null);
+    return fetchProducts()
+      .then((rows) => {
         setProducts(rows);
       })
       .catch((e: Error) => setError(e.message))
-      .finally(() => setLoading(false));
+      .finally(() => setProductsLoading(false));
+  }, [user]);
+
+  const handleUploadSuccess = useCallback(async () => {
+    await refresh();
+    await refreshProducts({ silent: true });
+    setShowOnboarding(false);
+  }, [refresh, refreshProducts]);
+
+  useEffect(() => {
+    if (user) {
+      refreshProducts();
+      if (user.needs_onboarding) {
+        setShowOnboarding(true);
+      }
+    } else {
+      setProducts([]);
+    }
+  }, [user, refreshProducts]);
+
+  useEffect(() => {
+    const onHash = () => setPage(pageFromHash());
+    window.addEventListener("hashchange", onHash);
+    return () => window.removeEventListener("hashchange", onHash);
   }, []);
+
+  function navigate(next: Page) {
+    window.location.hash = next === "browse" ? "" : `#/${next}`;
+    setPage(next);
+  }
 
   const stores = useMemo(
     () => [...new Set(products.map((p) => p.location.store))].sort(),
     [products],
   );
 
-  const categories = useMemo(
-    () => [...new Set(products.map((p) => p.category))].sort(),
-    [products],
-  );
-
-  const filtered = useMemo(() => {
-    const q = search.trim().toLowerCase();
-    return products.filter((p) => {
-      if (store !== "all" && p.location.store !== store) return false;
-      if (category !== "all" && p.category !== category) return false;
+  const browseStats = useMemo(() => {
+    const q = browseSearch.trim().toLowerCase();
+    const filtered = products.filter((p) => {
+      if (browseStore !== "all" && p.location.store !== browseStore) return false;
       if (!q) return true;
       const hay = [
         p.product_name,
@@ -159,78 +104,242 @@ function App() {
         .toLowerCase();
       return hay.includes(q);
     });
-  }, [products, search, store, category]);
+    const priced = filtered.filter((p) => p.price != null);
+    const avgPrice =
+      priced.length > 0
+        ? priced.reduce((s, p) => s + (p.price ?? 0), 0) / priced.length
+        : 0;
 
-  const priced = filtered.filter((p) => p.price != null);
-  const avgPrice =
-    priced.length > 0
-      ? priced.reduce((s, p) => s + (p.price ?? 0), 0) / priced.length
-      : 0;
+    return {
+      shown: filtered.length,
+      total: products.length,
+      photoCount: new Set(products.map((p) => p.image_id)).size,
+      storeCount: stores.length,
+      avgPriceLabel: priced.length > 0 ? formatPrice(avgPrice) : "—",
+    };
+  }, [products, browseSearch, browseStore, stores.length]);
+
+  async function finishOnboarding() {
+    setShowOnboarding(false);
+    try {
+      await completeOnboarding();
+      await refresh();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Could not save onboarding status");
+    }
+  }
+
+  async function handleDeleteProduct(productId: string) {
+    setDeletingId(productId);
+    setError(null);
+    const previous = products;
+    setProducts((rows) => rows.filter((p) => p.id !== productId));
+    try {
+      await deleteProduct(productId);
+      await refresh();
+      await refreshProducts({ silent: true });
+    } catch (err) {
+      setProducts(previous);
+      setError(err instanceof Error ? err.message : "Delete failed");
+    } finally {
+      setDeletingId(null);
+    }
+  }
+
+  if (authLoading) {
+    return (
+      <div className="app auth-page">
+        <p className="status auth-loading">Loading…</p>
+      </div>
+    );
+  }
+
+  if (!user) {
+    return <SignInPage />;
+  }
+
+  return (
+    <UploadQueueProvider onUploadSuccess={handleUploadSuccess}>
+      <AuthenticatedApp
+        page={page}
+        navigate={navigate}
+        user={user}
+        logout={logout}
+        browseSearch={browseSearch}
+        setBrowseSearch={setBrowseSearch}
+        browseStore={browseStore}
+        setBrowseStore={setBrowseStore}
+        compareQuery={compareQuery}
+        setCompareQuery={setCompareQuery}
+        products={products}
+        productsLoading={productsLoading}
+        stores={stores}
+        browseStats={browseStats}
+        error={error}
+        setError={setError}
+        deletingId={deletingId}
+        handleDeleteProduct={handleDeleteProduct}
+        showOnboarding={showOnboarding}
+        setShowOnboarding={setShowOnboarding}
+        finishOnboarding={finishOnboarding}
+      />
+    </UploadQueueProvider>
+  );
+}
+
+function AuthenticatedApp({
+  page,
+  navigate,
+  user,
+  logout,
+  browseSearch,
+  setBrowseSearch,
+  browseStore,
+  setBrowseStore,
+  compareQuery,
+  setCompareQuery,
+  products,
+  productsLoading,
+  stores,
+  browseStats,
+  error,
+  setError,
+  deletingId,
+  handleDeleteProduct,
+  showOnboarding,
+  setShowOnboarding,
+  finishOnboarding,
+}: {
+  page: Page;
+  navigate: (next: Page) => void;
+  user: { username: string; needs_onboarding: boolean };
+  logout: () => Promise<void>;
+  browseSearch: string;
+  setBrowseSearch: (v: string) => void;
+  browseStore: string;
+  setBrowseStore: (v: string) => void;
+  compareQuery: string;
+  setCompareQuery: (v: string) => void;
+  products: Product[];
+  productsLoading: boolean;
+  stores: string[];
+  browseStats: {
+    shown: number;
+    total: number;
+    photoCount: number;
+    storeCount: number;
+    avgPriceLabel: string;
+  };
+  error: string | null;
+  setError: (v: string | null) => void;
+  deletingId: string | null;
+  handleDeleteProduct: (id: string) => void;
+  showOnboarding: boolean;
+  setShowOnboarding: (v: boolean) => void;
+  finishOnboarding: () => Promise<void>;
+}) {
+  const { enqueueFiles, activeCount, pendingLabel, requestLabel, dismissLabel, completeLabel } =
+    useUploadQueue();
+
+  const searchProps =
+    page === "compare"
+      ? {
+          search: compareQuery,
+          onSearchChange: setCompareQuery,
+          searchPlaceholder: "Search comparisons…",
+        }
+      : {
+          search: browseSearch,
+          onSearchChange: setBrowseSearch,
+          searchPlaceholder: "Search products, brands, barcodes…",
+        };
 
   return (
     <div className="app">
-      <header className="header">
-        <div>
-          <p className="eyebrow">Toronto grocery price tracker</p>
-          <h1>Grocery Prices</h1>
-          <p className="subtitle">
-            {products.length} products from {new Set(products.map((p) => p.image_id)).size} photos
-          </p>
-        </div>
-        <div className="stats">
-          <div className="stat">
-            <span className="stat-value">{filtered.length}</span>
-            <span className="stat-label">shown</span>
-          </div>
-          <div className="stat">
-            <span className="stat-value">{stores.length}</span>
-            <span className="stat-label">stores</span>
-          </div>
-          <div className="stat">
-            <span className="stat-value">{formatPrice(avgPrice)}</span>
-            <span className="stat-label">avg price</span>
-          </div>
-        </div>
-      </header>
+      <TopBar
+        page={page}
+        {...searchProps}
+        user={user}
+        onLogout={() => void logout()}
+        onNavigate={navigate}
+        onPhotoSelected={(file) => enqueueFiles([file], "shelf")}
+        uploadActive={activeCount > 0}
+        stores={stores}
+        store={browseStore}
+        onStoreChange={setBrowseStore}
+        browseStats={products.length > 0 ? browseStats : undefined}
+        onShowOnboarding={() => setShowOnboarding(true)}
+      />
 
-      <section className="filters">
-        <input
-          type="search"
-          placeholder="Search products, brands, barcodes…"
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          aria-label="Search products"
-        />
-        <select value={store} onChange={(e) => setStore(e.target.value)} aria-label="Filter by store">
-          <option value="all">All stores</option>
-          {stores.map((s) => (
-            <option key={s} value={s}>{s}</option>
-          ))}
-        </select>
-        <select value={category} onChange={(e) => setCategory(e.target.value)} aria-label="Filter by category">
-          <option value="all">All categories</option>
-          {categories.map((c) => (
-            <option key={c} value={c}>{c}</option>
-          ))}
-        </select>
-      </section>
+      <UploadStatusBar onViewBrowse={() => navigate("browse")} />
 
-      {loading && <p className="status">Loading products…</p>}
-      {error && <p className="status error">{error}</p>}
-
-      {!loading && !error && (
-        <main className="grid">
-          {filtered.map((p) => (
-            <ProductCard key={p.id} product={p} />
-          ))}
-        </main>
+      {error && (
+        <p className="status error app-error">
+          {error}
+          <button type="button" className="app-error-dismiss" onClick={() => setError(null)}>
+            Dismiss
+          </button>
+        </p>
+      )}
+      {productsLoading && products.length === 0 && page !== "upload" && (
+        <p className="status">Loading products…</p>
       )}
 
-      {!loading && !error && filtered.length === 0 && (
-        <p className="status">No products match your filters.</p>
+      {page === "browse" && (products.length > 0 || !productsLoading) && (
+        <BrowsePage
+          products={products}
+          search={browseSearch}
+          store={browseStore}
+          onStartUpload={() => navigate("upload")}
+          onDeleteProduct={(id) => void handleDeleteProduct(id)}
+          deletingId={deletingId}
+          onLabelLocation={(product) => {
+            const { latitude, longitude } = product.location;
+            requestLabel({
+              imageId: product.image_id,
+              thumbnailUrl: productImageUrl(product.image_id),
+              latitude: latitude ?? null,
+              longitude: longitude ?? null,
+            });
+          }}
+        />
+      )}
+      {page === "upload" && <UploadPage />}
+      {page === "settings" && <SettingsPage />}
+      {page === "compare" && (products.length > 0 || !productsLoading) && (
+        <ComparePage
+          products={products}
+          query={compareQuery}
+          onDeleteProduct={(id) => void handleDeleteProduct(id)}
+          deletingId={deletingId}
+        />
+      )}
+
+      {showOnboarding && (
+        <OnboardingGuide
+          onStartUpload={() => {
+            void finishOnboarding();
+            navigate("upload");
+          }}
+          onDismiss={() => void finishOnboarding()}
+        />
+      )}
+
+      {pendingLabel && (
+        <StoreLabelModal
+          request={pendingLabel}
+          onDone={() => completeLabel()}
+          onDismiss={() => dismissLabel()}
+        />
       )}
     </div>
   );
 }
 
-export default App;
+export default function App() {
+  return (
+    <AuthProvider>
+      <AppShell />
+    </AuthProvider>
+  );
+}

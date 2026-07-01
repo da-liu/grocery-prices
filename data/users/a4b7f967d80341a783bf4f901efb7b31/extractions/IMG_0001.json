@@ -1,0 +1,10 @@
+{
+  "image_id": "IMG_0001",
+  "products": [
+    {
+      "product_name": "Bread",
+      "price": 3.49,
+      "category": "bakery"
+    }
+  ]
+}

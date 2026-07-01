@@ -20,18 +20,27 @@ echo "Regenerating products.jsonl..."
 python3 scripts/build_products.py
 
 echo "Syncing JPEG assets to viewer/public..."
-mkdir -p viewer/public/data/jpg
-rsync -a --delete data/jpg/ viewer/public/data/jpg/
+mkdir -p viewer/public/data
+for batch_dir in data/20*/; do
+  [ -d "$batch_dir/jpg" ] || continue
+  batch="$(basename "$batch_dir")"
+  mkdir -p "viewer/public/data/$batch/jpg"
+  rsync -a --delete "$batch_dir/jpg/" "viewer/public/data/$batch/jpg/"
+done
 
 echo "Building viewer..."
-(cd viewer && npm run build)
+VITE_API_URL="${VITE_API_URL:-https://api-g.daliu.ca}"
+(cd viewer && VITE_API_URL="$VITE_API_URL" npm run build)
 
 echo "Syncing viewer/dist to s3://$S3_BUCKET..."
 aws s3 sync viewer/dist "s3://$S3_BUCKET" --delete \
   --cache-control "public, max-age=300" \
-  --exclude "data/jpg/*"
-aws s3 sync viewer/dist/data/jpg "s3://$S3_BUCKET/data/jpg" --delete \
-  --cache-control "public, max-age=86400"
+  --exclude "data/20*/*"
+for batch_jpg in viewer/dist/data/20*/jpg; do
+  [ -d "$batch_jpg" ] || continue
+  aws s3 sync "$batch_jpg" "s3://$S3_BUCKET/${batch_jpg#viewer/dist/}" --delete \
+    --cache-control "public, max-age=86400"
+done
 
 if [ "$CF_DISTRIBUTION_ID" != "None" ] && [ -n "$CF_DISTRIBUTION_ID" ]; then
   echo "Invalidating CloudFront distribution $CF_DISTRIBUTION_ID..."

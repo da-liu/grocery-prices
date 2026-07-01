@@ -3,64 +3,14 @@
 
 from __future__ import annotations
 
-import json
-import math
+import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
-DATA_DIR = ROOT / "data"
-META_PATH = ROOT / ".meta.json"
-STORES_PATH = DATA_DIR / "stores.json"
-OUT_PATH = DATA_DIR / "products.jsonl"
+if str(ROOT) not in sys.path:
+    sys.path.insert(0, str(ROOT))
 
-DEFAULT_STORE_ID = "hua_sheng"
-
-
-def load_stores() -> tuple[list[dict], dict[str, dict]]:
-    with STORES_PATH.open() as f:
-        stores = json.load(f)
-    by_id = {store["id"]: store for store in stores}
-    return stores, by_id
-
-
-STORES, STORE_BY_ID = load_stores()
-
-
-def haversine_m(lat1: float, lon1: float, lat2: float, lon2: float) -> float:
-    radius_m = 6_371_000
-    phi1, phi2 = math.radians(lat1), math.radians(lat2)
-    d_phi = math.radians(lat2 - lat1)
-    d_lambda = math.radians(lon2 - lon1)
-    a = (
-        math.sin(d_phi / 2) ** 2
-        + math.cos(phi1) * math.cos(phi2) * math.sin(d_lambda / 2) ** 2
-    )
-    return 2 * radius_m * math.asin(math.sqrt(a))
-
-
-def store_from_gps(lat: float, lon: float) -> dict | None:
-    best: dict | None = None
-    best_distance = float("inf")
-    for store in STORES:
-        anchor_lat = store["latitude"]
-        anchor_lon = store["longitude"]
-        radius_m = store.get("match_radius_m", 150)
-        distance = haversine_m(lat, lon, anchor_lat, anchor_lon)
-        if distance <= radius_m and distance < best_distance:
-            best = store
-            best_distance = distance
-    return best
-
-
-def location_from_store(store: dict) -> dict:
-    location = {
-        "store": store["store"],
-        "address": store["address"],
-        "area": store["area"],
-    }
-    if maps_url := store.get("maps_url"):
-        location["maps_url"] = maps_url
-    return location
+from grocery_extract.products_builder import OUT_PATH, write_products_jsonl
 
 # Products keyed by image stem (without extension). Multiple products per image allowed.
 PRODUCTS: dict[str, list[dict]] = {
@@ -192,85 +142,90 @@ PRODUCTS: dict[str, list[dict]] = {
         {"product_name": "Lamb Leg with Skin", "product_name_zh": "有皮羊腿", "price": 12.38, "unit_price": 7.99, "net_weight": 1.55, "packed_on": "26-06-23", "barcode": "0200060312389", "category": "meat", "location_override": "lucky_moose"},
     ],
     "IMG_2053": [
-        {"product_name": "T&T Brown Rice Vermicelli", "brand": "T&T", "price": 3.99, "unit": "EA", "size": "400g", "unit_price_per_100g": 0.99, "category": "noodles", "location_override": "tt_downtown"},
-        {"product_name": "Rose Brand Vermicelli", "brand": "Rose Brand", "price": 3.49, "unit": "EA", "size": "454g", "unit_price_per_100g": 0.77, "category": "noodles", "location_override": "tt_downtown"},
-        {"product_name": "Pacific Star Jasmine Rice", "brand": "Pacific Star", "price": 27.99, "unit": "EA", "size": "8kg", "category": "rice", "location_override": "tt_downtown"},
+        {"product_name": "T&T Brown Rice Vermicelli", "brand": "T&T", "price": 3.99, "unit": "EA", "size": "400g", "unit_price_per_100g": 0.99, "category": "noodles", "location_override": "longos"},
+        {"product_name": "Rose Brand Vermicelli", "brand": "Rose Brand", "price": 3.49, "unit": "EA", "size": "454g", "unit_price_per_100g": 0.77, "category": "noodles", "location_override": "longos"},
+        {"product_name": "Pacific Star Jasmine Rice", "brand": "Pacific Star", "price": 27.99, "unit": "EA", "size": "8kg", "category": "rice", "location_override": "longos"},
     ],
     "IMG_2054": [
-        {"product_name": "Jasmine White Scented Rice", "brand": "Rose Brand", "price": 25.99, "unit": "EA", "size": "8kg", "category": "rice", "location_override": "tt_downtown"},
+        {"product_name": "Jasmine White Scented Rice", "brand": "Rose Brand", "price": 25.99, "unit": "EA", "size": "8kg", "category": "rice", "location_override": "longos"},
     ],
     "IMG_2055": [
-        {"product_name": "Tilda Pure Basmati Rice", "brand": "Tilda", "price": 19.99, "unit": "EA", "size": "4.54kg (10lb)", "category": "rice", "location_override": "tt_downtown"},
+        {"product_name": "Tilda Pure Basmati Rice", "brand": "Tilda", "price": 19.99, "unit": "EA", "size": "4.54kg (10lb)", "category": "rice", "location_override": "longos"},
+    ],
+    "IMG_2058": [
+        {"product_name": "Montreal-Style Smoked Meat", "brand": "Schinkel's Legacy", "price": 4.99, "unit": "100g", "unit_price_per_100g": 4.99, "category": "deli", "location_override": "farm_boy"},
+    ],
+    "IMG_2059": [
+        {"product_name": "New York Deli-Style Smoked Brisket", "brand": "Farm Boy", "price": 4.49, "unit": "100g", "unit_price_per_100g": 4.49, "category": "deli", "location_override": "farm_boy"},
+    ],
+    "IMG_2060": [
+        {"product_name": "Tomato Paste", "brand": "Hunt's", "price": 1.79, "unit": "EA", "size": "156ml", "category": "canned-goods", "location_override": "farm_boy"},
+    ],
+    "IMG_2061": [
+        {"product_name": "Diced Tomatoes With No Added Salt", "brand": "Farm Boy", "price": 2.49, "unit": "EA", "size": "796ml", "category": "canned-goods", "location_override": "farm_boy"},
+        {"product_name": "Diced Tomatoes With Garlic, Basil & Oregano", "brand": "Farm Boy", "price": 2.49, "unit": "EA", "size": "796ml", "category": "canned-goods", "location_override": "farm_boy"},
+        {"product_name": "Whole Tomatoes", "brand": "Farm Boy", "price": 2.49, "unit": "EA", "size": "796ml", "category": "canned-goods", "location_override": "farm_boy"},
+        {"product_name": "Crushed Tomatoes", "brand": "Farm Boy", "price": 2.49, "unit": "EA", "size": "796ml", "category": "canned-goods", "location_override": "farm_boy"},
+    ],
+    "IMG_2062": [
+        {"product_name": "Striploin Grilling Steak", "price": 26.99, "unit": "lb", "unit_price": 26.99, "category": "meat", "notes": "Canada AAA Beef, aged 14 days", "location_override": "farm_boy"},
+        {"product_name": "Prime Rib Oven Roast", "price": 23.99, "unit": "lb", "unit_price": 23.99, "category": "meat", "notes": "Canada AAA Beef, aged 14 days", "location_override": "farm_boy"},
+        {"product_name": "Sirloin Tip Oven Roast", "price": 10.99, "unit": "lb", "unit_price": 10.99, "is_special": True, "category": "meat", "notes": "Canada AAA Beef", "location_override": "farm_boy"},
+        {"product_name": "Rib Eye Grilling Steak", "price": 29.99, "unit": "lb", "unit_price": 29.99, "is_special": True, "category": "meat", "notes": "Canada AAA Beef", "location_override": "farm_boy"},
+    ],
+    "IMG_2063": [
+        {"product_name": "Mini-Wheats Original Cereal", "brand": "Kellogg's", "price": 5.99, "unit": "EA", "size": "650g", "regular_price": 8.49, "is_special": True, "category": "cereal", "location_override": "longos"},
+    ],
+    "IMG_2064": [
+        {"product_name": "Raisin Bran Cereal", "brand": "Kellogg's", "price": 5.99, "unit": "EA", "size": "600g", "regular_price": 8.49, "is_special": True, "unit_price_per_100g": 1.00, "category": "cereal", "location_override": "longos"},
+    ],
+    "IMG_2065": [
+        {"product_name": "Ketchup Chips", "brand": "Lay's", "price": 3.49, "unit": "EA", "size": "220g", "regular_price": 4.49, "is_special": True, "promo": "2 for $6.00", "category": "snacks", "location_override": "longos"},
+        {"product_name": "Cheese & Onion Chips", "brand": "Lay's", "price": 3.49, "unit": "EA", "size": "220g", "regular_price": 4.49, "is_special": True, "promo": "2 for $6.00", "category": "snacks", "location_override": "longos"},
+        {"product_name": "Classic Chips", "brand": "Lay's", "price": 3.49, "unit": "EA", "size": "220g", "regular_price": 4.49, "is_special": True, "promo": "2 for $6.00", "category": "snacks", "location_override": "longos"},
+        {"product_name": "All Dressed Chips", "brand": "Lay's", "price": 3.49, "unit": "EA", "size": "220g", "regular_price": 4.49, "is_special": True, "promo": "2 for $6.00", "category": "snacks", "location_override": "longos"},
+        {"product_name": "Wavy Salt & Vinegar Chips", "brand": "Lay's", "price": 3.49, "unit": "EA", "size": "220g", "regular_price": 4.49, "is_special": True, "promo": "2 for $6.00", "category": "snacks", "location_override": "longos"},
+    ],
+    "IMG_2066": [
+        {"product_name": "Caramel Almond Crunch Ice Cream Bars", "brand": "Häagen-Dazs", "price": 4.99, "unit": "EA", "size": "3x88ml", "regular_price": 7.29, "is_special": True, "category": "frozen-desserts", "location_override": "longos"},
+    ],
+    "IMG_2067": [
+        {"product_name": "Strawberry Ice Cream", "brand": "Häagen-Dazs", "price": 4.99, "unit": "EA", "size": "450ml", "regular_price": 6.99, "is_special": True, "unit_price_per_100g": 1.11, "category": "frozen-desserts", "location_override": "longos"},
+        {"product_name": "Coffee Ice Cream", "brand": "Häagen-Dazs", "price": 4.99, "unit": "EA", "size": "450ml", "regular_price": 6.99, "is_special": True, "unit_price_per_100g": 1.11, "category": "frozen-desserts", "location_override": "longos"},
+        {"product_name": "White Chocolate Raspberry Truffle Ice Cream", "brand": "Häagen-Dazs", "price": 4.99, "unit": "EA", "size": "450ml", "regular_price": 6.99, "is_special": True, "unit_price_per_100g": 1.11, "category": "frozen-desserts", "location_override": "longos"},
+    ],
+    "IMG_2068": [
+        {"product_name": "Essentials Crushed Tomatoes", "brand": "Longo's", "price": 1.99, "unit": "EA", "size": "796ml", "category": "canned-goods", "location_override": "longos"},
+        {"product_name": "Essentials Diced Tomatoes", "brand": "Longo's", "price": 1.99, "unit": "EA", "size": "796ml", "category": "canned-goods", "location_override": "longos"},
+        {"product_name": "Essentials Whole Tomatoes", "brand": "Longo's", "price": 1.99, "unit": "EA", "size": "796ml", "category": "canned-goods", "location_override": "longos"},
+    ],
+    "IMG_2069": [
+        {"product_name": "Spaghetti", "brand": "Italpasta", "price": 2.49, "unit": "EA", "size": "900g", "regular_price": 3.49, "is_special": True, "unit_price_per_100g": 0.28, "category": "pasta", "location_override": "longos"},
+        {"product_name": "Capellini", "brand": "Italpasta", "price": 2.49, "unit": "EA", "size": "900g", "regular_price": 3.49, "is_special": True, "unit_price_per_100g": 0.28, "category": "pasta", "location_override": "longos"},
+        {"product_name": "Linguine", "brand": "Italpasta", "price": 2.49, "unit": "EA", "size": "900g", "regular_price": 3.49, "is_special": True, "unit_price_per_100g": 0.28, "category": "pasta", "location_override": "longos"},
+        {"product_name": "Fusilli", "brand": "Italpasta", "price": 2.49, "unit": "EA", "size": "900g", "regular_price": 3.49, "is_special": True, "unit_price_per_100g": 0.28, "category": "pasta", "location_override": "longos"},
+    ],
+    "IMG_2070": [
+        {"product_name": "Skim Milk", "brand": "Beatrice", "price": 6.49, "unit": "EA", "size": "4L", "category": "dairy-eggs", "location_override": "longos"},
+        {"product_name": "1% Milk", "brand": "Beatrice", "price": 6.49, "unit": "EA", "size": "4L", "category": "dairy-eggs", "location_override": "longos"},
+        {"product_name": "2% Milk", "brand": "Beatrice", "price": 6.49, "unit": "EA", "size": "4L", "category": "dairy-eggs", "location_override": "longos"},
+        {"product_name": "PurFiltre 1% Milk", "brand": "Lactantia", "price": 6.49, "unit": "EA", "size": "2L", "category": "dairy-eggs", "location_override": "longos"},
+    ],
+    "IMG_2071": [
+        {"product_name": "Value Pack Boneless Pork Loin Centre Cut Fast Fry", "brand": "Longo's", "price": 4.58, "unit": "EA", "unit_price": 7.69, "net_weight": 0.596, "barcode": "208210004584", "category": "meat", "notes": "Local Ontario corn-fed pork", "location_override": "longos"},
+    ],
+    "IMG_2072": [
+        {"product_name": "Value Pack Boneless Pork Loin Fast Fry Chops", "brand": "Longo's", "price": 3.49, "unit": "lb", "unit_price": 3.49, "regular_price": 5.99, "is_special": True, "barcode": "203211002218", "category": "meat", "notes": "Shelf promo $3.49/lb, was $5.99/lb", "location_override": "longos"},
+    ],
+    "IMG_2073": [
+        {"product_name": "Fresh Pork Button Bones", "brand": "Longo's", "price": 2.49, "unit": "lb", "unit_price": 2.49, "regular_price": 3.49, "is_special": True, "category": "meat", "notes": "Fresh Ontario", "location_override": "longos"},
     ],
 }
 
 
-def store_id_for_image(image_id: str, product: dict) -> str:
-    override = product.pop("location_override", None)
-    if override:
-        return override
-    if "IMG_2044" <= image_id <= "IMG_2052":
-        return "lucky_moose"
-    if image_id >= "IMG_2053":
-        return "tt_downtown"
-    return DEFAULT_STORE_ID
-
-
-def store_for_image(image_id: str, product: dict, lat: float | None, lon: float | None) -> dict:
-    if lat is not None and lon is not None:
-        matched = store_from_gps(lat, lon)
-        if matched:
-            return location_from_store(matched)
-
-    store_id = store_id_for_image(image_id, product)
-    return location_from_store(STORE_BY_ID[store_id])
-
-
 def main() -> None:
-    with META_PATH.open() as f:
-        meta_by_stem = {
-            Path(row["SourceFile"]).stem: row for row in json.load(f)
-        }
-
-    lines: list[dict] = []
-    for image_id, products in sorted(PRODUCTS.items()):
-        meta = meta_by_stem.get(image_id, {})
-        lat = meta.get("GPSLatitude")
-        lon = meta.get("GPSLongitude")
-        raw_dt = meta.get("DateTimeOriginal")
-        captured_at = None
-        if raw_dt:
-            # EXIF format: 2026:06:29 15:51:08 -> ISO-like
-            captured_at = raw_dt.replace(":", "-", 2).replace(" ", "T", 1)
-
-        for idx, raw in enumerate(products, start=1):
-            product = dict(raw)
-            location = store_for_image(image_id, product, lat, lon)
-            if lat is not None and lon is not None:
-                location["latitude"] = lat
-                location["longitude"] = lon
-
-            entry = {
-                "id": f"{image_id}-{idx}",
-                "image_id": image_id,
-                "image_path": f"data/jpg/{image_id}.jpg",
-                "price_currency": "CAD",
-                "captured_at": captured_at,
-                "location": location,
-                **product,
-            }
-            lines.append(entry)
-
-    with OUT_PATH.open("w") as f:
-        for row in lines:
-            f.write(json.dumps(row, ensure_ascii=False) + "\n")
-
-    # copy to viewer public
-    viewer_public = ROOT / "viewer" / "public" / "products.jsonl"
-    viewer_public.parent.mkdir(parents=True, exist_ok=True)
-    viewer_public.write_text(OUT_PATH.read_text())
-
-    print(f"Wrote {len(lines)} products to {OUT_PATH}")
+    count = write_products_jsonl(PRODUCTS)
+    print(f"Wrote {count} products to {OUT_PATH}")
 
 
 if __name__ == "__main__":
