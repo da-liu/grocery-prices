@@ -78,7 +78,9 @@ export function StoreLabelModal({ request, onDone, onDismiss }: StoreLabelModalP
           <h2 id="store-label-title">Where was this photo taken?</h2>
           <p className="onboarding-body">
             {mode === "pick"
-              ? "Pick a saved store or create one at the photo location."
+              ? hasGps
+                ? "Pick a saved store or create one at the photo location."
+                : "This photo has no GPS. Pick one of your saved stores."
               : "Name this store. Products from the photo will use this location."}
           </p>
         </header>

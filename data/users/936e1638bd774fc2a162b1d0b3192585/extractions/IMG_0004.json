@@ -1,0 +1,69 @@
+{
+  "image_id": "IMG_0004",
+  "user_id": "936e1638bd774fc2a162b1d0b3192585",
+  "source": "upload",
+  "extracted_at": "2026-07-02T04:38:32-04:00",
+  "extractor": "cursor_sdk",
+  "image_path": "data/2026_06_30/jpg/IMG_0004.jpg",
+  "meta": {
+    "image_id": "IMG_0004",
+    "source_file": "/Users/daliu/workspace/ep/grocery-prices/data/users/936e1638bd774fc2a162b1d0b3192585/photos/2026_06_30/IMG_0004.jpg",
+    "gps_latitude": 43.642375,
+    "gps_longitude": -79.3813027777778,
+    "captured_at": "2026-06-30T19:51:52",
+    "date_folder": "2026_06_30"
+  },
+  "products": [
+    {
+      "product_name": "Lactantia PurFiltre 1% Milk",
+      "brand": "Lactantia",
+      "price": 6.49,
+      "unit": "carton",
+      "size": "2L",
+      "category": "dairy-eggs",
+      "notes": "Tag reads LACTANTIA PURFLTR 1% MILK 2LT"
+    },
+    {
+      "product_name": "Lactantia PurFiltre 2% Milk",
+      "brand": "Lactantia",
+      "price": 6.49,
+      "unit": "carton",
+      "size": "2L",
+      "category": "dairy-eggs",
+      "notes": "Tag reads LACTANTIA PURFLTR 2% MILK 2LT"
+    },
+    {
+      "product_name": "Beatrice Skim Milk",
+      "brand": "Beatrice",
+      "price": 6.49,
+      "unit": "bag",
+      "unit_price_per_100g": 0.162,
+      "barcode": "055300111027",
+      "size": "4L",
+      "category": "dairy-eggs",
+      "notes": "Shelf tag shows 16.2¢/100ml"
+    },
+    {
+      "product_name": "Beatrice 1% Milk",
+      "brand": "Beatrice",
+      "price": 6.49,
+      "unit": "bag",
+      "is_special": true,
+      "promo": "LOW PRICE LOCKDOWN",
+      "size": "4L",
+      "category": "dairy-eggs",
+      "notes": "Promo sign covers Beatrice milk 1%, 2% or skim 4L bag"
+    },
+    {
+      "product_name": "Beatrice 2% Milk",
+      "brand": "Beatrice",
+      "price": 6.49,
+      "unit": "bag",
+      "unit_price_per_100g": 0.162,
+      "barcode": "055300111010",
+      "size": "4L",
+      "category": "dairy-eggs",
+      "notes": "Shelf tag shows 16.2¢/100ml"
+    }
+  ]
+}

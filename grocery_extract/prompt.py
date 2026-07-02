@@ -26,8 +26,7 @@ Return JSON matching this schema:
       "net_weight_lb": null,
       "packed_on": "date on label or null",
       "category": "one of: condiments, dairy-eggs, tofu, dried-goods, pantry, rice, produce, produce-herbs, frozen-seafood, meat, noodles, deli, canned-goods, cereal, snacks, frozen-desserts, pasta, beverages",
-      "notes": "optional context or null",
-      "location_override": null
+      "notes": "optional context or null"
     }
   ]
 }
@@ -43,8 +42,7 @@ Rules:
 - For per-weight deli/meat tags priced per 100g or per lb, set unit accordingly and put the tagged unit price in price when that is the primary displayed price.
 - For weighed packages, use the total price on the label as price and unit_price as $/kg or $/lb when shown.
 - Read Chinese characters on packaging into product_name_zh when present.
-- Do not invent products not visible in the photo.
-- Do not include location_override unless a printed store address on a label clearly overrides GPS (rare). Valid ids: hua_sheng, lucky_moose, longos, farm_boy."""
+- Do not invent products not visible in the photo."""
 
 
 RECEIPT_USER = """Analyze this grocery receipt photo and extract every line item with a price.

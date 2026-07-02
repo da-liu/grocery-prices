@@ -11,7 +11,8 @@ import { TopBar } from "./TopBar";
 import { UploadPage } from "./UploadPage";
 import { UploadQueueProvider, useUploadQueue } from "./UploadQueueContext";
 import { UploadStatusBar } from "./UploadStatusBar";
-import type { Product } from "./types";
+import { DEV_FORCE_LOADING } from "./devPreview";
+import type { Product, StoreLabelRequest } from "./types";
 import "./App.css";
 
 type Page = "browse" | "upload" | "compare" | "settings";
@@ -238,8 +239,18 @@ function AuthenticatedApp({
   setShowOnboarding: (v: boolean) => void;
   finishOnboarding: () => Promise<void>;
 }) {
-  const { enqueueFiles, activeCount, pendingLabel, requestLabel, dismissLabel, completeLabel } =
+  const { enqueueFiles, pendingLabel, requestLabel, dismissLabel, completeLabel } =
     useUploadQueue();
+
+  const previewLabelRequest: StoreLabelRequest | null = DEV_FORCE_LOADING
+    ? {
+        imageId: "PREVIEW",
+        thumbnailUrl: "/onboarding-shelf-sample.jpg",
+        latitude: 43.65349,
+        longitude: -79.39821,
+      }
+    : null;
+  const labelRequest = pendingLabel ?? previewLabelRequest;
 
   const searchProps =
     page === "compare"
@@ -263,7 +274,6 @@ function AuthenticatedApp({
         onLogout={() => void logout()}
         onNavigate={navigate}
         onPhotoSelected={(file) => enqueueFiles([file], "shelf")}
-        uploadActive={activeCount > 0}
         stores={stores}
         store={browseStore}
         onStoreChange={setBrowseStore}
@@ -281,7 +291,7 @@ function AuthenticatedApp({
           </button>
         </p>
       )}
-      {productsLoading && products.length === 0 && page !== "upload" && (
+      {productsLoading && page !== "upload" && (
         <p className="status">Loading products…</p>
       )}
 
@@ -325,9 +335,9 @@ function AuthenticatedApp({
         />
       )}
 
-      {pendingLabel && (
+      {labelRequest && (
         <StoreLabelModal
-          request={pendingLabel}
+          request={labelRequest}
           onDone={() => completeLabel()}
           onDismiss={() => dismissLabel()}
         />

@@ -1,17 +1,6 @@
 from __future__ import annotations
 
-import json
 import math
-from pathlib import Path
-
-ROOT = Path(__file__).resolve().parents[1]
-STORES_PATH = ROOT / "data" / "stores.json"
-
-
-def load_stores() -> tuple[list[dict], dict[str, dict]]:
-    with STORES_PATH.open() as f:
-        stores = json.load(f)
-    return stores, {store["id"]: store for store in stores}
 
 
 def haversine_m(lat1: float, lon1: float, lat2: float, lon2: float) -> float:
@@ -32,8 +21,9 @@ def anchor_points(store: dict) -> list[tuple[float, float]]:
     return [(store["latitude"], store["longitude"])]
 
 
-def store_from_gps(lat: float, lon: float, stores: list[dict] | None = None) -> dict | None:
-    stores = stores or load_stores()[0]
+def store_from_gps(lat: float, lon: float, stores: list[dict]) -> dict | None:
+    if not stores:
+        return None
     best: dict | None = None
     best_distance = float("inf")
     for store in stores:

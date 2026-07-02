@@ -23,7 +23,6 @@ class ExtractedProduct(BaseModel):
     packed_on: str | None = None
     category: str
     notes: str | None = None
-    location_override: str | None = None
 
     def to_product_dict(self) -> dict[str, Any]:
         data = self.model_dump(exclude_none=True)

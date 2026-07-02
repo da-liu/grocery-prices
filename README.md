@@ -89,14 +89,4 @@ The build script copies `products.jsonl` and JPEGs into `viewer/public/`.
 
 ## Stores
 
-Store definitions live in `data/stores.json`. GPS coordinates from photo EXIF are matched to the nearest store within its `match_radius_m`.
-
-| Store ID | GPS anchor | Match radius |
-|----------|------------|--------------|
-| `hua_sheng` | 43.65349, -79.39821 | 150 m |
-| `lucky_moose` | 43.6539, -79.3942 | 120 m |
-| `longos` | 43.64236, -79.38123 | 150 m |
-
-Hua Sheng Supermarket: https://maps.app.goo.gl/wneauC4mmendbLyt9
-
-Products with printed labels (herbs, meat, cauliflower) use `location_override: lucky_moose` when the sticker address overrides GPS.
+Each user saves store locations in SQLite (`user_store_locations`). Create stores from the label-location flow after upload, or pick an existing one. GPS from photo EXIF is matched against your saved stores within each store's `match_radius_m` (default 150 m). Unmatched photos stay as "Unknown store" until you label them.

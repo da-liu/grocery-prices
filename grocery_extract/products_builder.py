@@ -5,11 +5,10 @@ from pathlib import Path
 
 from grocery_extract.exif import captured_at_from_exif, date_folder_from_exif
 from grocery_extract.photo_stores import get_image_store_location_id
-from grocery_extract.stores import load_stores, store_from_gps
+from grocery_extract.stores import store_from_gps
 from grocery_extract.user_paths import (
     user_extractions_dir,
     user_meta_path,
-    user_photos_dir,
     user_products_path,
     user_root,
 )
@@ -17,11 +16,8 @@ from grocery_extract.user_paths import (
 ROOT = Path(__file__).resolve().parents[1]
 DATA_DIR = ROOT / "data"
 META_PATH = ROOT / ".meta.json"
-STORES_PATH = DATA_DIR / "stores.json"
 OUT_PATH = DATA_DIR / "products.jsonl"
 EXTRACTIONS_DIR = DATA_DIR / "extractions"
-
-DEFAULT_STORE_ID = "hua_sheng"
 
 
 def location_from_store_record(store: dict) -> dict:
@@ -35,25 +31,10 @@ def location_from_store_record(store: dict) -> dict:
     return location
 
 
-def location_from_store(store: dict) -> dict:
-    return location_from_store_record(store)
-
-
 def unknown_location() -> dict:
     return {
         "store": "Unknown store",
     }
-
-
-def store_id_for_image(image_id: str, product: dict) -> str:
-    override = product.get("location_override")
-    if override:
-        return override
-    if "IMG_2044" <= image_id <= "IMG_2052":
-        return "lucky_moose"
-    if image_id >= "IMG_2053":
-        return "longos"
-    return DEFAULT_STORE_ID
 
 
 def find_image_path(image_id: str, date_folder: str | None, *, user_id: str | None = None) -> str:
@@ -82,49 +63,25 @@ def find_image_path(image_id: str, date_folder: str | None, *, user_id: str | No
 
 
 def store_for_image(
-    image_id: str,
-    product: dict,
     lat: float | None,
     lon: float | None,
     *,
-    stores: list[dict] | None = None,
-    store_by_id: dict[str, dict] | None = None,
     user_stores: list[dict] | None = None,
     user_store_by_id: dict[str, dict] | None = None,
     assigned_store_id: str | None = None,
-    user_scoped: bool = False,
 ) -> dict:
-    user_store_by_id = user_store_by_id or (
-        {store["id"]: store for store in user_stores} if user_stores else {}
-    )
+    user_stores = user_stores or []
+    user_store_by_id = user_store_by_id or {store["id"]: store for store in user_stores}
 
     if assigned_store_id and assigned_store_id in user_store_by_id:
         return location_from_store_record(user_store_by_id[assigned_store_id])
 
-    if lat is not None and lon is not None and user_stores:
+    if lat is not None and lon is not None:
         matched = store_from_gps(lat, lon, user_stores)
         if matched:
             return location_from_store_record(matched)
 
-    if user_scoped:
-        override = product.get("location_override")
-        if override:
-            loaded_stores, loaded_by_id = load_stores()
-            if override in loaded_by_id:
-                return location_from_store(loaded_by_id[override])
-        return unknown_location()
-
-    loaded_stores, loaded_by_id = load_stores()
-    stores = stores or loaded_stores
-    store_by_id = store_by_id or loaded_by_id
-
-    if lat is not None and lon is not None:
-        matched = store_from_gps(lat, lon, stores)
-        if matched:
-            return location_from_store(matched)
-
-    store_id = store_id_for_image(image_id, product)
-    return location_from_store(store_by_id[store_id])
+    return unknown_location()
 
 
 def load_meta_by_stem(meta_path: Path = META_PATH) -> dict[str, dict]:
@@ -164,7 +121,6 @@ def build_product_lines(
                 products_by_image[image_id] = products
         meta_by_stem = load_meta_by_stem()
 
-    stores, store_by_id = load_stores()
     user_stores: list[dict] = []
     user_store_by_id: dict[str, dict] = {}
     if user_id:
@@ -185,18 +141,15 @@ def build_product_lines(
         date_folder = date_folder_from_exif(raw_dt)
 
         for idx, raw in enumerate(products, start=1):
-            product = dict(raw)
+            product = {
+                k: v for k, v in dict(raw).items() if k != "location_override"
+            }
             location = store_for_image(
-                image_id,
-                product,
                 lat,
                 lon,
-                stores=stores,
-                store_by_id=store_by_id,
                 user_stores=user_stores,
                 user_store_by_id=user_store_by_id,
                 assigned_store_id=assigned_store_id,
-                user_scoped=bool(user_id),
             )
             if lat is not None and lon is not None:
                 location["latitude"] = lat
@@ -209,7 +162,7 @@ def build_product_lines(
                 "price_currency": "CAD",
                 "captured_at": captured_at,
                 "location": location,
-                **{k: v for k, v in product.items() if k != "location_override"},
+                **product,
             }
             lines.append(entry)
 

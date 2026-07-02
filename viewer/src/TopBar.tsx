@@ -19,7 +19,6 @@ interface TopBarProps {
   onLogout: () => void;
   onNavigate: (page: Page) => void;
   onPhotoSelected: (file: File) => void;
-  uploadActive?: boolean;
   stores?: string[];
   store?: string;
   onStoreChange?: (store: string) => void;
@@ -81,7 +80,6 @@ export function TopBar({
   onLogout,
   onNavigate,
   onPhotoSelected,
-  uploadActive = false,
   stores = [],
   store = "all",
   onStoreChange,
@@ -90,7 +88,7 @@ export function TopBar({
 }: TopBarProps) {
   const [menuOpen, setMenuOpen] = useState(false);
   const [filterOpen, setFilterOpen] = useState(false);
-  const captureRef = useRef<HTMLInputElement>(null);
+  const photoRef = useRef<HTMLInputElement>(null);
   const menuRef = useRef<HTMLDivElement>(null);
   const filterRef = useRef<HTMLDivElement>(null);
   const menuId = useId();
@@ -117,6 +115,10 @@ export function TopBar({
     setMenuOpen(false);
     setFilterOpen(false);
   }, [page]);
+
+  function handlePhoto(file: File | undefined) {
+    if (file) onPhotoSelected(file);
+  }
 
   function pickNav(pageName: Page) {
     setMenuOpen(false);
@@ -147,27 +149,22 @@ export function TopBar({
 
       <div className="top-bar-actions">
         <input
-          ref={captureRef}
+          ref={photoRef}
           type="file"
-          accept="image/*"
-          capture="environment"
+          accept="image/*,.heic"
           className="sr-only"
           onChange={(e) => {
-            const file = e.target.files?.[0];
-            if (file) onPhotoSelected(file);
+            handlePhoto(e.target.files?.[0]);
             e.target.value = "";
           }}
         />
         <button
           type="button"
-          className={`top-bar-icon-btn top-bar-icon-btn--primary${uploadActive ? " top-bar-icon-btn--busy" : ""}`}
-          aria-label="Take photo"
-          onClick={() => captureRef.current?.click()}
+          className="top-bar-icon-btn top-bar-icon-btn--primary"
+          aria-label="Take or upload photo"
+          onClick={() => photoRef.current?.click()}
         >
-          <span className="top-bar-camera-wrap">
-            <CameraIcon />
-            {uploadActive && <span className="upload-spinner upload-spinner--badge" aria-hidden="true" />}
-          </span>
+          <CameraIcon />
         </button>
 
         {showStoreFilter && (
@@ -228,6 +225,17 @@ export function TopBar({
           </button>
           {menuOpen && (
             <div id={menuId} className="top-bar-dropdown top-bar-dropdown--wide" role="menu">
+              {browseStats && (
+                <>
+                  <p className="top-bar-dropdown-label">Catalog</p>
+                  <p className="top-bar-dropdown-meta">
+                    {browseStats.shown} shown · {browseStats.total} products ·{" "}
+                    {browseStats.photoCount} photos · {browseStats.storeCount} stores · avg{" "}
+                    {browseStats.avgPriceLabel}
+                  </p>
+                </>
+              )}
+
               <p className="top-bar-dropdown-label">Go to</p>
               <button
                 type="button"
@@ -261,17 +269,6 @@ export function TopBar({
               >
                 Store locations
               </button>
-
-              {browseStats && page === "browse" && (
-                <>
-                  <p className="top-bar-dropdown-label">Catalog</p>
-                  <p className="top-bar-dropdown-meta">
-                    {browseStats.shown} shown · {browseStats.total} products ·{" "}
-                    {browseStats.photoCount} photos · {browseStats.storeCount} stores · avg{" "}
-                    {browseStats.avgPriceLabel}
-                  </p>
-                </>
-              )}
 
               <p className="top-bar-dropdown-label">Help</p>
               <button

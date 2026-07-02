@@ -4,7 +4,6 @@ import { productImageUrl } from "./api";
 import { LocationLabelButton } from "./LocationLabelButton";
 import { PhotoLightbox } from "./PhotoLightbox";
 import { StoreLink } from "./StoreLink";
-import { hasValidCoords } from "./maps";
 import type { Product } from "./types";
 
 function formatPrice(price: number | null | undefined, currency = "CAD") {
@@ -27,8 +26,7 @@ function ProductCard({
   onLabelLocation?: (product: Product) => void;
 }) {
   const imgSrc = productImageUrl(product.image_id);
-  const { latitude, longitude, store } = product.location;
-  const hasCoords = hasValidCoords(latitude, longitude);
+  const { store } = product.location;
   const needsLabel = store === "Unknown store" || !product.location.store_location_id;
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const [confirming, setConfirming] = useState(false);
@@ -159,7 +157,7 @@ function ProductCard({
           <dt>Store</dt>
           <dd className="store-meta-row">
             <StoreLink location={product.location} />
-            {hasCoords && onLabelLocation && (
+            {onLabelLocation && (
               <LocationLabelButton
                 needsLabel={needsLabel}
                 onClick={() => onLabelLocation(product)}

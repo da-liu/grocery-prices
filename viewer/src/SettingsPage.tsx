@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 import { deleteStoreLocation, fetchStoreLocations } from "./api";
 import { MapPreview } from "./MapPreview";
 import { hasValidCoords } from "./maps";
+import { DEV_FORCE_LOADING } from "./devPreview";
 import type { StoreLocation } from "./types";
 
 export function SettingsPage() {
@@ -12,6 +13,7 @@ export function SettingsPage() {
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
 
   const loadStores = useCallback(() => {
+    if (DEV_FORCE_LOADING) return Promise.resolve();
     setLoading(true);
     setError(null);
     return fetchStoreLocations()
