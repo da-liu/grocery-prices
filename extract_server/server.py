@@ -33,11 +33,10 @@ from fastapi.security import HTTPAuthorizationCredentials  # noqa: E402
 from grocery_extract.catalog_edit import add_product, reextract_photo, update_product  # noqa: E402
 from grocery_extract.delete import delete_product, delete_products_bulk  # noqa: E402
 from grocery_extract.ingest import ingest_upload, ingest_upload_batch  # noqa: E402
-from grocery_extract.pipeline import extract_from_upload  # noqa: E402
 from grocery_extract.photo_stores import set_image_store_location_id
 from grocery_extract.products_builder import build_product_lines, write_user_products_jsonl
 from grocery_extract.user_paths import find_user_jpg  # noqa: E402
-from extract_server.user_stores import (  # noqa: E402
+from grocery_extract.user_stores_db import (  # noqa: E402
     create_user_store,
     delete_user_store,
     get_user_store,
@@ -361,11 +360,6 @@ def get_media(
     return FileResponse(jpg, media_type="image/jpeg")
 
 
-@app.post("/extract")
-async def extract(file: UploadFile = File(...)) -> JSONResponse:
-    return await _extract_upload(file)
-
-
 @app.post("/api/photos/upload")
 async def upload_photo(
     file: UploadFile = File(...),
@@ -395,10 +389,11 @@ async def upload_photos_bulk(
     saved_paths: list[Path] = []
     with tempfile.TemporaryDirectory(prefix="grocery-bulk-") as tmp:
         tmp_dir = Path(tmp)
-        for upload in files:
+        for index, upload in enumerate(files):
             if not upload.filename:
                 continue
-            path = tmp_dir / Path(upload.filename).name
+            # Prefix index so same-named mobile uploads do not overwrite each other.
+            path = tmp_dir / f"{index:04d}-{Path(upload.filename).name}"
             path.write_bytes(await upload.read())
             saved_paths.append(path)
 
@@ -422,17 +417,6 @@ async def upload_photos_bulk(
     if any(not result.get("action_required") for result in results):
         complete_onboarding(user.id)
     return JSONResponse({"results": results, "count": len(results)})
-
-
-async def _extract_upload(file: UploadFile) -> JSONResponse:
-    upload_path = await _save_upload(file)
-    if not os.environ.get("CURSOR_API_KEY"):
-        raise HTTPException(status_code=503, detail="CURSOR_API_KEY not configured")
-    try:
-        result = extract_from_upload(upload_path)
-    except Exception as err:
-        raise HTTPException(status_code=502, detail=str(err)) from err
-    return JSONResponse(result.model_dump(mode="json"))
 
 
 async def _ingest_single(

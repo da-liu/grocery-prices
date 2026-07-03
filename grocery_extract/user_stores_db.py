@@ -3,10 +3,10 @@ from __future__ import annotations
 import sqlite3
 import uuid
 from dataclasses import dataclass
-from datetime import datetime, timezone
-from pathlib import Path
 
-DB_PATH = Path(__file__).resolve().parents[1] / "extract_server" / "data" / "grocery.db"
+from extract_server.users_db import DB_PATH
+
+_LEGACY_USER_STORE_COLUMNS = frozenset({"address", "area", "created_at"})
 
 
 @dataclass(frozen=True)
@@ -27,27 +27,66 @@ def _connect() -> sqlite3.Connection:
     return conn
 
 
+def _create_user_store_locations_table(conn: sqlite3.Connection) -> None:
+    conn.execute(
+        """
+        CREATE TABLE IF NOT EXISTS user_store_locations (
+            id TEXT PRIMARY KEY,
+            user_id TEXT NOT NULL,
+            name TEXT NOT NULL,
+            latitude REAL NOT NULL,
+            longitude REAL NOT NULL,
+            match_radius_m INTEGER NOT NULL DEFAULT 150,
+            maps_url TEXT
+        )
+        """
+    )
+    conn.execute(
+        "CREATE INDEX IF NOT EXISTS idx_user_store_locations_user ON user_store_locations(user_id)"
+    )
+
+
+def _migrate_user_store_locations(conn: sqlite3.Connection) -> None:
+    rows = conn.execute("PRAGMA table_info(user_store_locations)").fetchall()
+    if not rows:
+        return
+    colnames = {row[1] for row in rows}
+    if not (_LEGACY_USER_STORE_COLUMNS & colnames):
+        return
+
+    conn.execute(
+        """
+        CREATE TABLE user_store_locations_new (
+            id TEXT PRIMARY KEY,
+            user_id TEXT NOT NULL,
+            name TEXT NOT NULL,
+            latitude REAL NOT NULL,
+            longitude REAL NOT NULL,
+            match_radius_m INTEGER NOT NULL DEFAULT 150,
+            maps_url TEXT
+        )
+        """
+    )
+    conn.execute(
+        """
+        INSERT INTO user_store_locations_new (
+            id, user_id, name, latitude, longitude, match_radius_m, maps_url
+        )
+        SELECT id, user_id, name, latitude, longitude, match_radius_m, maps_url
+        FROM user_store_locations
+        """
+    )
+    conn.execute("DROP TABLE user_store_locations")
+    conn.execute("ALTER TABLE user_store_locations_new RENAME TO user_store_locations")
+    conn.execute(
+        "CREATE INDEX IF NOT EXISTS idx_user_store_locations_user ON user_store_locations(user_id)"
+    )
+
+
 def init_user_store_tables() -> None:
     with _connect() as conn:
-        conn.execute(
-            """
-            CREATE TABLE IF NOT EXISTS user_store_locations (
-                id TEXT PRIMARY KEY,
-                user_id TEXT NOT NULL,
-                name TEXT NOT NULL,
-                address TEXT,
-                area TEXT,
-                latitude REAL NOT NULL,
-                longitude REAL NOT NULL,
-                match_radius_m INTEGER NOT NULL DEFAULT 150,
-                maps_url TEXT,
-                created_at TEXT NOT NULL
-            )
-            """
-        )
-        conn.execute(
-            "CREATE INDEX IF NOT EXISTS idx_user_store_locations_user ON user_store_locations(user_id)"
-        )
+        _create_user_store_locations_table(conn)
+        _migrate_user_store_locations(conn)
 
 
 def _row_to_store(row) -> UserStoreLocation:
@@ -117,26 +156,21 @@ def create_user_store(
         raise ValueError("Store name is required")
 
     store_id = uuid.uuid4().hex
-    created_at = datetime.now(timezone.utc).isoformat()
     with _connect() as conn:
         conn.execute(
             """
             INSERT INTO user_store_locations (
-                id, user_id, name, address, area, latitude, longitude,
-                match_radius_m, maps_url, created_at
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                id, user_id, name, latitude, longitude, match_radius_m, maps_url
+            ) VALUES (?, ?, ?, ?, ?, ?, ?)
             """,
             (
                 store_id,
                 user_id,
                 name,
-                None,
-                None,
                 latitude,
                 longitude,
                 match_radius_m,
                 maps_url,
-                created_at,
             ),
         )
     store = get_user_store(user_id, store_id)

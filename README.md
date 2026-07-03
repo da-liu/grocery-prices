@@ -5,7 +5,7 @@ Photo-based grocery price tracking for Toronto stores.
 ## Data
 
 - `data/YYYY_MM_DD/*.HEIC` - original iPhone photos, grouped by import/capture date
-- `data/YYYY_MM_DD/jpg/` - JPEG copies for the viewer
+- `data/YYYY_MM_DD/jpg/` - JPEG copies for extraction and API media
 - `data/users/{id}/` - per-user photos, extractions, and `products.jsonl`
 
 Drop new HEIC files into today's date folder (e.g. `data/2026_06_30/`) so filenames like `IMG_2027` do not collide across import batches.
@@ -16,12 +16,9 @@ Automated photo extraction (Cursor SDK vision) lives in `extract_server/`. See [
 
 ```bash
 cd extract_server && PYTHONPATH=.. .venv/bin/python server.py
-curl -F "file=@data/2026_06_30/jpg/IMG_2060.jpg" http://127.0.0.1:8765/extract
 ```
 
-### Next phase API
-
-The server also exposes authenticated upload endpoints used by the viewer:
+Authenticated upload endpoints used by the viewer:
 
 | Endpoint | Purpose |
 |----------|---------|
@@ -79,7 +76,7 @@ Static site at **https://g.daliu.ca** (S3 + CloudFront).
 ./deploy.sh         # build + sync
 ```
 
-`./deploy.sh` syncs JPEGs and builds the viewer for https://g.daliu.ca.
+`./deploy.sh` builds the viewer and syncs it to https://g.daliu.ca. Product photos are served by the API, not the static site.
 
 ## Stores
 

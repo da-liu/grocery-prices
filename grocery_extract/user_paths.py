@@ -1,9 +1,11 @@
 from __future__ import annotations
 
+import os
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
-DATA_DIR = ROOT / "data"
+_DEFAULT_DATA_DIR = ROOT / "data"
+DATA_DIR = Path(os.environ.get("GROCERY_DATA_DIR", _DEFAULT_DATA_DIR))
 USERS_DIR = DATA_DIR / "users"
 
 

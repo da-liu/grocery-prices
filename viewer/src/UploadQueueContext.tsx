@@ -14,6 +14,7 @@ import {
   type UploadResult,
 } from "./api";
 import { DuplicatePhotoModal } from "./DuplicatePhotoModal";
+import { prepareUploadFile } from "./compressForUpload";
 import {
   createQueueItem,
   MAX_BULK_BATCH,
@@ -193,7 +194,11 @@ export function UploadQueueProvider({
           });
           return;
         }
-        const retried = await uploadPhotosBulk([item.file], item.source, action);
+        const retried = await uploadPhotosBulk(
+          [item.uploadFile ?? item.file],
+          item.source,
+          action,
+        );
         const retriedResult = retried.results[0];
         if (!retriedResult) {
           throw new Error("Upload returned no result");
@@ -215,7 +220,7 @@ export function UploadQueueProvider({
 
       try {
         const bulk = await uploadPhotosBulk(
-          batch.map((item) => item.file),
+          batch.map((item) => item.uploadFile ?? item.file),
           batch[0].source,
         );
 
@@ -269,12 +274,26 @@ export function UploadQueueProvider({
     pumpQueue();
   }, [items, pumpQueue, pendingDuplicate]);
 
-  const enqueueFiles = useCallback((files: File[], source: UploadSource) => {
-    if (!files.length) return;
-    const added = files.map((file) => createQueueItem(file, source));
-    setItems((prev) => [...prev, ...added]);
-    setExpanded(true);
-  }, []);
+  const enqueueFiles = useCallback(
+    (files: File[], source: UploadSource) => {
+      if (!files.length) return;
+      const added = files.map((file) => createQueueItem(file, source));
+      setItems((prev) => [...prev, ...added]);
+      setExpanded(true);
+
+      for (const item of added) {
+        void prepareUploadFile(item.file)
+          .then(({ uploadFile, thumbnailUrl }) => {
+            updateItem(item.id, { uploadFile, thumbnailUrl, status: "queued" });
+          })
+          .catch((err) => {
+            const message = err instanceof Error ? err.message : "Compression failed";
+            updateItem(item.id, { status: "failed", error: message });
+          });
+      }
+    },
+    [updateItem],
+  );
 
   const dismissToast = useCallback(() => setToast(null), []);
 
@@ -307,6 +326,7 @@ export function UploadQueueProvider({
       }
       return prev.filter(
         (item) =>
+          item.status === "preparing" ||
           item.status === "queued" ||
           item.status === "processing" ||
           item.status === "awaiting_duplicate",
@@ -324,6 +344,7 @@ export function UploadQueueProvider({
 
   const activeCount = items.filter(
     (item) =>
+      item.status === "preparing" ||
       item.status === "queued" ||
       item.status === "processing" ||
       item.status === "awaiting_duplicate",

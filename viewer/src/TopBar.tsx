@@ -1,6 +1,6 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type RefObject } from "react";
 
-type Page = "browse" | "upload" | "compare" | "settings";
+type Page = "browse" | "compare" | "settings";
 
 interface BrowseStats {
   shown: number;
@@ -18,7 +18,9 @@ interface TopBarProps {
   user: { username: string };
   onLogout: () => void;
   onNavigate: (page: Page) => void;
+  photoInputRef: RefObject<HTMLInputElement | null>;
   onPhotosSelected: (files: File[]) => void;
+  onReceiptsSelected: (files: File[]) => void;
   showSortFilter?: boolean;
   sortFilterOpen?: boolean;
   activeChipCount?: number;
@@ -80,7 +82,9 @@ export function TopBar({
   user,
   onLogout,
   onNavigate,
+  photoInputRef,
   onPhotosSelected,
+  onReceiptsSelected,
   showSortFilter = false,
   sortFilterOpen = false,
   activeChipCount = 0,
@@ -89,7 +93,7 @@ export function TopBar({
   onShowOnboarding,
 }: TopBarProps) {
   const [menuOpen, setMenuOpen] = useState(false);
-  const photoRef = useRef<HTMLInputElement>(null);
+  const receiptRef = useRef<HTMLInputElement>(null);
   const menuRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -119,9 +123,7 @@ export function TopBar({
 
   return (
     <header className="top-bar">
-      {page === "upload" ? (
-        <p className="top-bar-title">Upload</p>
-      ) : page === "settings" ? (
+      {page === "settings" ? (
         <p className="top-bar-title">Settings</p>
       ) : (
         <input
@@ -136,9 +138,10 @@ export function TopBar({
 
       <div className="top-bar-actions">
         <input
-          ref={photoRef}
+          ref={photoInputRef}
           type="file"
           accept="image/*,.heic"
+          capture="environment"
           multiple
           className="sr-only"
           onChange={(e) => {
@@ -146,11 +149,24 @@ export function TopBar({
             e.target.value = "";
           }}
         />
+        <input
+          ref={receiptRef}
+          type="file"
+          accept="image/*,.heic"
+          multiple
+          className="sr-only"
+          onChange={(e) => {
+            if (e.target.files?.length) {
+              onReceiptsSelected(Array.from(e.target.files));
+            }
+            e.target.value = "";
+          }}
+        />
         <button
           type="button"
           className="top-bar-icon-btn top-bar-icon-btn--primary"
           aria-label="Take or upload photo"
-          onClick={() => photoRef.current?.click()}
+          onClick={() => photoInputRef.current?.click()}
         >
           <CameraIcon />
         </button>
@@ -220,10 +236,12 @@ export function TopBar({
               <button
                 type="button"
                 role="menuitem"
-                className={page === "upload" ? "active" : undefined}
-                onClick={() => pickNav("upload")}
+                onClick={() => {
+                  setMenuOpen(false);
+                  receiptRef.current?.click();
+                }}
               >
-                Upload & import
+                Import receipts
               </button>
               <button
                 type="button"

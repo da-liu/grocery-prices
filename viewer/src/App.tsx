@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { AuthProvider, useAuth } from "./AuthContext";
 import { fetchProducts, deleteProduct, deleteProductsBulk, completeOnboarding, productImageUrl, updateProduct, addManualProduct, reextractPhoto } from "./api";
 import { BrowsePage } from "./BrowsePage";
@@ -28,7 +28,6 @@ import { AuthLoadingScreen } from "./AuthLoadingScreen";
 import { SignInPage } from "./SignInPage";
 import { StoreLabelModal } from "./StoreLabelModal";
 import { TopBar } from "./TopBar";
-import { UploadPage } from "./UploadPage";
 import { UploadQueueProvider, useUploadQueue } from "./UploadQueueContext";
 import { UploadStatusBar } from "./UploadStatusBar";
 import { DEV_FORCE_LOADING } from "./devPreview";
@@ -36,11 +35,11 @@ import type { Product, StoreLabelRequest } from "./types";
 import type { ManualProductInput, ProductUpdateInput } from "./api";
 import "./App.css";
 
-type Page = "browse" | "upload" | "compare" | "settings";
+type Page = "browse" | "compare" | "settings";
 
 function pageFromHash(): Page {
   const hash = window.location.hash.replace(/^#\/?/, "");
-  if (hash === "upload" || hash === "compare" || hash === "settings") return hash;
+  if (hash === "compare" || hash === "settings") return hash;
   return "browse";
 }
 
@@ -436,6 +435,11 @@ function AuthenticatedApp({
 }) {
   const { enqueueFiles, pendingLabel, requestLabel, dismissLabel, completeLabel } =
     useUploadQueue();
+  const photoInputRef = useRef<HTMLInputElement>(null);
+
+  function openPhotoPicker() {
+    photoInputRef.current?.click();
+  }
 
   const previewLabelRequest: StoreLabelRequest | null = DEV_FORCE_LOADING
     ? {
@@ -468,7 +472,9 @@ function AuthenticatedApp({
         user={user}
         onLogout={() => void logout()}
         onNavigate={navigate}
+        photoInputRef={photoInputRef}
         onPhotosSelected={(files) => enqueueFiles(files, "shelf")}
+        onReceiptsSelected={(files) => enqueueFiles(files, "receipt")}
         showSortFilter={page === "browse"}
         sortFilterOpen={sortFilterOpen}
         activeChipCount={activeChipCount}
@@ -515,7 +521,7 @@ function AuthenticatedApp({
           </button>
         </p>
       )}
-      {productsLoading && page !== "upload" && (
+      {productsLoading && (
         <p className="status">Loading products…</p>
       )}
 
@@ -523,7 +529,7 @@ function AuthenticatedApp({
         <BrowsePage
           products={browseDisplayed}
           catalogEmpty={products.length === 0}
-          onStartUpload={() => navigate("upload")}
+          onStartUpload={openPhotoPicker}
           onDeleteProduct={(id) => void handleDeleteProduct(id)}
           deletingId={deletingId}
           onEditProduct={handleEditProduct}
@@ -546,7 +552,6 @@ function AuthenticatedApp({
           }}
         />
       )}
-      {page === "upload" && <UploadPage />}
       {page === "settings" && <SettingsPage />}
       {page === "compare" && (products.length > 0 || !productsLoading) && (
         <ComparePage
@@ -595,7 +600,7 @@ function AuthenticatedApp({
         <OnboardingGuide
           onStartUpload={() => {
             void finishOnboarding();
-            navigate("upload");
+            openPhotoPicker();
           }}
           onDismiss={() => void finishOnboarding()}
         />

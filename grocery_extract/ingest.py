@@ -39,7 +39,7 @@ def _today_folder() -> str:
     return datetime.now(TORONTO).strftime("%Y_%m_%d")
 
 
-def next_image_id(user_id: str) -> str:
+def _max_image_num(user_id: str) -> int:
     max_num = 0
     photos_root = user_root(user_id) / "photos"
     if photos_root.exists():
@@ -53,7 +53,19 @@ def next_image_id(user_id: str) -> str:
             stem = path.stem
             if stem[4:].isdigit():
                 max_num = max(max_num, int(stem[4:]))
-    return f"IMG_{max_num + 1:04d}"
+    return max_num
+
+
+def next_image_id(user_id: str) -> str:
+    return f"IMG_{_max_image_num(user_id) + 1:04d}"
+
+
+def allocate_image_ids(user_id: str, count: int) -> list[str]:
+    """Reserve a contiguous block of image IDs before parallel ingest."""
+    if count <= 0:
+        return []
+    start = _max_image_num(user_id) + 1
+    return [f"IMG_{start + index:04d}" for index in range(count)]
 
 
 def _load_meta_rows(user_id: str) -> list[dict]:
@@ -289,17 +301,19 @@ def ingest_upload_batch(
     duplicate_action: str | None = None,
     max_workers: int | None = None,
 ) -> list[dict]:
+    image_ids = allocate_image_ids(user_id, len(upload_paths))
     workers = max(1, min(max_workers or DEFAULT_UPLOAD_WORKERS, len(upload_paths)))
     if workers == 1:
         results = [
             ingest_upload(
                 upload_path,
                 user_id=user_id,
+                image_id=image_id,
                 source=source,
                 api_key=api_key,
                 duplicate_action=duplicate_action,
             )
-            for upload_path in upload_paths
+            for upload_path, image_id in zip(upload_paths, image_ids, strict=True)
         ]
     else:
         results: list[dict | None] = [None] * len(upload_paths)
@@ -309,11 +323,14 @@ def ingest_upload_batch(
                     ingest_upload,
                     upload_path,
                     user_id=user_id,
+                    image_id=image_id,
                     source=source,
                     api_key=api_key,
                     duplicate_action=duplicate_action,
                 ): index
-                for index, upload_path in enumerate(upload_paths)
+                for index, (upload_path, image_id) in enumerate(
+                    zip(upload_paths, image_ids, strict=True)
+                )
             }
             for future in as_completed(future_map):
                 index = future_map[future]

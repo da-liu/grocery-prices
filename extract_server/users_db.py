@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import os
 import re
 import sqlite3
 import uuid
@@ -9,7 +10,8 @@ from pathlib import Path
 
 import bcrypt
 
-DB_PATH = Path(__file__).resolve().parent / "data" / "grocery.db"
+_DEFAULT_DB_PATH = Path(__file__).resolve().parent / "data" / "grocery.db"
+DB_PATH = Path(os.environ.get("GROCERY_DB_PATH", _DEFAULT_DB_PATH))
 USERNAME_RE = re.compile(r"^[a-zA-Z0-9_-]{3,32}$")
 EMAIL_RE = re.compile(r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$")
 

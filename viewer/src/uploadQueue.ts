@@ -3,6 +3,7 @@ import type { DuplicateAction } from "./api";
 export type UploadSource = "shelf" | "receipt";
 
 export type UploadQueueStatus =
+  | "preparing"
   | "queued"
   | "processing"
   | "awaiting_duplicate"
@@ -17,6 +18,7 @@ export interface UploadQueueItem {
   status: UploadQueueStatus;
   source: UploadSource;
   file: File;
+  uploadFile?: File;
   productCount?: number;
   imageId?: string;
   error?: string;
@@ -46,15 +48,17 @@ export function createQueueItem(file: File, source: UploadSource): UploadQueueIt
   return {
     id: crypto.randomUUID(),
     label: file.name || "Photo",
-    thumbnailUrl: URL.createObjectURL(file),
-    status: "queued",
+    thumbnailUrl: "",
+    status: "preparing",
     source,
     file,
   };
 }
 
 export function revokeQueueItem(item: UploadQueueItem) {
-  URL.revokeObjectURL(item.thumbnailUrl);
+  if (item.thumbnailUrl.startsWith("blob:")) {
+    URL.revokeObjectURL(item.thumbnailUrl);
+  }
 }
 
 export function productCountFromResult(result: {

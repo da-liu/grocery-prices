@@ -62,6 +62,8 @@ function Spinner() {
 
 function statusLabel(item: UploadQueueItem): string {
   switch (item.status) {
+    case "preparing":
+      return "Compressing…";
     case "queued":
       return "Waiting…";
     case "processing":
@@ -185,14 +187,18 @@ export function UploadStatusBar({ onViewBrowse }: { onViewBrowse: () => void }) 
                     key={item.id}
                     className={`upload-status-item upload-status-item--${item.status}`}
                   >
-                    <img src={item.thumbnailUrl} alt="" className="upload-status-thumb" />
+                    {item.thumbnailUrl ? (
+                      <img src={item.thumbnailUrl} alt="" className="upload-status-thumb" />
+                    ) : (
+                      <div className="upload-status-thumb" aria-hidden="true" />
+                    )}
                     <div className="upload-status-copy">
                       <strong>{item.label}</strong>
                       <span>{statusLabel(item)}</span>
                     </div>
-                    {(item.status === "queued" || item.status === "processing") && (
-                      <Spinner />
-                    )}
+                    {(item.status === "preparing" ||
+                      item.status === "queued" ||
+                      item.status === "processing") && <Spinner />}
                   </li>
                 ))}
               </ul>

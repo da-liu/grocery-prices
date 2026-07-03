@@ -24,7 +24,11 @@ export function DuplicatePhotoModal({
         </header>
 
         <div className="duplicate-preview">
-          <img src={thumbnailUrl} alt="" />
+          {thumbnailUrl ? (
+            <img src={thumbnailUrl} alt="" />
+          ) : (
+            <div className="duplicate-preview-placeholder" aria-hidden="true" />
+          )}
           <span>{fileName}</span>
         </div>
 

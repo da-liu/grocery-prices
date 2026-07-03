@@ -49,8 +49,6 @@ Server listens on http://127.0.0.1:8765
 
 **GET /health** - liveness check
 
-**POST /extract** - multipart file upload (`file` field), extraction only
-
 **POST /api/auth/login** - `{ "password": "..." }` when `GROCERY_AUTH_PASSWORD` is set
 
 **GET /api/auth/me** - check bearer token
@@ -62,17 +60,25 @@ Server listens on http://127.0.0.1:8765
 **POST /api/photos/bulk** - authenticated receipt bulk import (`files` field, multiple)
 
 ```bash
-curl -s -F "file=@../data/2026_06_30/jpg/IMG_2060.jpg" http://127.0.0.1:8765/extract | jq .
+# Register/login first, then upload with bearer token
+TOKEN=$(curl -s -X POST http://127.0.0.1:8765/api/auth/login \
+  -H 'Content-Type: application/json' \
+  -d '{"username":"you@example.com","password":"your-password"}' | jq -r .token)
+curl -s -H "Authorization: Bearer $TOKEN" \
+  -F "file=@../data/2026_06_30/jpg/IMG_2060.jpg" \
+  http://127.0.0.1:8765/api/photos/upload | jq .
 ```
 
 Response shape:
 
 ```json
 {
-  "image_path": "data/2026_06_30/jpg/IMG_2060.jpg",
+  "image_id": "IMG_0001",
+  "image_path": "api/media/IMG_0001",
   "meta": { "gps_latitude": 43.64, "captured_at": "2026-06-30T19:33:18", ... },
   "products": [{ "product_name": "...", "price": 1.79, "category": "canned-goods" }],
-  "extractor": "cursor_sdk"
+  "extractor": "cursor_sdk",
+  "product_count": 12
 }
 ```
 
