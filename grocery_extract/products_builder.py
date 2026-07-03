@@ -5,6 +5,7 @@ from pathlib import Path
 
 from grocery_extract.exif import captured_at_from_exif, date_folder_from_exif
 from grocery_extract.photo_stores import get_image_store_location_id
+from grocery_extract.product_matching import attach_price_insights
 from grocery_extract.stores import store_from_gps
 from grocery_extract.user_paths import (
     user_extractions_dir,
@@ -12,12 +13,6 @@ from grocery_extract.user_paths import (
     user_products_path,
     user_root,
 )
-
-ROOT = Path(__file__).resolve().parents[1]
-DATA_DIR = ROOT / "data"
-META_PATH = ROOT / ".meta.json"
-OUT_PATH = DATA_DIR / "products.jsonl"
-EXTRACTIONS_DIR = DATA_DIR / "extractions"
 
 
 def location_from_store_record(store: dict) -> dict:
@@ -37,29 +32,16 @@ def unknown_location() -> dict:
     }
 
 
-def find_image_path(image_id: str, date_folder: str | None, *, user_id: str | None = None) -> str:
-    if user_id:
-        photos_root = user_root(user_id) / "photos"
-        if date_folder:
-            rel = f"api/media/{image_id}"
-            if (photos_root / date_folder / "jpg" / f"{image_id}.jpg").exists():
-                return rel
-        for batch_dir in sorted(photos_root.glob("20*")):
-            if (batch_dir / "jpg" / f"{image_id}.jpg").exists():
-                return f"api/media/{image_id}"
-        return f"api/media/{image_id}"
-
+def find_image_path(image_id: str, date_folder: str | None, *, user_id: str) -> str:
+    photos_root = user_root(user_id) / "photos"
     if date_folder:
-        rel = f"data/{date_folder}/jpg/{image_id}.jpg"
-        if (DATA_DIR / date_folder / "jpg" / f"{image_id}.jpg").exists():
+        rel = f"api/media/{image_id}"
+        if (photos_root / date_folder / "jpg" / f"{image_id}.jpg").exists():
             return rel
-    for batch_dir in sorted(DATA_DIR.glob("20*")):
-        jpg = batch_dir / "jpg" / f"{image_id}.jpg"
-        if jpg.exists():
-            return f"data/{batch_dir.name}/jpg/{image_id}.jpg"
-    if date_folder:
-        return f"data/{date_folder}/jpg/{image_id}.jpg"
-    return f"data/jpg/{image_id}.jpg"
+    for batch_dir in sorted(photos_root.glob("20*")):
+        if (batch_dir / "jpg" / f"{image_id}.jpg").exists():
+            return f"api/media/{image_id}"
+    return f"api/media/{image_id}"
 
 
 def store_for_image(
@@ -84,50 +66,33 @@ def store_for_image(
     return unknown_location()
 
 
-def load_meta_by_stem(meta_path: Path = META_PATH) -> dict[str, dict]:
+def load_meta_by_stem(meta_path: Path) -> dict[str, dict]:
     if not meta_path.exists():
         return {}
     with meta_path.open() as f:
         return {Path(row["SourceFile"]).stem: row for row in json.load(f)}
 
 
-def load_extractions(extractions_dir: Path = EXTRACTIONS_DIR) -> dict[str, list[dict]]:
+def load_extractions(extractions_dir: Path) -> dict[str, list[dict]]:
     if not extractions_dir.exists():
         return {}
     merged: dict[str, list[dict]] = {}
     for path in sorted(extractions_dir.glob("IMG_*.json")):
         with path.open() as f:
             payload = json.load(f)
-        products = payload.get("products", [])
-        if products:
-            merged[path.stem] = products
+        merged[path.stem] = payload.get("products", [])
     return merged
 
 
-def build_product_lines(
-    manual_products: dict[str, list[dict]],
-    *,
-    include_extractions: bool = True,
-    user_id: str | None = None,
-) -> list[dict]:
-    """Merge manual extractions with saved vision pipeline results."""
-    if user_id:
-        products_by_image = load_extractions(user_extractions_dir(user_id))
-        meta_by_stem = load_meta_by_stem(user_meta_path(user_id))
-    else:
-        products_by_image = dict(manual_products)
-        if include_extractions:
-            for image_id, products in load_extractions().items():
-                products_by_image[image_id] = products
-        meta_by_stem = load_meta_by_stem()
+def build_product_lines(*, user_id: str) -> list[dict]:
+    """Build catalog rows from a user's saved extractions and photo metadata."""
+    products_by_image = load_extractions(user_extractions_dir(user_id))
+    meta_by_stem = load_meta_by_stem(user_meta_path(user_id))
 
-    user_stores: list[dict] = []
-    user_store_by_id: dict[str, dict] = {}
-    if user_id:
-        from grocery_extract.user_stores_db import list_user_stores_as_dicts
+    from grocery_extract.user_stores_db import list_user_stores_as_dicts
 
-        user_stores = list_user_stores_as_dicts(user_id)
-        user_store_by_id = {store["id"]: store for store in user_stores}
+    user_stores = list_user_stores_as_dicts(user_id)
+    user_store_by_id = {store["id"]: store for store in user_stores}
 
     lines: list[dict] = []
 
@@ -135,10 +100,37 @@ def build_product_lines(
         meta = meta_by_stem.get(image_id, {})
         lat = meta.get("GPSLatitude")
         lon = meta.get("GPSLongitude")
-        assigned_store_id = get_image_store_location_id(user_id, image_id) if user_id else None
+        assigned_store_id = get_image_store_location_id(user_id, image_id)
         raw_dt = meta.get("DateTimeOriginal")
         captured_at = captured_at_from_exif(raw_dt)
         date_folder = date_folder_from_exif(raw_dt)
+
+        if not products:
+            location = store_for_image(
+                lat,
+                lon,
+                user_stores=user_stores,
+                user_store_by_id=user_store_by_id,
+                assigned_store_id=assigned_store_id,
+            )
+            if lat is not None and lon is not None:
+                location["latitude"] = lat
+                location["longitude"] = lon
+            lines.append(
+                {
+                    "id": f"{image_id}-empty",
+                    "image_id": image_id,
+                    "image_path": find_image_path(image_id, date_folder, user_id=user_id),
+                    "price_currency": "CAD",
+                    "captured_at": captured_at,
+                    "location": location,
+                    "product_name": "No products extracted",
+                    "category": "pantry",
+                    "price": None,
+                    "extraction_empty": True,
+                }
+            )
+            continue
 
         for idx, raw in enumerate(products, start=1):
             product = {
@@ -166,33 +158,14 @@ def build_product_lines(
             }
             lines.append(entry)
 
-    return lines
+    return attach_price_insights(lines)
 
 
 def write_user_products_jsonl(user_id: str) -> int:
-    lines = build_product_lines({}, user_id=user_id)
+    lines = build_product_lines(user_id=user_id)
     out_path = user_products_path(user_id)
     out_path.parent.mkdir(parents=True, exist_ok=True)
     with out_path.open("w") as f:
         for row in lines:
             f.write(json.dumps(row, ensure_ascii=False) + "\n")
-    return len(lines)
-
-
-def write_products_jsonl(
-    manual_products: dict[str, list[dict]],
-    *,
-    out_path: Path | None = None,
-    viewer_public: Path | None = None,
-) -> int:
-    lines = build_product_lines(manual_products)
-    out_path = out_path or OUT_PATH
-    out_path.parent.mkdir(parents=True, exist_ok=True)
-    with out_path.open("w") as f:
-        for row in lines:
-            f.write(json.dumps(row, ensure_ascii=False) + "\n")
-
-    viewer_public = viewer_public or ROOT / "viewer" / "public" / "products.jsonl"
-    viewer_public.parent.mkdir(parents=True, exist_ok=True)
-    viewer_public.write_text(out_path.read_text())
     return len(lines)

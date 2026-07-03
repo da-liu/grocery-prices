@@ -41,6 +41,9 @@ Rules:
 - Set regular_price when a "was" or regular price is shown alongside the sale price.
 - For per-weight deli/meat tags priced per 100g or per lb, set unit accordingly and put the tagged unit price in price when that is the primary displayed price.
 - For weighed packages, use the total price on the label as price and unit_price as $/kg or $/lb when shown.
+- unit_price must be the per-unit shelf tag price (e.g. $/100g, $/lb, $/EA). Never put the package total in unit_price.
+- unit_price_per_100g is only for tags that explicitly show price per 100g; leave null otherwise.
+- When both total package price and per-unit price appear, price = total package price, unit_price = per-unit rate.
 - Read Chinese characters on packaging into product_name_zh when present.
 - Do not invent products not visible in the photo."""
 
@@ -53,6 +56,7 @@ Rules:
 - One object per receipt line item.
 - product_name should match the printed item description.
 - Use the line total as price when shown; otherwise use the unit price.
+- unit_price is the per-unit rate only (e.g. $/kg, $/EA), never the line total.
 - Include barcode only when printed on the receipt line.
 - Skip subtotals, tax, payment lines, and store header/footer boilerplate."""
 

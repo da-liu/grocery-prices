@@ -16,9 +16,6 @@ if ! command -v aws >/dev/null 2>&1; then
   exit 1
 fi
 
-echo "Regenerating products.jsonl..."
-python3 scripts/build_products.py
-
 echo "Syncing JPEG assets to viewer/public..."
 mkdir -p viewer/public/data
 for batch_dir in data/20*/; do

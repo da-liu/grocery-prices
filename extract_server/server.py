@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import asyncio
 import os
 import sys
 import tempfile
@@ -26,10 +27,11 @@ from extract_server.auth import (  # noqa: E402
     require_user,
     _bearer,
 )
-from fastapi import Cookie, Response  # noqa: E402
+from fastapi import Cookie, Form, Response  # noqa: E402
 from fastapi.security import HTTPAuthorizationCredentials  # noqa: E402
 
-from grocery_extract.delete import delete_product  # noqa: E402
+from grocery_extract.catalog_edit import add_product, reextract_photo, update_product  # noqa: E402
+from grocery_extract.delete import delete_product, delete_products_bulk  # noqa: E402
 from grocery_extract.ingest import ingest_upload, ingest_upload_batch  # noqa: E402
 from grocery_extract.pipeline import extract_from_upload  # noqa: E402
 from grocery_extract.photo_stores import set_image_store_location_id
@@ -103,6 +105,40 @@ class AssignPhotoStoreBody(BaseModel):
     store_location_id: str
 
 
+class BulkDeleteProductsBody(BaseModel):
+    ids: list[str] = Field(min_length=1, max_length=500)
+
+
+class ProductUpdateBody(BaseModel):
+    product_name: str | None = None
+    product_name_zh: str | None = None
+    brand: str | None = None
+    price: float | None = None
+    unit: str | None = None
+    unit_price: float | None = None
+    unit_price_per_100g: float | None = None
+    regular_price: float | None = None
+    is_special: bool | None = None
+    promo: str | None = None
+    barcode: str | None = None
+    size: str | None = None
+    category: str | None = None
+    notes: str | None = None
+
+
+class ManualProductBody(BaseModel):
+    product_name: str = Field(min_length=1)
+    product_name_zh: str | None = None
+    brand: str | None = None
+    price: float | None = None
+    unit: str | None = None
+    unit_price: float | None = None
+    barcode: str | None = None
+    size: str | None = None
+    category: str = "pantry"
+    notes: str | None = None
+
+
 def _auth_payload(response: Response, user) -> AuthResponse:
     token = issue_session(response, user)
     upload_count = count_user_extractions(user.id)
@@ -173,7 +209,54 @@ def finish_onboarding(user: Annotated[AuthUser, Depends(require_user)]) -> dict:
 
 @app.get("/api/products")
 def list_products(user: Annotated[AuthUser, Depends(require_user)]) -> list[dict]:
-    return build_product_lines({}, user_id=user.id)
+    return build_product_lines(user_id=user.id)
+
+
+@app.patch("/api/products/{product_id}")
+def patch_product(
+    product_id: str,
+    body: ProductUpdateBody,
+    user: Annotated[AuthUser, Depends(require_user)],
+) -> dict:
+    updates = body.model_dump(exclude_unset=True)
+    if not updates:
+        raise HTTPException(status_code=400, detail="No fields to update")
+    updated = update_product(user.id, product_id, updates)
+    if updated is None:
+        raise HTTPException(status_code=404, detail="Product not found")
+    return updated
+
+
+@app.post("/api/photos/{image_id}/products")
+def create_manual_product(
+    image_id: str,
+    body: ManualProductBody,
+    user: Annotated[AuthUser, Depends(require_user)],
+) -> dict:
+    if not image_id.startswith("IMG_"):
+        raise HTTPException(status_code=400, detail="Invalid image id")
+    created = add_product(user.id, image_id, body.model_dump(exclude_unset=True))
+    if created is None:
+        raise HTTPException(status_code=404, detail="Photo not found")
+    return created
+
+
+@app.post("/api/photos/{image_id}/re-extract")
+def rerun_extraction(
+    image_id: str,
+    user: Annotated[AuthUser, Depends(require_user)],
+) -> dict:
+    if not image_id.startswith("IMG_"):
+        raise HTTPException(status_code=400, detail="Invalid image id")
+    if not os.environ.get("CURSOR_API_KEY"):
+        raise HTTPException(status_code=503, detail="CURSOR_API_KEY not configured")
+    try:
+        result = reextract_photo(user.id, image_id)
+    except Exception as err:
+        raise HTTPException(status_code=502, detail=str(err)) from err
+    if result is None:
+        raise HTTPException(status_code=404, detail="Photo not found")
+    return result
 
 
 @app.delete("/api/products/{product_id}")
@@ -184,6 +267,17 @@ def remove_product(
     if not delete_product(user.id, product_id):
         raise HTTPException(status_code=404, detail="Product not found")
     return {"ok": True}
+
+
+@app.post("/api/products/bulk-delete")
+def remove_products_bulk(
+    body: BulkDeleteProductsBody,
+    user: Annotated[AuthUser, Depends(require_user)],
+) -> dict:
+    result = delete_products_bulk(user.id, body.ids)
+    if result["deleted"] == 0 and result["failed"]:
+        raise HTTPException(status_code=404, detail="No products deleted")
+    return result
 
 
 @app.get("/api/store-locations")
@@ -275,18 +369,28 @@ async def extract(file: UploadFile = File(...)) -> JSONResponse:
 @app.post("/api/photos/upload")
 async def upload_photo(
     file: UploadFile = File(...),
+    duplicate_action: Annotated[str | None, Form()] = None,
     user: AuthUser = Depends(require_user),
 ) -> JSONResponse:
-    return await _ingest_single(file, user=user, source="upload")
+    return await _ingest_single(
+        file,
+        user=user,
+        source="upload",
+        duplicate_action=duplicate_action,
+    )
 
 
 @app.post("/api/photos/bulk")
 async def upload_photos_bulk(
     files: list[UploadFile] = File(...),
+    source: Annotated[str, Form()] = "receipt",
+    duplicate_action: Annotated[str | None, Form()] = None,
     user: AuthUser = Depends(require_user),
 ) -> JSONResponse:
     if not files:
         raise HTTPException(status_code=400, detail="No files uploaded")
+
+    ingest_source = "receipt" if source == "receipt" else "upload"
 
     saved_paths: list[Path] = []
     with tempfile.TemporaryDirectory(prefix="grocery-bulk-") as tmp:
@@ -301,12 +405,22 @@ async def upload_photos_bulk(
         if not saved_paths:
             raise HTTPException(status_code=400, detail="No valid files uploaded")
 
+        if not os.environ.get("CURSOR_API_KEY"):
+            raise HTTPException(status_code=503, detail="CURSOR_API_KEY not configured")
+
         try:
-            results = ingest_upload_batch(saved_paths, user_id=user.id, source="receipt")
+            results = await asyncio.to_thread(
+                ingest_upload_batch,
+                saved_paths,
+                user_id=user.id,
+                source=ingest_source,
+                duplicate_action=duplicate_action,
+            )
         except Exception as err:
             raise HTTPException(status_code=502, detail=str(err)) from err
 
-    complete_onboarding(user.id)
+    if any(not result.get("action_required") for result in results):
+        complete_onboarding(user.id)
     return JSONResponse({"results": results, "count": len(results)})
 
 
@@ -321,15 +435,28 @@ async def _extract_upload(file: UploadFile) -> JSONResponse:
     return JSONResponse(result.model_dump(mode="json"))
 
 
-async def _ingest_single(file: UploadFile, *, user: AuthUser, source: str) -> JSONResponse:
+async def _ingest_single(
+    file: UploadFile,
+    *,
+    user: AuthUser,
+    source: str,
+    duplicate_action: str | None = None,
+) -> JSONResponse:
     upload_path = await _save_upload(file)
     if not os.environ.get("CURSOR_API_KEY"):
         raise HTTPException(status_code=503, detail="CURSOR_API_KEY not configured")
     try:
-        payload = ingest_upload(upload_path, user_id=user.id, source=source)
+        payload = await asyncio.to_thread(
+            ingest_upload,
+            upload_path,
+            user_id=user.id,
+            source=source,
+            duplicate_action=duplicate_action,
+        )
     except Exception as err:
         raise HTTPException(status_code=502, detail=str(err)) from err
-    complete_onboarding(user.id)
+    if not payload.get("action_required"):
+        complete_onboarding(user.id)
     return JSONResponse(payload)
 
 

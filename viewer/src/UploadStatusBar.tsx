@@ -66,10 +66,20 @@ function statusLabel(item: UploadQueueItem): string {
       return "Waiting…";
     case "processing":
       return "Reading prices…";
+    case "awaiting_duplicate":
+      return "Duplicate detected";
     case "done":
-      return item.productCount != null
-        ? `${item.productCount} product${item.productCount === 1 ? "" : "s"}`
-        : "Done";
+      if (item.extractionEmpty) return "No products found";
+      if (item.productCount != null) {
+        const overlap =
+          item.overlappingCount && item.overlappingCount > 0
+            ? ` · ${item.overlappingCount} matched`
+            : "";
+        return `${item.productCount} product${item.productCount === 1 ? "" : "s"}${overlap}`;
+      }
+      return "Done";
+    case "skipped":
+      return "Skipped duplicate";
     case "failed":
       return item.error ?? "Failed";
   }
@@ -133,7 +143,7 @@ export function UploadStatusBar({ onViewBrowse }: { onViewBrowse: () => void }) 
   }, [toast, dismissToast]);
 
   useEffect(() => {
-    if (activeCount === 0 && items.some((item) => item.status === "done" || item.status === "failed")) {
+    if (activeCount === 0 && items.some((item) => item.status === "done" || item.status === "failed" || item.status === "skipped")) {
       const timer = window.setTimeout(clearFinished, 15000);
       return () => window.clearTimeout(timer);
     }
@@ -194,7 +204,12 @@ export function UploadStatusBar({ onViewBrowse }: { onViewBrowse: () => void }) 
       {toast && (
         <div className="upload-toast" role="status">
           <span>
-            Added {toast.productCount} product{toast.productCount === 1 ? "" : "s"}
+            {toast.extractionEmpty
+              ? "No products extracted"
+              : `Added ${toast.productCount} product${toast.productCount === 1 ? "" : "s"}`}
+            {toast.overlappingCount && toast.overlappingCount > 0
+              ? ` · ${toast.overlappingCount} matched existing items`
+              : ""}
           </span>
           <button type="button" onClick={onViewBrowse}>
             View

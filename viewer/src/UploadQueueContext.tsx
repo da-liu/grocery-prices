@@ -7,11 +7,20 @@ import {
   useRef,
   useState,
 } from "react";
-import { completeOnboarding, uploadPhoto, uploadReceiptBulk } from "./api";
+import {
+  completeOnboarding,
+  uploadPhotosBulk,
+  type DuplicateAction,
+  type UploadResult,
+} from "./api";
+import { DuplicatePhotoModal } from "./DuplicatePhotoModal";
 import {
   createQueueItem,
+  MAX_BULK_BATCH,
   productCountFromResult,
   revokeQueueItem,
+  UPLOAD_CONCURRENCY,
+  type PendingDuplicate,
   type UploadQueueItem,
   type UploadSource,
   type UploadToast,
@@ -37,6 +46,53 @@ interface UploadQueueState {
 
 const UploadQueueContext = createContext<UploadQueueState | null>(null);
 
+function applyUploadResult(result: UploadResult): Partial<UploadQueueItem> {
+  if (result.action_required) {
+    return {
+      status: "awaiting_duplicate",
+      duplicateOf: result.duplicate_of,
+    };
+  }
+
+  if (result.skipped) {
+    return {
+      status: "skipped",
+      imageId: result.duplicate_of ?? result.image_id,
+      productCount: 0,
+    };
+  }
+
+  const productCount = productCountFromResult(result);
+  return {
+    status: "done",
+    productCount,
+    imageId: result.image_id,
+    extractionEmpty: result.extraction_empty,
+    overlappingCount: result.overlapping_products?.length ?? 0,
+  };
+}
+
+function claimNextBatch(
+  items: UploadQueueItem[],
+  processingIds: ReadonlySet<string>,
+  pendingDuplicateId: string | undefined,
+): UploadQueueItem[] | null {
+  const queued = items.filter(
+    (item) =>
+      item.status === "queued" &&
+      !processingIds.has(item.id) &&
+      item.id !== pendingDuplicateId,
+  );
+  if (!queued.length) return null;
+
+  const source = queued[0].source;
+  const sameSource = queued.filter((item) => item.source === source);
+  if (sameSource.length >= 2) {
+    return sameSource.slice(0, MAX_BULK_BATCH);
+  }
+  return [sameSource[0]];
+}
+
 export function UploadQueueProvider({
   children,
   onUploadSuccess,
@@ -48,13 +104,20 @@ export function UploadQueueProvider({
   const [toast, setToast] = useState<UploadToast | null>(null);
   const [expanded, setExpanded] = useState(false);
   const [labelQueue, setLabelQueue] = useState<StoreLabelRequest[]>([]);
+  const [pendingDuplicate, setPendingDuplicate] = useState<PendingDuplicate | null>(null);
   const itemsRef = useRef(items);
-  const processingRef = useRef(false);
+  const inFlightRef = useRef(0);
+  const processingIdsRef = useRef<Set<string>>(new Set());
+  const pendingDuplicateRef = useRef<string | undefined>(undefined);
   const onUploadSuccessRef = useRef(onUploadSuccess);
 
   useEffect(() => {
     itemsRef.current = items;
   }, [items]);
+
+  useEffect(() => {
+    pendingDuplicateRef.current = pendingDuplicate?.itemId;
+  }, [pendingDuplicate]);
 
   useEffect(() => {
     onUploadSuccessRef.current = onUploadSuccess;
@@ -64,84 +127,154 @@ export function UploadQueueProvider({
     setItems((prev) => prev.map((item) => (item.id === id ? { ...item, ...patch } : item)));
   }, []);
 
-  const processQueue = useCallback(async () => {
-    if (processingRef.current) return;
-    processingRef.current = true;
+  const finishUpload = useCallback(
+    async (item: UploadQueueItem, result: UploadResult) => {
+      const patch = applyUploadResult(result);
+      updateItem(item.id, patch);
 
-    try {
-      while (true) {
-        const next = itemsRef.current.find((item) => item.status === "queued");
-        if (!next) break;
+      if (result.skipped || result.action_required) {
+        return;
+      }
 
-        updateItem(next.id, { status: "processing" });
+      if (result.needs_store_label) {
+        setLabelQueue((prev) => [
+          ...prev,
+          {
+            imageId: result.image_id,
+            thumbnailUrl: item.thumbnailUrl,
+            latitude: result.meta?.gps_latitude ?? null,
+            longitude: result.meta?.gps_longitude ?? null,
+          },
+        ]);
+      }
 
-        try {
-          const result =
-            next.source === "receipt"
-              ? (await uploadReceiptBulk([next.file])).results[0]
-              : await uploadPhoto(next.file);
+      setToast({
+        id: crypto.randomUUID(),
+        productCount: productCountFromResult(result),
+        imageId: result.image_id,
+        extractionEmpty: result.extraction_empty,
+        overlappingCount: result.overlapping_products?.length ?? 0,
+      });
 
+      try {
+        await completeOnboarding();
+      } catch {
+        // onboarding may already be complete
+      }
+
+      await onUploadSuccessRef.current?.();
+    },
+    [updateItem],
+  );
+
+  const resolveDuplicate = useCallback(
+    (item: UploadQueueItem, duplicateOf: string) =>
+      new Promise<DuplicateAction>((resolve) => {
+        setPendingDuplicate({ itemId: item.id, duplicateOf, resolve });
+      }),
+    [],
+  );
+
+  const handleItemResult = useCallback(
+    async (item: UploadQueueItem, result: UploadResult) => {
+      if (result.action_required && result.duplicate_of) {
+        updateItem(item.id, {
+          status: "awaiting_duplicate",
+          duplicateOf: result.duplicate_of,
+        });
+        const action = await resolveDuplicate(item, result.duplicate_of);
+        setPendingDuplicate(null);
+        if (action === "skip") {
+          updateItem(item.id, {
+            status: "skipped",
+            duplicateOf: result.duplicate_of,
+            productCount: 0,
+            imageId: result.duplicate_of,
+          });
+          return;
+        }
+        const retried = await uploadPhotosBulk([item.file], item.source, action);
+        const retriedResult = retried.results[0];
+        if (!retriedResult) {
+          throw new Error("Upload returned no result");
+        }
+        await handleItemResult(item, retriedResult);
+        return;
+      }
+
+      await finishUpload(item, result);
+    },
+    [finishUpload, resolveDuplicate, updateItem],
+  );
+
+  const processBatch = useCallback(
+    async (batch: UploadQueueItem[]) => {
+      for (const item of batch) {
+        updateItem(item.id, { status: "processing" });
+      }
+
+      try {
+        const bulk = await uploadPhotosBulk(
+          batch.map((item) => item.file),
+          batch[0].source,
+        );
+
+        for (let index = 0; index < batch.length; index += 1) {
+          const item = batch[index];
+          const result = bulk.results[index];
           if (!result) {
-            throw new Error("Upload returned no result");
+            updateItem(item.id, {
+              status: "failed",
+              error: "Upload returned no result",
+            });
+            continue;
           }
-
-          const productCount = productCountFromResult(result);
-          updateItem(next.id, {
-            status: "done",
-            productCount,
-            imageId: result.image_id,
-          });
-
-          if (result.needs_store_label) {
-            setLabelQueue((prev) => [
-              ...prev,
-              {
-                imageId: result.image_id,
-                thumbnailUrl: next.thumbnailUrl,
-                latitude: result.meta?.gps_latitude ?? null,
-                longitude: result.meta?.gps_longitude ?? null,
-              },
-            ]);
-          }
-
-          setToast({
-            id: crypto.randomUUID(),
-            productCount,
-            imageId: result.image_id,
-          });
-
-          try {
-            await completeOnboarding();
-          } catch {
-            // onboarding may already be complete
-          }
-
-          await onUploadSuccessRef.current?.();
-        } catch (err) {
-          updateItem(next.id, {
-            status: "failed",
-            error: err instanceof Error ? err.message : "Upload failed",
-          });
+          await handleItemResult(item, result);
+        }
+      } catch (err) {
+        const message = err instanceof Error ? err.message : "Upload failed";
+        for (const item of batch) {
+          updateItem(item.id, { status: "failed", error: message });
         }
       }
-    } finally {
-      processingRef.current = false;
-      if (itemsRef.current.some((item) => item.status === "queued")) {
-        void processQueue();
-      }
-    }
-  }, [updateItem]);
-
-  const enqueueFiles = useCallback(
-    (files: File[], source: UploadSource) => {
-      if (!files.length) return;
-      const added = files.map((file) => createQueueItem(file, source));
-      setItems((prev) => [...prev, ...added]);
-      setExpanded(true);
-      queueMicrotask(() => void processQueue());
     },
-    [processQueue],
+    [handleItemResult, updateItem],
   );
+
+  const pumpQueue = useCallback(() => {
+    while (inFlightRef.current < UPLOAD_CONCURRENCY) {
+      const batch = claimNextBatch(
+        itemsRef.current,
+        processingIdsRef.current,
+        pendingDuplicateRef.current,
+      );
+      if (!batch) break;
+
+      for (const item of batch) {
+        processingIdsRef.current.add(item.id);
+      }
+      inFlightRef.current += 1;
+
+      void processBatch(batch).finally(() => {
+        for (const item of batch) {
+          processingIdsRef.current.delete(item.id);
+        }
+        inFlightRef.current -= 1;
+        pumpQueue();
+      });
+    }
+  }, [processBatch]);
+
+  useEffect(() => {
+    pumpQueue();
+  }, [items, pumpQueue, pendingDuplicate]);
+
+  const enqueueFiles = useCallback((files: File[], source: UploadSource) => {
+    if (!files.length) return;
+    const added = files.map((file) => createQueueItem(file, source));
+    setItems((prev) => [...prev, ...added]);
+    setExpanded(true);
+  }, []);
 
   const dismissToast = useCallback(() => setToast(null), []);
 
@@ -164,11 +297,20 @@ export function UploadQueueProvider({
   const clearFinished = useCallback(() => {
     setItems((prev) => {
       for (const item of prev) {
-        if (item.status === "done" || item.status === "failed") {
+        if (
+          item.status === "done" ||
+          item.status === "failed" ||
+          item.status === "skipped"
+        ) {
           revokeQueueItem(item);
         }
       }
-      return prev.filter((item) => item.status === "queued" || item.status === "processing");
+      return prev.filter(
+        (item) =>
+          item.status === "queued" ||
+          item.status === "processing" ||
+          item.status === "awaiting_duplicate",
+      );
     });
   }, []);
 
@@ -181,9 +323,16 @@ export function UploadQueueProvider({
   }, []);
 
   const activeCount = items.filter(
-    (item) => item.status === "queued" || item.status === "processing",
+    (item) =>
+      item.status === "queued" ||
+      item.status === "processing" ||
+      item.status === "awaiting_duplicate",
   ).length;
   const queuedCount = items.filter((item) => item.status === "queued").length;
+
+  const duplicateItem = pendingDuplicate
+    ? items.find((item) => item.id === pendingDuplicate.itemId)
+    : null;
 
   const value = useMemo(
     () => ({
@@ -217,7 +366,19 @@ export function UploadQueueProvider({
     ],
   );
 
-  return <UploadQueueContext.Provider value={value}>{children}</UploadQueueContext.Provider>;
+  return (
+    <UploadQueueContext.Provider value={value}>
+      {children}
+      {pendingDuplicate && duplicateItem && (
+        <DuplicatePhotoModal
+          duplicateOf={pendingDuplicate.duplicateOf}
+          fileName={duplicateItem.label}
+          thumbnailUrl={duplicateItem.thumbnailUrl}
+          onChoose={(action) => pendingDuplicate.resolve(action)}
+        />
+      )}
+    </UploadQueueContext.Provider>
+  );
 }
 
 export function useUploadQueue() {
@@ -225,3 +386,6 @@ export function useUploadQueue() {
   if (!ctx) throw new Error("useUploadQueue must be used within UploadQueueProvider");
   return ctx;
 }
+
+// Exported for unit tests.
+export { claimNextBatch };

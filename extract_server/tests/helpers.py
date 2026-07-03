@@ -7,8 +7,8 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT))
 
-from scripts.build_products import PRODUCTS  # noqa: E402
-
+FIXTURES_DIR = Path(__file__).resolve().parent / "fixtures"
+GROUND_TRUTH_PATH = FIXTURES_DIR / "ground_truth_products.json"
 CACHE_DIR = Path(__file__).resolve().parents[1] / ".extract_cache"
 DATA_DIR = ROOT / "data"
 
@@ -25,7 +25,8 @@ BENCHMARK_SUBSET = [
 
 
 def ground_truth_by_image() -> dict[str, list[dict]]:
-    return {k: [dict(p) for p in v] for k, v in PRODUCTS.items()}
+    payload = json.loads(GROUND_TRUTH_PATH.read_text())
+    return {k: [dict(p) for p in v] for k, v in payload.items()}
 
 
 def find_jpg(image_id: str) -> Path | None:

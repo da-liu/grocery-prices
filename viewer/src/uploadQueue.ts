@@ -1,8 +1,14 @@
-import type { UploadResult } from "./api";
+import type { DuplicateAction } from "./api";
 
 export type UploadSource = "shelf" | "receipt";
 
-export type UploadQueueStatus = "queued" | "processing" | "done" | "failed";
+export type UploadQueueStatus =
+  | "queued"
+  | "processing"
+  | "awaiting_duplicate"
+  | "done"
+  | "failed"
+  | "skipped";
 
 export interface UploadQueueItem {
   id: string;
@@ -14,13 +20,27 @@ export interface UploadQueueItem {
   productCount?: number;
   imageId?: string;
   error?: string;
+  duplicateOf?: string;
+  extractionEmpty?: boolean;
+  overlappingCount?: number;
 }
 
 export interface UploadToast {
   id: string;
   productCount: number;
   imageId: string;
+  extractionEmpty?: boolean;
+  overlappingCount?: number;
 }
+
+export interface PendingDuplicate {
+  itemId: string;
+  duplicateOf: string;
+  resolve: (action: DuplicateAction) => void;
+}
+
+export const UPLOAD_CONCURRENCY = 2;
+export const MAX_BULK_BATCH = 8;
 
 export function createQueueItem(file: File, source: UploadSource): UploadQueueItem {
   return {
@@ -37,6 +57,13 @@ export function revokeQueueItem(item: UploadQueueItem) {
   URL.revokeObjectURL(item.thumbnailUrl);
 }
 
-export function productCountFromResult(result: UploadResult): number {
-  return result.product_count ?? result.products.length;
+export function productCountFromResult(result: {
+  product_count?: number;
+  products?: unknown[];
+  skipped?: boolean;
+  extraction_empty?: boolean;
+}): number {
+  if (result.skipped) return 0;
+  if (result.extraction_empty) return 0;
+  return result.product_count ?? result.products?.length ?? 0;
 }

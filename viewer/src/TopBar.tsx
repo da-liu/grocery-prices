@@ -1,4 +1,4 @@
-import { useEffect, useId, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 type Page = "browse" | "upload" | "compare" | "settings";
 
@@ -18,10 +18,11 @@ interface TopBarProps {
   user: { username: string };
   onLogout: () => void;
   onNavigate: (page: Page) => void;
-  onPhotoSelected: (file: File) => void;
-  stores?: string[];
-  store?: string;
-  onStoreChange?: (store: string) => void;
+  onPhotosSelected: (files: File[]) => void;
+  showSortFilter?: boolean;
+  sortFilterOpen?: boolean;
+  activeChipCount?: number;
+  onToggleSortFilter?: () => void;
   browseStats?: BrowseStats;
   onShowOnboarding?: () => void;
 }
@@ -79,23 +80,17 @@ export function TopBar({
   user,
   onLogout,
   onNavigate,
-  onPhotoSelected,
-  stores = [],
-  store = "all",
-  onStoreChange,
+  onPhotosSelected,
+  showSortFilter = false,
+  sortFilterOpen = false,
+  activeChipCount = 0,
+  onToggleSortFilter,
   browseStats,
   onShowOnboarding,
 }: TopBarProps) {
   const [menuOpen, setMenuOpen] = useState(false);
-  const [filterOpen, setFilterOpen] = useState(false);
   const photoRef = useRef<HTMLInputElement>(null);
   const menuRef = useRef<HTMLDivElement>(null);
-  const filterRef = useRef<HTMLDivElement>(null);
-  const menuId = useId();
-  const filterId = useId();
-
-  const showStoreFilter = page === "browse" && stores.length > 0;
-  const storeFiltered = store !== "all";
 
   useEffect(() => {
     function onPointerDown(e: PointerEvent) {
@@ -103,31 +98,23 @@ export function TopBar({
       if (menuOpen && menuRef.current && !menuRef.current.contains(target)) {
         setMenuOpen(false);
       }
-      if (filterOpen && filterRef.current && !filterRef.current.contains(target)) {
-        setFilterOpen(false);
-      }
     }
     document.addEventListener("pointerdown", onPointerDown);
     return () => document.removeEventListener("pointerdown", onPointerDown);
-  }, [menuOpen, filterOpen]);
+  }, [menuOpen]);
 
   useEffect(() => {
     setMenuOpen(false);
-    setFilterOpen(false);
   }, [page]);
 
-  function handlePhoto(file: File | undefined) {
-    if (file) onPhotoSelected(file);
+  function handlePhotos(files: FileList | null | undefined) {
+    if (!files?.length) return;
+    onPhotosSelected(Array.from(files));
   }
 
   function pickNav(pageName: Page) {
     setMenuOpen(false);
     onNavigate(pageName);
-  }
-
-  function pickStore(next: string) {
-    onStoreChange?.(next);
-    setFilterOpen(false);
   }
 
   return (
@@ -152,9 +139,10 @@ export function TopBar({
           ref={photoRef}
           type="file"
           accept="image/*,.heic"
+          multiple
           className="sr-only"
           onChange={(e) => {
-            handlePhoto(e.target.files?.[0]);
+            handlePhotos(e.target.files);
             e.target.value = "";
           }}
         />
@@ -167,46 +155,24 @@ export function TopBar({
           <CameraIcon />
         </button>
 
-        {showStoreFilter && (
-          <div className="top-bar-menu-wrap" ref={filterRef}>
-            <button
-              type="button"
-              className={`top-bar-icon-btn${storeFiltered ? " active" : ""}`}
-              aria-label="Filter by store"
-              aria-expanded={filterOpen}
-              aria-controls={filterId}
-              onClick={() => {
-                setFilterOpen((open) => !open);
-                setMenuOpen(false);
-              }}
-            >
-              <FilterIcon />
-            </button>
-            {filterOpen && (
-              <div id={filterId} className="top-bar-dropdown" role="menu">
-                <p className="top-bar-dropdown-label">Store</p>
-                <button
-                  type="button"
-                  role="menuitem"
-                  className={store === "all" ? "active" : undefined}
-                  onClick={() => pickStore("all")}
-                >
-                  All stores
-                </button>
-                {stores.map((name) => (
-                  <button
-                    key={name}
-                    type="button"
-                    role="menuitem"
-                    className={store === name ? "active" : undefined}
-                    onClick={() => pickStore(name)}
-                  >
-                    {name}
-                  </button>
-                ))}
-              </div>
+        {showSortFilter && (
+          <button
+            type="button"
+            className={`top-bar-icon-btn top-bar-icon-btn--filter${sortFilterOpen || activeChipCount > 0 ? " active" : ""}`}
+            aria-label="Sort and filter"
+            aria-expanded={sortFilterOpen}
+            onClick={() => {
+              onToggleSortFilter?.();
+              setMenuOpen(false);
+            }}
+          >
+            <FilterIcon />
+            {activeChipCount > 0 && (
+              <span className="top-bar-filter-badge" aria-hidden="true">
+                {activeChipCount}
+              </span>
             )}
-          </div>
+          </button>
         )}
 
         <div className="top-bar-menu-wrap" ref={menuRef}>
@@ -215,16 +181,14 @@ export function TopBar({
             className="top-bar-icon-btn"
             aria-label="Menu"
             aria-expanded={menuOpen}
-            aria-controls={menuId}
             onClick={() => {
               setMenuOpen((open) => !open);
-              setFilterOpen(false);
             }}
           >
             <MenuIcon />
           </button>
           {menuOpen && (
-            <div id={menuId} className="top-bar-dropdown top-bar-dropdown--wide" role="menu">
+            <div className="top-bar-dropdown top-bar-dropdown--wide" role="menu">
               {browseStats && (
                 <>
                   <p className="top-bar-dropdown-label">Catalog</p>

@@ -22,6 +22,27 @@ export interface StoreLabelRequest {
   longitude: number | null;
 }
 
+export interface PriceInsight {
+  product_id: string;
+  product_name: string;
+  price: number;
+  store?: string;
+  captured_at?: string;
+  image_id: string;
+  insight_type: "history" | "same_store_history" | "other_store";
+  price_delta?: number | null;
+}
+
+export interface OverlappingProduct {
+  match_key: string;
+  new_product_name?: string;
+  existing_product_id: string;
+  existing_product_name: string;
+  existing_price?: number | null;
+  existing_store?: string;
+  existing_captured_at?: string;
+}
+
 export interface Product {
   id: string;
   image_id: string;
@@ -46,4 +67,6 @@ export interface Product {
   notes?: string;
   captured_at?: string;
   location: Location;
+  extraction_empty?: boolean;
+  price_insights?: PriceInsight[];
 }

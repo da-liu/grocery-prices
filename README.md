@@ -6,15 +6,9 @@ Photo-based grocery price tracking for Toronto stores.
 
 - `data/YYYY_MM_DD/*.HEIC` - original iPhone photos, grouped by import/capture date
 - `data/YYYY_MM_DD/jpg/` - JPEG copies for the viewer
-- `data/products.jsonl` - extracted products (one JSON object per line)
+- `data/users/{id}/` - per-user photos, extractions, and `products.jsonl`
 
 Drop new HEIC files into today's date folder (e.g. `data/2026_06_30/`) so filenames like `IMG_2027` do not collide across import batches.
-
-Regenerate JSONL after editing extractions:
-
-```bash
-python3 scripts/build_products.py
-```
 
 ## Extraction server
 
@@ -34,9 +28,9 @@ The server also exposes authenticated upload endpoints used by the viewer:
 | `POST /api/auth/login` | Password login (`GROCERY_AUTH_PASSWORD`) |
 | `POST /api/photos/upload` | Shelf photo upload + vision extraction + save |
 | `POST /api/photos/bulk` | Receipt bulk import |
-| `GET /api/products` | Live `products.jsonl` data |
+| `GET /api/products` | User's live product catalog |
 
-Uploaded extractions are saved under `data/extractions/` and merged into `products.jsonl` on rebuild.
+Uploaded extractions are saved under `data/users/{id}/extractions/` and merged into that user's `products.jsonl` on ingest.
 
 ### Tunnel hosting
 
@@ -85,7 +79,7 @@ Static site at **https://g.daliu.ca** (S3 + CloudFront).
 ./deploy.sh         # build + sync
 ```
 
-The build script copies `products.jsonl` and JPEGs into `viewer/public/`.
+`./deploy.sh` syncs JPEGs and builds the viewer for https://g.daliu.ca.
 
 ## Stores
 

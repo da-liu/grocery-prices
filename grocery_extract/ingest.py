@@ -1,12 +1,16 @@
 from __future__ import annotations
 
 import json
+import os
 import shutil
 import subprocess
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime
 from pathlib import Path
 from zoneinfo import ZoneInfo
 
+from grocery_extract.delete import delete_photo
+from grocery_extract.duplicate import file_content_hash, find_exact_duplicate, set_content_hash
 from grocery_extract.exif import (
     captured_at_from_exif,
     convert_heic_to_jpg,
@@ -16,7 +20,8 @@ from grocery_extract.exif import (
 )
 from grocery_extract.pipeline import extract_from_upload
 from grocery_extract.photo_stores import auto_assign_store_from_gps
-from grocery_extract.products_builder import write_user_products_jsonl
+from grocery_extract.product_matching import overlapping_product_keys
+from grocery_extract.products_builder import build_product_lines, write_user_products_jsonl
 from grocery_extract.schema import ExtractionResult
 from grocery_extract.user_paths import (
     user_extractions_dir,
@@ -27,6 +32,7 @@ from grocery_extract.user_paths import (
 
 ROOT = Path(__file__).resolve().parents[1]
 TORONTO = ZoneInfo("America/Toronto")
+DEFAULT_UPLOAD_WORKERS = int(os.environ.get("GROCERY_UPLOAD_WORKERS", "4"))
 
 
 def _today_folder() -> str:
@@ -64,7 +70,14 @@ def _save_meta_rows(user_id: str, rows: list[dict]) -> None:
     path.write_text(json.dumps(rows, indent=2) + "\n")
 
 
-def _upsert_meta(user_id: str, image_id: str, source_file: str, exif: dict) -> None:
+def _upsert_meta(
+    user_id: str,
+    image_id: str,
+    source_file: str,
+    exif: dict,
+    *,
+    content_hash: str | None = None,
+) -> None:
     rows = _load_meta_rows(user_id)
     row = {
         "SourceFile": source_file,
@@ -72,9 +85,13 @@ def _upsert_meta(user_id: str, image_id: str, source_file: str, exif: dict) -> N
         "GPSLongitude": exif.get("GPSLongitude"),
         "DateTimeOriginal": exif.get("DateTimeOriginal"),
     }
+    if content_hash:
+        row["ContentHash"] = content_hash
     replaced = False
     for idx, existing in enumerate(rows):
         if Path(existing["SourceFile"]).stem == image_id:
+            if content_hash is None and existing.get("ContentHash"):
+                row["ContentHash"] = existing["ContentHash"]
             rows[idx] = row
             replaced = True
             break
@@ -140,6 +157,36 @@ def _save_extraction(
     return path
 
 
+def _duplicate_response(
+    *,
+    duplicate_of: str,
+    content_hash: str,
+    duplicate_action: str | None,
+) -> dict | None:
+    if duplicate_action == "skip":
+        return {
+            "duplicate": True,
+            "duplicate_of": duplicate_of,
+            "content_hash": content_hash,
+            "skipped": True,
+            "image_id": duplicate_of,
+            "products": [],
+            "product_count": 0,
+            "meta": {},
+            "source": "upload",
+            "extractor": None,
+            "needs_store_label": False,
+        }
+    if duplicate_action is None:
+        return {
+            "duplicate": True,
+            "duplicate_of": duplicate_of,
+            "content_hash": content_hash,
+            "action_required": True,
+        }
+    return None
+
+
 def ingest_upload(
     upload_path: Path,
     *,
@@ -147,9 +194,25 @@ def ingest_upload(
     image_id: str | None = None,
     source: str = "upload",
     api_key: str | None = None,
+    duplicate_action: str | None = None,
 ) -> dict:
     """Save an uploaded photo for a user, extract products, rebuild user catalog."""
     user_root(user_id).mkdir(parents=True, exist_ok=True)
+
+    content_hash = file_content_hash(upload_path)
+    duplicate_of = find_exact_duplicate(user_id, content_hash)
+    if duplicate_of:
+        duplicate_result = _duplicate_response(
+            duplicate_of=duplicate_of,
+            content_hash=content_hash,
+            duplicate_action=duplicate_action,
+        )
+        if duplicate_result is not None:
+            return duplicate_result
+        if duplicate_action == "replace":
+            delete_photo(user_id, duplicate_of)
+            image_id = duplicate_of
+
     image_id = image_id or next_image_id(user_id)
 
     exif = extract_exif(upload_path) if upload_path.exists() else {}
@@ -157,7 +220,8 @@ def ingest_upload(
     date_folder = date_folder_from_exif(raw_dt) or _today_folder()
 
     saved_path, _jpg_path = _persist_image(upload_path, image_id, date_folder, user_id)
-    _upsert_meta(user_id, image_id, str(saved_path.relative_to(ROOT)), exif)
+    _upsert_meta(user_id, image_id, str(saved_path.relative_to(ROOT)), exif, content_hash=content_hash)
+    set_content_hash(user_id, image_id, content_hash)
 
     from grocery_extract.user_stores_db import list_user_stores_as_dicts
 
@@ -169,6 +233,8 @@ def ingest_upload(
         exif.get("GPSLongitude"),
         user_stores,
     )
+
+    existing_products = build_product_lines(user_id=user_id)
 
     result = extract_from_upload(
         saved_path,
@@ -189,6 +255,10 @@ def ingest_upload(
         user_stores,
     )
 
+    all_products = build_product_lines(user_id=user_id)
+    new_rows = [row for row in all_products if row["image_id"] == image_id]
+    overlaps = overlapping_product_keys(new_rows, existing_products)
+
     return {
         "image_id": image_id,
         "date_folder": date_folder,
@@ -203,6 +273,10 @@ def ingest_upload(
         "product_count": product_count,
         "extractor": result.extractor,
         "needs_store_label": needs_store_label,
+        "content_hash": content_hash,
+        "extraction_empty": len(result.products) == 0,
+        "overlapping_products": overlaps,
+        "duplicate": False,
     }
 
 
@@ -212,10 +286,39 @@ def ingest_upload_batch(
     user_id: str,
     source: str = "receipt",
     api_key: str | None = None,
+    duplicate_action: str | None = None,
+    max_workers: int | None = None,
 ) -> list[dict]:
-    results = [
-        ingest_upload(upload_path, user_id=user_id, source=source, api_key=api_key)
-        for upload_path in upload_paths
-    ]
+    workers = max(1, min(max_workers or DEFAULT_UPLOAD_WORKERS, len(upload_paths)))
+    if workers == 1:
+        results = [
+            ingest_upload(
+                upload_path,
+                user_id=user_id,
+                source=source,
+                api_key=api_key,
+                duplicate_action=duplicate_action,
+            )
+            for upload_path in upload_paths
+        ]
+    else:
+        results: list[dict | None] = [None] * len(upload_paths)
+        with ThreadPoolExecutor(max_workers=workers) as executor:
+            future_map = {
+                executor.submit(
+                    ingest_upload,
+                    upload_path,
+                    user_id=user_id,
+                    source=source,
+                    api_key=api_key,
+                    duplicate_action=duplicate_action,
+                ): index
+                for index, upload_path in enumerate(upload_paths)
+            }
+            for future in as_completed(future_map):
+                index = future_map[future]
+                results[index] = future.result()
+        results = [result for result in results if result is not None]
+
     write_user_products_jsonl(user_id)
     return results

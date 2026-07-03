@@ -42,13 +42,14 @@ export function UploadPage() {
         </label>
 
         <label className="upload-card">
-          <span className="upload-card-title">Choose photo</span>
-          <span className="upload-card-hint">HEIC, JPG, PNG, WebP</span>
+          <span className="upload-card-title">Choose photos</span>
+          <span className="upload-card-hint">Select one or more · HEIC, JPG, PNG, WebP</span>
           <input
             type="file"
             accept="image/*,.heic"
+            multiple
             onChange={(e) => {
-              handleCapture(e.target.files?.[0] ?? null, "shelf");
+              if (e.target.files?.length) enqueueFiles(Array.from(e.target.files), "shelf");
               e.target.value = "";
             }}
           />

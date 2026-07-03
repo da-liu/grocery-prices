@@ -22,7 +22,7 @@ Shared logic lives in `../grocery_extract/`:
 | `scoring.py` | Benchmark metrics vs ground truth |
 | `pipeline.py` | End-to-end upload pipeline |
 
-Ground truth for benchmarks comes from `scripts/build_products.py` → `PRODUCTS` dict.
+Ground truth for benchmarks lives in `extract_server/tests/fixtures/ground_truth_products.json`.
 
 ## Setup
 
@@ -55,7 +55,7 @@ Server listens on http://127.0.0.1:8765
 
 **GET /api/auth/me** - check bearer token
 
-**GET /api/products** - merged product list (manual + `data/extractions/`)
+**GET /api/products** - authenticated user's product catalog
 
 **POST /api/photos/upload** - authenticated shelf photo ingest (save + extract + rebuild)
 
@@ -93,7 +93,7 @@ Results are cached in `.extract_cache/` to avoid re-billing on reruns.
 
 ### Benchmark thresholds
 
-Compared against manual extractions in `build_products.py`:
+Compared against manual extractions in `tests/fixtures/ground_truth_products.json`:
 
 | Metric | Threshold |
 |--------|-----------|

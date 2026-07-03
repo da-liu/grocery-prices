@@ -139,6 +139,65 @@ def test_delete_product(client):
     assert products[0]["product_name"] == "Bread"
 
 
+def test_bulk_delete_products(client):
+    reg = client.post(
+        "/api/auth/register",
+        json={"username": "bulkdeleter", "password": "password123"},
+    )
+    assert reg.status_code == 200, reg.text
+    token = reg.json()["token"]
+    headers = {"Authorization": f"Bearer {token}"}
+
+    from extract_server.users_db import _connect
+    from grocery_extract.products_builder import write_user_products_jsonl
+    from grocery_extract.user_paths import user_extractions_dir
+
+    with _connect() as conn:
+        user_id = conn.execute(
+            "SELECT id FROM users WHERE username = ?",
+            ("bulkdeleter",),
+        ).fetchone()["id"]
+
+    extraction_dir = user_extractions_dir(user_id)
+    extraction_dir.mkdir(parents=True, exist_ok=True)
+    extraction_dir.joinpath("IMG_0001.json").write_text(
+        json.dumps(
+            {
+                "image_id": "IMG_0001",
+                "products": [
+                    {"product_name": "Milk", "price": 5.99, "category": "dairy"},
+                    {"product_name": "Bread", "price": 3.49, "category": "bakery"},
+                ],
+            }
+        )
+    )
+    extraction_dir.joinpath("IMG_0002.json").write_text(
+        json.dumps(
+            {
+                "image_id": "IMG_0002",
+                "products": [
+                    {"product_name": "Eggs", "price": 4.99, "category": "dairy"},
+                ],
+            }
+        )
+    )
+    write_user_products_jsonl(user_id)
+
+    bulk = client.post(
+        "/api/products/bulk-delete",
+        headers=headers,
+        json={"ids": ["IMG_0001-1", "IMG_0001-2", "IMG_0002-1"]},
+    )
+    assert bulk.status_code == 200, bulk.text
+    body = bulk.json()
+    assert body["deleted"] == 3
+    assert body["photos_removed"] == 2
+    assert body["failed"] == []
+
+    products = client.get("/api/products", headers=headers).json()
+    assert products == []
+
+
 def test_complete_onboarding(client):
     reg = client.post(
         "/api/auth/register",

@@ -15,7 +15,7 @@ from grocery_extract.cursor_extractor import extract_products_from_image  # noqa
 from grocery_extract.scoring import benchmark  # noqa: E402
 from helpers import BENCHMARK_SUBSET, find_jpg, ground_truth_by_image, load_cached, save_cache
 
-# Targets calibrated against manual agent extractions in build_products.py
+# Targets calibrated against manual extractions in ground_truth_products.json
 MIN_RECALL = 0.75
 MIN_F1 = 0.70
 MIN_PRICE_ACCURACY = 0.80

@@ -106,6 +106,22 @@ export async function deleteProduct(productId: string): Promise<void> {
   if (!resp.ok) throw new Error(await parseError(resp));
 }
 
+export interface BulkDeleteResult {
+  deleted: number;
+  photos_removed: number;
+  failed: string[];
+}
+
+export async function deleteProductsBulk(productIds: string[]): Promise<BulkDeleteResult> {
+  const resp = await authFetch(`${API_BASE}/api/products/bulk-delete`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ ids: productIds }),
+  });
+  if (!resp.ok) throw new Error(await parseError(resp));
+  return resp.json();
+}
+
 export function productImageUrl(imageId: string): string {
   const token = getToken();
   const base = `${API_BASE}/api/media/${imageId}`;
@@ -118,6 +134,8 @@ export interface ExtractedProductRow {
   category: string;
 }
 
+export type DuplicateAction = "skip" | "replace" | "new";
+
 export interface UploadResult {
   image_id: string;
   image_path: string;
@@ -129,9 +147,60 @@ export interface UploadResult {
     gps_latitude?: number | null;
     gps_longitude?: number | null;
   };
+  duplicate?: boolean;
+  duplicate_of?: string;
+  action_required?: boolean;
+  skipped?: boolean;
+  extraction_empty?: boolean;
+  overlapping_products?: import("./types").OverlappingProduct[];
 }
 
-async function postUpload(url: string, form: FormData): Promise<Response> {
+export interface ReextractResult {
+  image_id: string;
+  products: ExtractedProductRow[];
+  product_count: number;
+  extraction_empty: boolean;
+  overlapping_products?: import("./types").OverlappingProduct[];
+}
+
+export type ProductUpdateInput = {
+  product_name?: string;
+  product_name_zh?: string | null;
+  brand?: string | null;
+  price?: number | null;
+  unit?: string | null;
+  unit_price?: number | null;
+  unit_price_per_100g?: number | null;
+  regular_price?: number | null;
+  is_special?: boolean | null;
+  promo?: string | null;
+  barcode?: string | null;
+  size?: string | null;
+  category?: string | null;
+  notes?: string | null;
+};
+
+export type ManualProductInput = {
+  product_name: string;
+  product_name_zh?: string;
+  brand?: string;
+  price?: number | null;
+  unit?: string;
+  unit_price?: number | null;
+  barcode?: string;
+  size?: string;
+  category?: string;
+  notes?: string;
+};
+
+async function postUpload(
+  url: string,
+  form: FormData,
+  duplicateAction?: DuplicateAction,
+): Promise<Response> {
+  if (duplicateAction) {
+    form.append("duplicate_action", duplicateAction);
+  }
   try {
     return await authFetch(url, { method: "POST", body: form });
   } catch (err) {
@@ -144,20 +213,56 @@ async function postUpload(url: string, form: FormData): Promise<Response> {
   }
 }
 
-export async function uploadPhoto(file: File): Promise<UploadResult> {
+export async function uploadPhoto(
+  file: File,
+  duplicateAction?: DuplicateAction,
+): Promise<UploadResult> {
   const form = new FormData();
   form.append("file", file);
-  const resp = await postUpload(`${API_BASE}/api/photos/upload`, form);
+  const resp = await postUpload(`${API_BASE}/api/photos/upload`, form, duplicateAction);
   if (!resp.ok) throw new Error(await parseError(resp));
   return resp.json();
 }
 
-export async function uploadReceiptBulk(files: File[]): Promise<{ results: UploadResult[] }> {
+export async function uploadPhotosBulk(
+  files: File[],
+  source: "shelf" | "receipt",
+  duplicateAction?: DuplicateAction,
+): Promise<{ results: UploadResult[] }> {
   const form = new FormData();
   for (const file of files) {
     form.append("files", file);
   }
-  const resp = await postUpload(`${API_BASE}/api/photos/bulk`, form);
+  form.append("source", source === "receipt" ? "receipt" : "upload");
+  const resp = await postUpload(`${API_BASE}/api/photos/bulk`, form, duplicateAction);
+  if (!resp.ok) throw new Error(await parseError(resp));
+  return resp.json();
+}
+
+export async function updateProduct(productId: string, updates: ProductUpdateInput): Promise<Product> {
+  const resp = await authFetch(`${API_BASE}/api/products/${encodeURIComponent(productId)}`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(updates),
+  });
+  if (!resp.ok) throw new Error(await parseError(resp));
+  return resp.json();
+}
+
+export async function addManualProduct(imageId: string, product: ManualProductInput): Promise<Product> {
+  const resp = await authFetch(`${API_BASE}/api/photos/${encodeURIComponent(imageId)}/products`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(product),
+  });
+  if (!resp.ok) throw new Error(await parseError(resp));
+  return resp.json();
+}
+
+export async function reextractPhoto(imageId: string): Promise<ReextractResult> {
+  const resp = await authFetch(`${API_BASE}/api/photos/${encodeURIComponent(imageId)}/re-extract`, {
+    method: "POST",
+  });
   if (!resp.ok) throw new Error(await parseError(resp));
   return resp.json();
 }

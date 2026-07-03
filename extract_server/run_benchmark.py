@@ -3,8 +3,10 @@ import os
 import sys
 from pathlib import Path
 
-ROOT = Path(__file__).resolve().parents[2]
-sys.path.insert(0, str(ROOT))
+GROCERY_ROOT = Path(__file__).resolve().parents[1]
+TESTS_DIR = Path(__file__).resolve().parent / "tests"
+sys.path.insert(0, str(GROCERY_ROOT))
+sys.path.insert(0, str(TESTS_DIR))
 
 from helpers import BENCHMARK_SUBSET, find_jpg, ground_truth_by_image, load_cached, save_cache
 from grocery_extract.cursor_extractor import extract_products_from_image
