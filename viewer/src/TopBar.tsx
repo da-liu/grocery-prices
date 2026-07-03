@@ -141,7 +141,6 @@ export function TopBar({
           ref={photoInputRef}
           type="file"
           accept="image/*,.heic"
-          capture="environment"
           multiple
           className="sr-only"
           onChange={(e) => {
