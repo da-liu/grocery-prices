@@ -136,6 +136,8 @@ export interface ExtractedProductRow {
 
 export type DuplicateAction = "skip" | "replace" | "new";
 
+export type ExtractionStatus = "pending" | "processing" | "done" | "failed";
+
 export interface UploadResult {
   image_id: string;
   image_path: string;
@@ -152,6 +154,8 @@ export interface UploadResult {
   action_required?: boolean;
   skipped?: boolean;
   extraction_empty?: boolean;
+  extraction_status?: ExtractionStatus;
+  extraction_error?: string;
   overlapping_products?: import("./types").OverlappingProduct[];
 }
 
@@ -213,18 +217,7 @@ async function postUpload(
   }
 }
 
-export async function uploadPhoto(
-  file: File,
-  duplicateAction?: DuplicateAction,
-): Promise<UploadResult> {
-  const form = new FormData();
-  form.append("file", file);
-  const resp = await postUpload(`${API_BASE}/api/photos/upload`, form, duplicateAction);
-  if (!resp.ok) throw new Error(await parseError(resp));
-  return resp.json();
-}
-
-export async function uploadPhotosBulk(
+export async function uploadPhotos(
   files: File[],
   source: "shelf" | "receipt",
   duplicateAction?: DuplicateAction,
@@ -235,6 +228,17 @@ export async function uploadPhotosBulk(
   }
   form.append("source", source === "receipt" ? "receipt" : "upload");
   const resp = await postUpload(`${API_BASE}/api/photos/bulk`, form, duplicateAction);
+  if (!resp.ok) throw new Error(await parseError(resp));
+  return resp.json();
+}
+
+export async function fetchPhotoStatuses(imageIds: string[]): Promise<{ results: UploadResult[] }> {
+  if (!imageIds.length) return { results: [] };
+  const resp = await authFetch(`${API_BASE}/api/photos/status`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ ids: imageIds }),
+  });
   if (!resp.ok) throw new Error(await parseError(resp));
   return resp.json();
 }

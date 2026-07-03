@@ -481,6 +481,12 @@ function AuthenticatedApp({
         onToggleSortFilter={() => setSortFilterOpen(!sortFilterOpen)}
         browseStats={products.length > 0 ? browseStats : undefined}
         onShowOnboarding={() => setShowOnboarding(true)}
+        onDeleteAllProducts={
+          products.length > 0
+            ? () => void handleDeleteProducts(products.map((product) => product.id))
+            : undefined
+        }
+        deletingAll={bulkDeleting}
       />
 
       {page === "browse" && !selectionMode && (

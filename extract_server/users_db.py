@@ -35,9 +35,11 @@ class User:
 
 def _connect() -> sqlite3.Connection:
     DB_PATH.parent.mkdir(parents=True, exist_ok=True)
-    conn = sqlite3.connect(DB_PATH)
+    conn = sqlite3.connect(DB_PATH, timeout=5.0)
     conn.row_factory = sqlite3.Row
     conn.execute("PRAGMA foreign_keys = ON")
+    conn.execute("PRAGMA journal_mode = WAL")
+    conn.execute("PRAGMA busy_timeout = 5000")
     return conn
 
 
@@ -64,9 +66,11 @@ def init_db() -> None:
         if "onboarding_completed_at" not in columns:
             conn.execute("ALTER TABLE users ADD COLUMN onboarding_completed_at TEXT")
 
+    from grocery_extract.catalog_db import init_catalog_tables
     from grocery_extract.user_stores_db import init_user_store_tables
 
     init_user_store_tables()
+    init_catalog_tables()
 
 
 def user_needs_onboarding(user_id: str) -> bool:
@@ -166,9 +170,6 @@ def get_user_id_for_session(token: str, *, now: float) -> str | None:
 
 
 def count_user_extractions(user_id: str) -> int:
-    from grocery_extract.user_paths import user_extractions_dir
+    from grocery_extract.catalog_db import count_extractions
 
-    directory = user_extractions_dir(user_id)
-    if not directory.exists():
-        return 0
-    return len(list(directory.glob("IMG_*.json")))
+    return count_extractions(user_id)

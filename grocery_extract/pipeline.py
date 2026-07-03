@@ -3,8 +3,9 @@ from __future__ import annotations
 import shutil
 import tempfile
 from pathlib import Path
+from typing import Any
 
-from grocery_extract.cursor_extractor import extract_products_from_image
+from grocery_extract.cursor_extractor import current_extractor_name, extract_products_from_image
 from grocery_extract.exif import (
     captured_at_from_exif,
     convert_heic_to_jpg,
@@ -50,41 +51,70 @@ def extract_from_upload(
     image_id: str | None = None,
     api_key: str | None = None,
     prompt_variant: str = "shelf",
+    exif: dict[str, Any] | None = None,
+    skip_normalize: bool = False,
 ) -> ExtractionResult:
-    """Full pipeline: normalize image, read EXIF, extract products via Cursor SDK."""
-    with tempfile.TemporaryDirectory(prefix="grocery-extract-") as tmp:
-        work_dir = Path(tmp)
-        jpg_path = _resolve_jpg_path(upload_path, work_dir)
+    """Full pipeline: normalize image, read EXIF, and extract products via the configured backend."""
+    stem = image_id or upload_path.stem
+    suffix = upload_path.suffix.lower()
 
-        exif_source = upload_path if upload_path.suffix.lower() == ".heic" else jpg_path
-        exif = extract_exif(exif_source) if exif_source.exists() else {}
+    if skip_normalize and suffix in {".jpg", ".jpeg"}:
+        jpg_path = upload_path
+        meta_exif = exif if exif is not None else (extract_exif(jpg_path) if jpg_path.exists() else {})
+    else:
+        with tempfile.TemporaryDirectory(prefix="grocery-extract-") as tmp:
+            work_dir = Path(tmp)
+            jpg_path = _resolve_jpg_path(upload_path, work_dir)
+            meta_exif = exif if exif is not None else (
+                extract_exif(upload_path if suffix == ".heic" else jpg_path)
+                if upload_path.exists()
+                else {}
+            )
+            raw_dt = meta_exif.get("DateTimeOriginal")
+            date_folder = date_folder_from_exif(raw_dt)
+            meta = ImageMeta(
+                image_id=stem,
+                source_file=str(upload_path),
+                gps_latitude=meta_exif.get("GPSLatitude"),
+                gps_longitude=meta_exif.get("GPSLongitude"),
+                captured_at=captured_at_from_exif(raw_dt),
+                date_folder=date_folder,
+            )
+            products, raw = extract_products_from_image(
+                jpg_path,
+                api_key=api_key,
+                prompt_variant=prompt_variant,
+            )
+            return ExtractionResult(
+                image_path=find_image_path(stem, date_folder) if (ROOT / "data").exists() else str(jpg_path),
+                meta=meta,
+                products=products,
+                raw_response=raw,
+                extractor=current_extractor_name(),
+            )
 
-        stem = image_id or upload_path.stem
-        raw_dt = exif.get("DateTimeOriginal")
-        date_folder = date_folder_from_exif(raw_dt)
-
-        meta = ImageMeta(
-            image_id=stem,
-            source_file=str(upload_path),
-            gps_latitude=exif.get("GPSLatitude"),
-            gps_longitude=exif.get("GPSLongitude"),
-            captured_at=captured_at_from_exif(raw_dt),
-            date_folder=date_folder,
-        )
-
-        products, raw = extract_products_from_image(
-            jpg_path,
-            api_key=api_key,
-            prompt_variant=prompt_variant,
-        )
-
-        return ExtractionResult(
-            image_path=find_image_path(stem, date_folder) if (ROOT / "data").exists() else str(jpg_path),
-            meta=meta,
-            products=products,
-            raw_response=raw,
-            extractor="cursor_sdk",
-        )
+    raw_dt = meta_exif.get("DateTimeOriginal")
+    date_folder = date_folder_from_exif(raw_dt)
+    meta = ImageMeta(
+        image_id=stem,
+        source_file=str(upload_path),
+        gps_latitude=meta_exif.get("GPSLatitude"),
+        gps_longitude=meta_exif.get("GPSLongitude"),
+        captured_at=captured_at_from_exif(raw_dt),
+        date_folder=date_folder,
+    )
+    products, raw = extract_products_from_image(
+        jpg_path,
+        api_key=api_key,
+        prompt_variant=prompt_variant,
+    )
+    return ExtractionResult(
+        image_path=find_image_path(stem, date_folder) if (ROOT / "data").exists() else str(jpg_path),
+        meta=meta,
+        products=products,
+        raw_response=raw,
+        extractor=current_extractor_name(),
+    )
 
 
 def extract_from_existing_jpg(jpg_path: Path, *, api_key: str | None = None) -> list[ExtractedProduct]:

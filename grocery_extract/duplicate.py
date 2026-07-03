@@ -1,10 +1,9 @@
 from __future__ import annotations
 
 import hashlib
-import json
 from pathlib import Path
 
-from grocery_extract.user_paths import user_meta_path
+from grocery_extract.catalog_db import find_photo_by_content_hash
 
 
 def file_content_hash(path: Path) -> str:
@@ -15,27 +14,5 @@ def file_content_hash(path: Path) -> str:
     return digest.hexdigest()
 
 
-def _load_meta_rows(user_id: str) -> list[dict]:
-    path = user_meta_path(user_id)
-    if not path.exists():
-        return []
-    with path.open() as handle:
-        return json.load(handle)
-
-
 def find_exact_duplicate(user_id: str, content_hash: str) -> str | None:
-    for row in _load_meta_rows(user_id):
-        if row.get("ContentHash") == content_hash:
-            return Path(row["SourceFile"]).stem
-    return None
-
-
-def set_content_hash(user_id: str, image_id: str, content_hash: str) -> None:
-    path = user_meta_path(user_id)
-    rows = _load_meta_rows(user_id)
-    for row in rows:
-        if Path(row["SourceFile"]).stem == image_id:
-            row["ContentHash"] = content_hash
-            break
-    path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(json.dumps(rows, indent=2) + "\n")
+    return find_photo_by_content_hash(user_id, content_hash)

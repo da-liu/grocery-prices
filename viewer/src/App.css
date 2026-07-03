@@ -101,6 +101,15 @@
   background: var(--accent-strong);
 }
 
+.top-bar-icon-btn--danger {
+  border-color: var(--danger);
+  color: var(--danger);
+}
+
+.top-bar-icon-btn--danger:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--danger) 12%, transparent);
+}
+
 .top-bar-icon-btn:disabled {
   opacity: 0.55;
   cursor: not-allowed;

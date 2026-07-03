@@ -1,13 +1,15 @@
 # Grocery price extraction server
 
-HTTP service that accepts grocery shelf photos and extracts product names, prices, and metadata using the **Cursor SDK** vision agent.
+HTTP service that accepts grocery shelf photos and extracts product names, prices, and metadata using a configurable vision backend.
 
 ## Architecture
 
 ```
 Upload (HEIC/JPG)
   → exiftool (GPS, capture time)
-  → Cursor SDK Agent.prompt + SDKImage (vision extraction)
+  → store original + canonical JPEG
+  → 25% JPEG derivative for model input
+  → Cursor SDK or direct Gemini API (vision extraction)
   → JSON product list
 ```
 
@@ -16,7 +18,7 @@ Shared logic lives in `../grocery_extract/`:
 | Module | Role |
 |--------|------|
 | `prompt.py` | Saved extraction prompt (same rules as manual agent workflow) |
-| `cursor_extractor.py` | Cursor SDK vision call |
+| `cursor_extractor.py` | Vision backend routing (Cursor SDK or direct Gemini API) |
 | `parse_response.py` | Parse and sanitize model JSON |
 | `exif.py` | EXIF via exiftool, HEIC→JPG via sips |
 | `scoring.py` | Benchmark metrics vs ground truth |
@@ -31,10 +33,27 @@ cd extract_server
 python3 -m venv .venv
 source .venv/bin/activate
 pip install -e .
-cp .env.example .env   # then set CURSOR_API_KEY (and optional GROCERY_AUTH_PASSWORD)
+cp .env.example .env
 ```
 
 Requires `exiftool` and `sips` (macOS) on PATH. The server loads `extract_server/.env` on startup.
+
+Set one of these backend configurations in `.env`:
+
+```bash
+# Cursor SDK
+GROCERY_EXTRACT_BACKEND=cursor
+GROCERY_EXTRACT_MODEL=composer-2.5
+CURSOR_API_KEY=cursor_your_key_here
+
+# Direct Gemini
+GROCERY_EXTRACT_BACKEND=gemini_direct
+GROCERY_EXTRACT_MODEL=gemini-3-flash-lite   # alias for direct API model gemini-3.1-flash-lite
+GOOGLE_API_KEY=your_google_api_key_here
+
+# Production LLM input image size
+GROCERY_EXTRACT_SCALE_PCT=25
+```
 
 ## Run server
 
@@ -55,9 +74,7 @@ Server listens on http://127.0.0.1:8765
 
 **GET /api/products** - authenticated user's product catalog
 
-**POST /api/photos/upload** - authenticated shelf photo ingest (save + extract + rebuild)
-
-**POST /api/photos/bulk** - authenticated receipt bulk import (`files` field, multiple)
+**POST /api/photos/bulk** - authenticated photo ingest (`files` field, one or more; `source` = `upload` or `receipt`)
 
 ```bash
 # Register/login first, then upload with bearer token
@@ -65,20 +82,26 @@ TOKEN=$(curl -s -X POST http://127.0.0.1:8765/api/auth/login \
   -H 'Content-Type: application/json' \
   -d '{"username":"you@example.com","password":"your-password"}' | jq -r .token)
 curl -s -H "Authorization: Bearer $TOKEN" \
-  -F "file=@../data/2026_06_30/jpg/IMG_2060.jpg" \
-  http://127.0.0.1:8765/api/photos/upload | jq .
+  -F "files=@../data/2026_06_30/jpg/IMG_2060.jpg" \
+  -F "source=upload" \
+  http://127.0.0.1:8765/api/photos/bulk | jq .
 ```
 
 Response shape:
 
 ```json
 {
-  "image_id": "IMG_0001",
-  "image_path": "api/media/IMG_0001",
-  "meta": { "gps_latitude": 43.64, "captured_at": "2026-06-30T19:33:18", ... },
-  "products": [{ "product_name": "...", "price": 1.79, "category": "canned-goods" }],
-  "extractor": "cursor_sdk",
-  "product_count": 12
+  "count": 1,
+  "results": [
+    {
+      "image_id": "IMG_0001",
+      "image_path": "api/media/IMG_0001",
+      "meta": { "gps_latitude": 43.64, "captured_at": "2026-06-30T19:33:18" },
+      "products": [{ "product_name": "...", "price": 1.79, "category": "canned-goods" }],
+      "extractor": "gemini_direct",
+      "product_count": 12
+    }
+  ]
 }
 ```
 

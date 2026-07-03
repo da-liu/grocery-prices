@@ -54,34 +54,6 @@ async function decodeHeicToCanvas(file: File): Promise<HTMLCanvasElement> {
   return displayHeifImage(images[0]);
 }
 
-async function decodeImageToCanvas(file: File): Promise<HTMLCanvasElement> {
-  const url = URL.createObjectURL(file);
-  try {
-    const img = await new Promise<HTMLImageElement>((resolve, reject) => {
-      const image = new Image();
-      image.onload = () => resolve(image);
-      image.onerror = () => reject(new Error("Failed to load image"));
-      image.src = url;
-    });
-    const canvas = document.createElement("canvas");
-    canvas.width = img.naturalWidth;
-    canvas.height = img.naturalHeight;
-    const ctx = canvas.getContext("2d");
-    if (!ctx) throw new Error("Canvas not available");
-    ctx.drawImage(img, 0, 0);
-    return canvas;
-  } finally {
-    URL.revokeObjectURL(url);
-  }
-}
-
-export async function decodeToCanvas(file: File): Promise<HTMLCanvasElement> {
-  if (await isHeicFile(file)) {
-    return decodeHeicToCanvas(file);
-  }
-  return decodeImageToCanvas(file);
-}
-
 export function resizeCanvas(source: HTMLCanvasElement, maxDim: number): HTMLCanvasElement {
   const { width, height } = scaledDimensions(source.width, source.height, maxDim);
   const canvas = document.createElement("canvas");
@@ -111,18 +83,19 @@ export function uploadFileName(originalName: string): string {
 export async function prepareUploadFile(
   file: File,
 ): Promise<{ uploadFile: File; thumbnailUrl: string }> {
-  const source = await decodeToCanvas(file);
-  const uploadCanvas = resizeCanvas(source, UPLOAD_MAX_DIM);
-  const thumbCanvas = resizeCanvas(source, THUMB_MAX_DIM);
+  if (!(await isHeicFile(file))) {
+    return {
+      uploadFile: file,
+      thumbnailUrl: URL.createObjectURL(file),
+    };
+  }
 
-  const [uploadBlob, thumbBlob] = await Promise.all([
-    canvasToWebp(uploadCanvas, UPLOAD_WEBP_QUALITY),
-    canvasToWebp(thumbCanvas, UPLOAD_WEBP_QUALITY),
-  ]);
+  const source = await decodeHeicToCanvas(file);
+  const uploadBlob = await canvasToWebp(source, UPLOAD_WEBP_QUALITY);
 
   const uploadFile = new File([uploadBlob], uploadFileName(file.name), {
     type: "image/webp",
   });
-  const thumbnailUrl = URL.createObjectURL(thumbBlob);
+  const thumbnailUrl = URL.createObjectURL(uploadBlob);
   return { uploadFile, thumbnailUrl };
 }

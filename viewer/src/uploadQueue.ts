@@ -41,7 +41,7 @@ export interface PendingDuplicate {
   resolve: (action: DuplicateAction) => void;
 }
 
-export const UPLOAD_CONCURRENCY = 2;
+export const UPLOAD_CONCURRENCY = 4;
 export const MAX_BULK_BATCH = 8;
 
 export function createQueueItem(file: File, source: UploadSource): UploadQueueItem {

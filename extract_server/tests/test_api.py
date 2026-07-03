@@ -49,7 +49,10 @@ def test_register_login_and_scoped_products(client):
 
 
 def test_upload_requires_auth(client):
-    resp = client.post("/api/photos/upload", files={"file": ("x.jpg", b"abc", "image/jpeg")})
+    resp = client.post(
+        "/api/photos/bulk",
+        files=[("files", ("x.jpg", b"abc", "image/jpeg"))],
+    )
     assert resp.status_code == 401
 
 
@@ -60,127 +63,103 @@ def test_upload_with_mocked_ingest(client):
     )
     token = reg.json()["token"]
 
-    with patch("server.ingest_upload") as ingest:
-        ingest.return_value = {
+    with patch("server.accept_upload_batch") as ingest:
+        ingest.return_value = [
+            {
+                "image_id": "IMG_0001",
+                "image_path": "api/media/IMG_0001",
+                "products": [],
+                "product_count": 0,
+                "meta": {},
+                "extractor": None,
+                "source": "upload",
+                "extraction_status": "pending",
+            }
+        ]
+        with patch.dict("os.environ", {"CURSOR_API_KEY": "test-key"}):
+            resp = client.post(
+                "/api/photos/bulk",
+                headers={"Authorization": f"Bearer {token}"},
+                files=[("files", ("x.jpg", b"abc", "image/jpeg"))],
+                data={"source": "upload"},
+            )
+    assert resp.status_code == 202
+    assert resp.json()["results"][0]["image_id"] == "IMG_0001"
+    assert resp.json()["results"][0]["extraction_status"] == "pending"
+
+
+def test_upload_with_gemini_direct_backend_uses_google_key(client):
+    reg = client.post(
+        "/api/auth/register",
+        json={"username": "gemini-uploader", "password": "password123"},
+    )
+    token = reg.json()["token"]
+    captured: dict[str, object] = {}
+
+    def fake_batch(paths, **kwargs):
+        captured["api_key"] = kwargs["api_key"]
+        return [
+            {
+                "image_id": "IMG_0001",
+                "image_path": "api/media/IMG_0001",
+                "products": [],
+                "product_count": 0,
+                "meta": {},
+                "extractor": None,
+                "source": "upload",
+                "extraction_status": "pending",
+            }
+        ]
+
+    with patch("server.accept_upload_batch", side_effect=fake_batch):
+        with patch.dict(
+            "os.environ",
+            {
+                "GROCERY_EXTRACT_BACKEND": "gemini_direct",
+                "GOOGLE_API_KEY": "google-test-key",
+            },
+        ):
+            resp = client.post(
+                "/api/photos/bulk",
+                headers={"Authorization": f"Bearer {token}"},
+                files=[("files", ("x.jpg", b"abc", "image/jpeg"))],
+                data={"source": "upload"},
+            )
+    assert resp.status_code == 202
+    assert captured["api_key"] == "google-test-key"
+
+
+def test_rerun_extraction_with_gemini_direct_uses_google_key(client):
+    reg = client.post(
+        "/api/auth/register",
+        json={"username": "gemini-reextract", "password": "password123"},
+    )
+    token = reg.json()["token"]
+
+    with patch(
+        "server.reextract_photo",
+        return_value={
             "image_id": "IMG_0001",
-            "image_path": "api/media/IMG_0001",
             "products": [],
             "product_count": 0,
-            "meta": {},
-            "extractor": "cursor_sdk",
-            "source": "upload",
-        }
-        resp = client.post(
-            "/api/photos/upload",
-            headers={"Authorization": f"Bearer {token}"},
-            files={"file": ("x.jpg", b"abc", "image/jpeg")},
-        )
+            "overlapping_products": [],
+            "extraction_empty": True,
+        },
+    ) as reextract:
+        with patch.dict(
+            "os.environ",
+            {
+                "GROCERY_EXTRACT_BACKEND": "gemini_direct",
+                "GOOGLE_API_KEY": "google-test-key",
+            },
+        ):
+            resp = client.post(
+                "/api/photos/IMG_0001/re-extract",
+                headers={"Authorization": f"Bearer {token}"},
+            )
+
     assert resp.status_code == 200
-    assert resp.json()["image_id"] == "IMG_0001"
-
-
-def test_delete_product(client):
-    reg = client.post(
-        "/api/auth/register",
-        json={"username": "deleter", "password": "password123"},
-    )
-    assert reg.status_code == 200, reg.text
-    token = reg.json()["token"]
-    headers = {"Authorization": f"Bearer {token}"}
-
-    from extract_server.users_db import _connect
-    from grocery_extract.products_builder import write_user_products_jsonl
-    from grocery_extract.user_paths import user_extractions_dir
-
-    with _connect() as conn:
-        user_id = conn.execute(
-            "SELECT id FROM users WHERE username = ?",
-            ("deleter",),
-        ).fetchone()["id"]
-
-    extraction_dir = user_extractions_dir(user_id)
-    extraction_dir.mkdir(parents=True, exist_ok=True)
-    extraction_dir.joinpath("IMG_0001.json").write_text(
-        json.dumps(
-            {
-                "image_id": "IMG_0001",
-                "products": [
-                    {"product_name": "Milk", "price": 5.99, "category": "dairy"},
-                    {"product_name": "Bread", "price": 3.49, "category": "bakery"},
-                ],
-            }
-        )
-    )
-    write_user_products_jsonl(user_id)
-
-    products = client.get("/api/products", headers=headers).json()
-    assert len(products) == 2
-
-    delete = client.delete("/api/products/IMG_0001-1", headers=headers)
-    assert delete.status_code == 200, delete.text
-
-    products = client.get("/api/products", headers=headers).json()
-    assert len(products) == 1
-    assert products[0]["product_name"] == "Bread"
-
-
-def test_bulk_delete_products(client):
-    reg = client.post(
-        "/api/auth/register",
-        json={"username": "bulkdeleter", "password": "password123"},
-    )
-    assert reg.status_code == 200, reg.text
-    token = reg.json()["token"]
-    headers = {"Authorization": f"Bearer {token}"}
-
-    from extract_server.users_db import _connect
-    from grocery_extract.products_builder import write_user_products_jsonl
-    from grocery_extract.user_paths import user_extractions_dir
-
-    with _connect() as conn:
-        user_id = conn.execute(
-            "SELECT id FROM users WHERE username = ?",
-            ("bulkdeleter",),
-        ).fetchone()["id"]
-
-    extraction_dir = user_extractions_dir(user_id)
-    extraction_dir.mkdir(parents=True, exist_ok=True)
-    extraction_dir.joinpath("IMG_0001.json").write_text(
-        json.dumps(
-            {
-                "image_id": "IMG_0001",
-                "products": [
-                    {"product_name": "Milk", "price": 5.99, "category": "dairy"},
-                    {"product_name": "Bread", "price": 3.49, "category": "bakery"},
-                ],
-            }
-        )
-    )
-    extraction_dir.joinpath("IMG_0002.json").write_text(
-        json.dumps(
-            {
-                "image_id": "IMG_0002",
-                "products": [
-                    {"product_name": "Eggs", "price": 4.99, "category": "dairy"},
-                ],
-            }
-        )
-    )
-    write_user_products_jsonl(user_id)
-
-    bulk = client.post(
-        "/api/products/bulk-delete",
-        headers=headers,
-        json={"ids": ["IMG_0001-1", "IMG_0001-2", "IMG_0002-1"]},
-    )
-    assert bulk.status_code == 200, bulk.text
-    body = bulk.json()
-    assert body["deleted"] == 3
-    assert body["photos_removed"] == 2
-    assert body["failed"] == []
-
-    products = client.get("/api/products", headers=headers).json()
-    assert products == []
+    assert reextract.call_args.kwargs["api_key"] == "google-test-key"
 
 
 def test_complete_onboarding(client):

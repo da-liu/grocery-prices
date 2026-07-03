@@ -31,10 +31,11 @@ from fastapi import Cookie, Form, Response  # noqa: E402
 from fastapi.security import HTTPAuthorizationCredentials  # noqa: E402
 
 from grocery_extract.catalog_edit import add_product, reextract_photo, update_product  # noqa: E402
+from grocery_extract.catalog_db import list_product_rows
+from grocery_extract.cursor_extractor import CursorExtractError, configured_api_key  # noqa: E402
 from grocery_extract.delete import delete_product, delete_products_bulk  # noqa: E402
-from grocery_extract.ingest import ingest_upload, ingest_upload_batch  # noqa: E402
+from grocery_extract.ingest import accept_upload_batch, build_status_response  # noqa: E402
 from grocery_extract.photo_stores import set_image_store_location_id
-from grocery_extract.products_builder import build_product_lines, write_user_products_jsonl
 from grocery_extract.user_paths import find_user_jpg  # noqa: E402
 from grocery_extract.user_stores_db import (  # noqa: E402
     create_user_store,
@@ -153,7 +154,6 @@ def _auth_payload(response: Response, user) -> AuthResponse:
 def health() -> dict[str, str | bool]:
     return {
         "status": "ok",
-        "extractor": "cursor_sdk",
         "auth_required": True,
     }
 
@@ -208,7 +208,7 @@ def finish_onboarding(user: Annotated[AuthUser, Depends(require_user)]) -> dict:
 
 @app.get("/api/products")
 def list_products(user: Annotated[AuthUser, Depends(require_user)]) -> list[dict]:
-    return build_product_lines(user_id=user.id)
+    return list_product_rows(user.id)
 
 
 @app.patch("/api/products/{product_id}")
@@ -247,10 +247,12 @@ def rerun_extraction(
 ) -> dict:
     if not image_id.startswith("IMG_"):
         raise HTTPException(status_code=400, detail="Invalid image id")
-    if not os.environ.get("CURSOR_API_KEY"):
-        raise HTTPException(status_code=503, detail="CURSOR_API_KEY not configured")
     try:
-        result = reextract_photo(user.id, image_id)
+        api_key = configured_api_key()
+    except CursorExtractError as err:
+        raise HTTPException(status_code=503, detail=str(err)) from err
+    try:
+        result = reextract_photo(user.id, image_id, api_key=api_key)
     except Exception as err:
         raise HTTPException(status_code=502, detail=str(err)) from err
     if result is None:
@@ -308,7 +310,6 @@ def update_store_location(
         raise HTTPException(status_code=400, detail=str(err)) from err
     if store is None:
         raise HTTPException(status_code=404, detail="Store location not found")
-    write_user_products_jsonl(user.id)
     return store_to_api_dict(store)
 
 
@@ -319,7 +320,6 @@ def remove_store_location(
 ) -> dict[str, bool]:
     if not delete_user_store(user.id, store_id):
         raise HTTPException(status_code=404, detail="Store location not found")
-    write_user_products_jsonl(user.id)
     return {"ok": True}
 
 
@@ -335,7 +335,6 @@ def assign_photo_store(
         raise HTTPException(status_code=404, detail="Store location not found")
     if not set_image_store_location_id(user.id, image_id, body.store_location_id):
         raise HTTPException(status_code=404, detail="Photo not found")
-    write_user_products_jsonl(user.id)
     return {"ok": True, "image_id": image_id, "store_location_id": body.store_location_id}
 
 
@@ -360,18 +359,27 @@ def get_media(
     return FileResponse(jpg, media_type="image/jpeg")
 
 
-@app.post("/api/photos/upload")
-async def upload_photo(
-    file: UploadFile = File(...),
-    duplicate_action: Annotated[str | None, Form()] = None,
-    user: AuthUser = Depends(require_user),
-) -> JSONResponse:
-    return await _ingest_single(
-        file,
-        user=user,
-        source="upload",
-        duplicate_action=duplicate_action,
-    )
+class PhotoStatusRequest(BaseModel):
+    ids: list[str] = Field(min_length=1, max_length=100)
+
+
+@app.get("/api/photos/status")
+def photos_status_get(
+    ids: str,
+    user: Annotated[AuthUser, Depends(require_user)],
+) -> dict:
+    image_ids = [part.strip() for part in ids.split(",") if part.strip()]
+    if not image_ids:
+        raise HTTPException(status_code=400, detail="No image ids provided")
+    return {"results": build_status_response(user.id, image_ids)}
+
+
+@app.post("/api/photos/status")
+def photos_status_post(
+    body: PhotoStatusRequest,
+    user: Annotated[AuthUser, Depends(require_user)],
+) -> dict:
+    return {"results": build_status_response(user.id, body.ids)}
 
 
 @app.post("/api/photos/bulk")
@@ -400,84 +408,27 @@ async def upload_photos_bulk(
         if not saved_paths:
             raise HTTPException(status_code=400, detail="No valid files uploaded")
 
-        if not os.environ.get("CURSOR_API_KEY"):
-            raise HTTPException(status_code=503, detail="CURSOR_API_KEY not configured")
+        try:
+            api_key = configured_api_key()
+        except CursorExtractError as err:
+            raise HTTPException(status_code=503, detail=str(err)) from err
 
         try:
             results = await asyncio.to_thread(
-                ingest_upload_batch,
+                accept_upload_batch,
                 saved_paths,
                 user_id=user.id,
                 source=ingest_source,
                 duplicate_action=duplicate_action,
+                api_key=api_key,
+                enqueue=True,
             )
         except Exception as err:
             raise HTTPException(status_code=502, detail=str(err)) from err
 
     if any(not result.get("action_required") for result in results):
         complete_onboarding(user.id)
-    return JSONResponse({"results": results, "count": len(results)})
-
-
-async def _ingest_single(
-    file: UploadFile,
-    *,
-    user: AuthUser,
-    source: str,
-    duplicate_action: str | None = None,
-) -> JSONResponse:
-    upload_path = await _save_upload(file)
-    if not os.environ.get("CURSOR_API_KEY"):
-        raise HTTPException(status_code=503, detail="CURSOR_API_KEY not configured")
-    try:
-        payload = await asyncio.to_thread(
-            ingest_upload,
-            upload_path,
-            user_id=user.id,
-            source=source,
-            duplicate_action=duplicate_action,
-        )
-    except Exception as err:
-        raise HTTPException(status_code=502, detail=str(err)) from err
-    if not payload.get("action_required"):
-        complete_onboarding(user.id)
-    return JSONResponse(payload)
-
-
-_MIME_SUFFIX = {
-    "image/jpeg": ".jpg",
-    "image/jpg": ".jpg",
-    "image/png": ".png",
-    "image/webp": ".webp",
-    "image/heic": ".heic",
-    "image/heif": ".heic",
-}
-
-
-def _upload_suffix(filename: str | None, content_type: str | None) -> str:
-    suffix = Path(filename or "").suffix.lower()
-    if suffix in {".jpg", ".jpeg", ".png", ".webp", ".heic"}:
-        return suffix if suffix != ".jpeg" else ".jpg"
-    if content_type:
-        mime = content_type.split(";", 1)[0].strip().lower()
-        if mime in _MIME_SUFFIX:
-            return _MIME_SUFFIX[mime]
-    return ""
-
-
-async def _save_upload(file: UploadFile) -> Path:
-    suffix = _upload_suffix(file.filename, file.content_type)
-    if suffix not in {".jpg", ".png", ".webp", ".heic"}:
-        raise HTTPException(
-            status_code=400,
-            detail=f"Unsupported file type: {file.filename or 'unknown'} ({file.content_type})",
-        )
-
-    tmp = tempfile.mkdtemp(prefix="grocery-upload-")
-    stem = Path(file.filename or "upload").stem or "upload"
-    upload_path = Path(tmp) / f"{stem}{suffix}"
-    upload_path.write_bytes(await file.read())
-    return upload_path
+    return JSONResponse({"results": results, "count": len(results)}, status_code=202)
 
 
 if __name__ == "__main__":

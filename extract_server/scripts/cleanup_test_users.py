@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Remove test users left in the production DB and data/users/ by old test runs."""
+"""Remove test users left in the production DB and extract_server/data/users/ by old test runs."""
 
 from __future__ import annotations
 

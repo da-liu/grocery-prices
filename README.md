@@ -4,11 +4,10 @@ Photo-based grocery price tracking for Toronto stores.
 
 ## Data
 
-- `data/YYYY_MM_DD/*.HEIC` - original iPhone photos, grouped by import/capture date
-- `data/YYYY_MM_DD/jpg/` - JPEG copies for extraction and API media
-- `data/users/{id}/` - per-user photos, extractions, and `products.jsonl`
+- `extract_server/data/grocery.db` - users, sessions, store locations, photos, extractions, product sightings
+- `extract_server/data/users/{id}/photos/` - per-user photo blobs (HEIC + JPEG), date-partitioned
 
-Drop new HEIC files into today's date folder (e.g. `data/2026_06_30/`) so filenames like `IMG_2027` do not collide across import batches.
+Uploaded photos are stored on the API host filesystem; catalog metadata lives in SQLite. Product IDs are UUIDs; photo IDs remain `IMG_####`.
 
 ## Extraction server
 
@@ -23,11 +22,10 @@ Authenticated upload endpoints used by the viewer:
 | Endpoint | Purpose |
 |----------|---------|
 | `POST /api/auth/login` | Password login (`GROCERY_AUTH_PASSWORD`) |
-| `POST /api/photos/upload` | Shelf photo upload + vision extraction + save |
-| `POST /api/photos/bulk` | Receipt bulk import |
+| `POST /api/photos/bulk` | Photo upload + vision extraction + save (`files` field, one or more) |
 | `GET /api/products` | User's live product catalog |
 
-Uploaded extractions are saved under `data/users/{id}/extractions/` and merged into that user's `products.jsonl` on ingest.
+`POST /api/photos/bulk` saves photos to blob storage and writes extractions to SQLite.
 
 ### Tunnel hosting
 
@@ -43,7 +41,7 @@ The viewer build defaults to `VITE_API_URL=https://api-g.daliu.ca` in `deploy.sh
 
 ### Auth
 
-Users register with username + password. Each account has a private product catalog under `data/users/{id}/`.
+Users register with username + password. Each account has a private catalog under `extract_server/data/users/{id}/`.
 
 | Endpoint | Purpose |
 |----------|---------|

@@ -9,7 +9,8 @@ import {
 } from "react";
 import {
   completeOnboarding,
-  uploadPhotosBulk,
+  fetchPhotoStatuses,
+  uploadPhotos,
   type DuplicateAction,
   type UploadResult,
 } from "./api";
@@ -47,6 +48,14 @@ interface UploadQueueState {
 
 const UploadQueueContext = createContext<UploadQueueState | null>(null);
 
+const POLL_INTERVAL_MS = 1500;
+
+function sleep(ms: number) {
+  return new Promise<void>((resolve) => {
+    window.setTimeout(resolve, ms);
+  });
+}
+
 function applyUploadResult(result: UploadResult): Partial<UploadQueueItem> {
   if (result.action_required) {
     return {
@@ -60,6 +69,14 @@ function applyUploadResult(result: UploadResult): Partial<UploadQueueItem> {
       status: "skipped",
       imageId: result.duplicate_of ?? result.image_id,
       productCount: 0,
+    };
+  }
+
+  if (result.extraction_status === "failed") {
+    return {
+      status: "failed",
+      imageId: result.image_id,
+      error: result.extraction_error ?? "Extraction failed",
     };
   }
 
@@ -176,6 +193,28 @@ export function UploadQueueProvider({
     [],
   );
 
+  const waitForExtraction = useCallback(
+    async (item: UploadQueueItem, imageId: string) => {
+      for (;;) {
+        await sleep(POLL_INTERVAL_MS);
+        const { results } = await fetchPhotoStatuses([imageId]);
+        const status = results[0];
+        if (!status) {
+          throw new Error("Extraction status not found");
+        }
+        if (
+          status.extraction_status === "pending" ||
+          status.extraction_status === "processing"
+        ) {
+          continue;
+        }
+        await finishUpload(item, status);
+        return;
+      }
+    },
+    [finishUpload],
+  );
+
   const handleItemResult = useCallback(
     async (item: UploadQueueItem, result: UploadResult) => {
       if (result.action_required && result.duplicate_of) {
@@ -194,7 +233,7 @@ export function UploadQueueProvider({
           });
           return;
         }
-        const retried = await uploadPhotosBulk(
+        const retried = await uploadPhotos(
           [item.uploadFile ?? item.file],
           item.source,
           action,
@@ -207,9 +246,21 @@ export function UploadQueueProvider({
         return;
       }
 
+      if (
+        result.extraction_status === "pending" ||
+        result.extraction_status === "processing"
+      ) {
+        updateItem(item.id, {
+          status: "processing",
+          imageId: result.image_id,
+        });
+        await waitForExtraction(item, result.image_id);
+        return;
+      }
+
       await finishUpload(item, result);
     },
-    [finishUpload, resolveDuplicate, updateItem],
+    [finishUpload, resolveDuplicate, updateItem, waitForExtraction],
   );
 
   const processBatch = useCallback(
@@ -219,7 +270,7 @@ export function UploadQueueProvider({
       }
 
       try {
-        const bulk = await uploadPhotosBulk(
+        const bulk = await uploadPhotos(
           batch.map((item) => item.uploadFile ?? item.file),
           batch[0].source,
         );

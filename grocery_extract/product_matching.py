@@ -99,6 +99,25 @@ def attach_price_insights(products: list[dict[str, Any]]) -> list[dict[str, Any]
     return enriched
 
 
+def products_to_match_rows(
+    products: list[dict[str, Any]],
+    *,
+    image_id: str,
+    location: dict[str, Any],
+    captured_at: str | None,
+) -> list[dict[str, Any]]:
+    return [
+        {
+            "id": f"{image_id}:{index}",
+            "image_id": image_id,
+            "captured_at": captured_at,
+            "location": location,
+            **product,
+        }
+        for index, product in enumerate(products, start=1)
+    ]
+
+
 def overlapping_product_keys(
     new_products: list[dict[str, Any]],
     existing_products: list[dict[str, Any]],

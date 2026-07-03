@@ -21,8 +21,12 @@ def anchor_points(store: dict) -> list[tuple[float, float]]:
     return [(store["latitude"], store["longitude"])]
 
 
-def store_from_gps(lat: float, lon: float, stores: list[dict]) -> dict | None:
-    if not stores:
+def store_from_gps(
+    lat: float | None,
+    lon: float | None,
+    stores: list[dict],
+) -> dict | None:
+    if lat is None or lon is None or not stores:
         return None
     best: dict | None = None
     best_distance = float("inf")
