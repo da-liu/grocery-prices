@@ -17,7 +17,11 @@ ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT))
 sys.path.insert(0, str(ROOT / "extract_server"))
 
-from grocery_extract.cursor_extractor import extract_products_from_image
+from grocery_extract.cursor_extractor import (
+    current_extract_backend,
+    default_extract_model,
+    extract_products_from_image,
+)
 from grocery_extract.image_prep import _image_dimensions, resize_to_scale_percent
 from grocery_extract.scoring import benchmark, score_image
 
@@ -61,7 +65,7 @@ def run_experiment(
         "image_ids": image_ids,
         "scales_pct": scales,
         "repeats": repeats,
-        "model": os.environ.get("GROCERY_EXTRACT_MODEL", "composer-2.5"),
+        "model": default_extract_model(current_extract_backend()),
         "llm_max_dim": 0,
         "note": "llm_max_dim=0 sends the scaled JPEG as-is with no extra downscale",
     }

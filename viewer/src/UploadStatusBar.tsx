@@ -73,11 +73,7 @@ function statusLabel(item: UploadQueueItem): string {
     case "done":
       if (item.extractionEmpty) return "No products found";
       if (item.productCount != null) {
-        const overlap =
-          item.overlappingCount && item.overlappingCount > 0
-            ? ` · ${item.overlappingCount} matched`
-            : "";
-        return `${item.productCount} product${item.productCount === 1 ? "" : "s"}${overlap}`;
+        return `${item.productCount} product${item.productCount === 1 ? "" : "s"}`;
       }
       return "Done";
     case "skipped":
@@ -213,9 +209,7 @@ export function UploadStatusBar({ onViewBrowse }: { onViewBrowse: () => void }) 
             {toast.extractionEmpty
               ? "No products extracted"
               : `Added ${toast.productCount} product${toast.productCount === 1 ? "" : "s"}`}
-            {toast.overlappingCount && toast.overlappingCount > 0
-              ? ` · ${toast.overlappingCount} matched existing items`
-              : ""}
+            {toast.note ? ` ${toast.note}` : ""}
           </span>
           <button type="button" onClick={onViewBrowse}>
             View

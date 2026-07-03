@@ -24,7 +24,6 @@ export interface UploadQueueItem {
   error?: string;
   duplicateOf?: string;
   extractionEmpty?: boolean;
-  overlappingCount?: number;
 }
 
 export interface UploadToast {
@@ -32,7 +31,7 @@ export interface UploadToast {
   productCount: number;
   imageId: string;
   extractionEmpty?: boolean;
-  overlappingCount?: number;
+  note?: string;
 }
 
 export interface PendingDuplicate {

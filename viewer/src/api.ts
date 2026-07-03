@@ -24,6 +24,25 @@ async function parseError(resp: Response): Promise<string> {
   }
 }
 
+function errorMessage(err: unknown): string {
+  return err instanceof Error ? err.message : "Network error";
+}
+
+export function describeRequestError(
+  err: unknown,
+  action: "upload" | "status",
+  apiBase: string = API_BASE,
+): string {
+  const message = errorMessage(err);
+  if (message !== "Load failed" && message !== "Failed to fetch") {
+    return message;
+  }
+  if (action === "status") {
+    return `Lost connection while checking upload progress at ${apiBase}. Your photo may still finish processing; refresh in a moment.`;
+  }
+  return `Could not reach API at ${apiBase}. Check network or try again.`;
+}
+
 function authFetch(url: string, init: RequestInit = {}) {
   return fetch(url, {
     ...fetchOpts,
@@ -208,12 +227,7 @@ async function postUpload(
   try {
     return await authFetch(url, { method: "POST", body: form });
   } catch (err) {
-    const message = err instanceof Error ? err.message : "Network error";
-    throw new Error(
-      message === "Load failed" || message === "Failed to fetch"
-        ? `Could not reach API at ${API_BASE}. Check network or try again.`
-        : message,
-    );
+    throw new Error(describeRequestError(err, "upload"));
   }
 }
 
@@ -234,11 +248,16 @@ export async function uploadPhotos(
 
 export async function fetchPhotoStatuses(imageIds: string[]): Promise<{ results: UploadResult[] }> {
   if (!imageIds.length) return { results: [] };
-  const resp = await authFetch(`${API_BASE}/api/photos/status`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ ids: imageIds }),
-  });
+  let resp: Response;
+  try {
+    resp = await authFetch(`${API_BASE}/api/photos/status`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ ids: imageIds }),
+    });
+  } catch (err) {
+    throw new Error(describeRequestError(err, "status"));
+  }
   if (!resp.ok) throw new Error(await parseError(resp));
   return resp.json();
 }

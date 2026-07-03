@@ -30,7 +30,7 @@ from prompt_variants import PROMPT_VARIANTS  # noqa: E402
 from vision_runner import run_cursor_vision  # noqa: E402
 
 DEFAULT_VARIANTS = ["baseline", "concise", "ocr_focus", "minimal_schema"]
-DEFAULT_MODEL = os.environ.get("GROCERY_EXTRACT_MODEL", "composer-2.5")
+DEFAULT_MODEL = "composer-2.5"
 
 
 def render_markdown(summary: dict, out_dir: Path) -> str:

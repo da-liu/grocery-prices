@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState, type RefObject } from "react";
+import type { TopBarStyle } from "./topBarStyle";
 
 type Page = "browse" | "compare" | "settings";
 
@@ -29,6 +30,7 @@ interface TopBarProps {
   onShowOnboarding?: () => void;
   onDeleteAllProducts?: () => void;
   deletingAll?: boolean;
+  styleVariant: TopBarStyle;
 }
 
 function CameraIcon() {
@@ -110,8 +112,10 @@ export function TopBar({
   onShowOnboarding,
   onDeleteAllProducts,
   deletingAll = false,
+  styleVariant,
 }: TopBarProps) {
   const [menuOpen, setMenuOpen] = useState(false);
+  const [elevated, setElevated] = useState(false);
   const receiptRef = useRef<HTMLInputElement>(null);
   const menuRef = useRef<HTMLDivElement>(null);
 
@@ -130,6 +134,19 @@ export function TopBar({
     setMenuOpen(false);
   }, [page]);
 
+  useEffect(() => {
+    if (styleVariant !== "shadow-scroll") {
+      setElevated(false);
+      return;
+    }
+    const updateElevation = () => {
+      setElevated(window.scrollY > 6);
+    };
+    updateElevation();
+    window.addEventListener("scroll", updateElevation, { passive: true });
+    return () => window.removeEventListener("scroll", updateElevation);
+  }, [styleVariant]);
+
   function handlePhotos(files: FileList | null | undefined) {
     if (!files?.length) return;
     onPhotosSelected(Array.from(files));
@@ -141,7 +158,9 @@ export function TopBar({
   }
 
   return (
-    <header className="top-bar">
+    <header
+      className={`top-bar top-bar--${styleVariant}${elevated ? " top-bar--elevated" : ""}`}
+    >
       {page === "settings" ? (
         <p className="top-bar-title">Settings</p>
       ) : (
@@ -279,7 +298,7 @@ export function TopBar({
                 className={page === "settings" ? "active" : undefined}
                 onClick={() => pickNav("settings")}
               >
-                Store locations
+                Settings
               </button>
 
               <p className="top-bar-dropdown-label">Help</p>

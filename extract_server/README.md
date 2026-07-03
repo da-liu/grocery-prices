@@ -43,12 +43,10 @@ Set one of these backend configurations in `.env`:
 ```bash
 # Cursor SDK
 GROCERY_EXTRACT_BACKEND=cursor
-GROCERY_EXTRACT_MODEL=composer-2.5
 CURSOR_API_KEY=cursor_your_key_here
 
 # Direct Gemini
 GROCERY_EXTRACT_BACKEND=gemini_direct
-GROCERY_EXTRACT_MODEL=gemini-3-flash-lite   # alias for direct API model gemini-3.1-flash-lite
 GOOGLE_API_KEY=your_google_api_key_here
 
 # Production LLM input image size

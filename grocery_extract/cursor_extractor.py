@@ -16,9 +16,8 @@ from grocery_extract.schema import ExtractedProduct
 ROOT = Path(__file__).resolve().parents[1]
 CURSOR_BACKEND = "cursor"
 GEMINI_DIRECT_BACKEND = "gemini_direct"
-DEFAULT_CURSOR_MODEL = "composer-2.5"
+DEFAULT_CURSOR_MODEL = "auto"
 DEFAULT_GEMINI_DIRECT_MODEL = "gemini-3.1-flash-lite"
-GEMINI_DIRECT_MODEL_ALIAS = "gemini-3-flash-lite"
 
 
 class CursorExtractError(RuntimeError):
@@ -35,13 +34,8 @@ def current_extract_backend() -> str:
     return backend
 
 
-def current_extract_model(backend: str | None = None) -> str:
+def default_extract_model(backend: str | None = None) -> str:
     backend = backend or current_extract_backend()
-    configured = os.environ.get("GROCERY_EXTRACT_MODEL", "").strip()
-    if configured:
-        if backend == GEMINI_DIRECT_BACKEND and configured == GEMINI_DIRECT_MODEL_ALIAS:
-            return DEFAULT_GEMINI_DIRECT_MODEL
-        return configured
     if backend == GEMINI_DIRECT_BACKEND:
         return DEFAULT_GEMINI_DIRECT_MODEL
     return DEFAULT_CURSOR_MODEL
@@ -148,9 +142,7 @@ def extract_products_from_image(
 ) -> tuple[list[ExtractedProduct], str]:
     """Extract products from a grocery photo using the configured vision backend."""
     backend = backend or current_extract_backend()
-    model = model or current_extract_model(backend)
-    if backend == GEMINI_DIRECT_BACKEND and model == GEMINI_DIRECT_MODEL_ALIAS:
-        model = DEFAULT_GEMINI_DIRECT_MODEL
+    model = model or default_extract_model(backend)
     api_key = configured_api_key(api_key, backend)
     image_path = image_path.resolve()
     if not image_path.exists():

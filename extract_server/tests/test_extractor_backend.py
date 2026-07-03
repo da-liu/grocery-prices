@@ -4,7 +4,7 @@ import base64
 from pathlib import Path
 
 from grocery_extract.cursor_extractor import (
-    current_extract_model,
+    default_extract_model,
     current_extractor_name,
     extract_products_from_image,
 )
@@ -38,11 +38,10 @@ def test_prepare_image_for_llm_uses_scale_percent(tmp_path: Path, monkeypatch):
         out_path.unlink(missing_ok=True)
 
 
-def test_current_extract_model_maps_gemini_flash_lite_alias(monkeypatch):
+def test_default_extract_model_uses_backend_defaults(monkeypatch):
     monkeypatch.setenv("GROCERY_EXTRACT_BACKEND", "gemini_direct")
-    monkeypatch.setenv("GROCERY_EXTRACT_MODEL", "gemini-3-flash-lite")
 
-    assert current_extract_model() == "gemini-3.1-flash-lite"
+    assert default_extract_model() == "gemini-3.1-flash-lite"
     assert current_extractor_name() == "gemini_direct"
 
 
@@ -53,7 +52,6 @@ def test_extract_products_from_image_posts_to_gemini_direct(tmp_path: Path, monk
     prepared.write_bytes(b"prepared-image")
 
     monkeypatch.setenv("GROCERY_EXTRACT_BACKEND", "gemini_direct")
-    monkeypatch.setenv("GROCERY_EXTRACT_MODEL", "gemini-3-flash-lite")
     monkeypatch.setenv("GOOGLE_API_KEY", "google-key")
     monkeypatch.delenv("GEMINI_API_KEY", raising=False)
     monkeypatch.setattr(

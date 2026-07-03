@@ -28,6 +28,11 @@ import { AuthLoadingScreen } from "./AuthLoadingScreen";
 import { SignInPage } from "./SignInPage";
 import { StoreLabelModal } from "./StoreLabelModal";
 import { TopBar } from "./TopBar";
+import {
+  loadTopBarStyle,
+  saveTopBarStyle,
+  type TopBarStyle,
+} from "./topBarStyle";
 import { UploadQueueProvider, useUploadQueue } from "./UploadQueueContext";
 import { UploadStatusBar } from "./UploadStatusBar";
 import { DEV_FORCE_LOADING } from "./devPreview";
@@ -74,6 +79,7 @@ function AppShell() {
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [bulkDeletePending, setBulkDeletePending] = useState<string[] | null>(null);
   const [bulkDeleting, setBulkDeleting] = useState(false);
+  const [topBarStyle, setTopBarStyle] = useState<TopBarStyle>(() => loadTopBarStyle());
 
   const refreshProducts = useCallback((options?: { silent?: boolean }) => {
     if (!user) return Promise.resolve();
@@ -114,6 +120,10 @@ function AppShell() {
     saveBrowseQueryToStorage(browseQuery);
     syncBrowseQueryToUrl(browseQuery);
   }, [browseQuery]);
+
+  useEffect(() => {
+    saveTopBarStyle(topBarStyle);
+  }, [topBarStyle]);
 
   function navigate(next: Page) {
     window.location.hash = next === "browse" ? "" : `#/${next}`;
@@ -333,6 +343,8 @@ function AppShell() {
         bulkDeleteImpact={bulkDeleteImpact}
         bulkDeleting={bulkDeleting}
         handleDeleteProducts={handleDeleteProducts}
+        topBarStyle={topBarStyle}
+        setTopBarStyle={setTopBarStyle}
       />
     </UploadQueueProvider>
   );
@@ -382,6 +394,8 @@ function AuthenticatedApp({
   bulkDeleteImpact,
   bulkDeleting,
   handleDeleteProducts,
+  topBarStyle,
+  setTopBarStyle,
 }: {
   page: Page;
   navigate: (next: Page) => void;
@@ -432,6 +446,8 @@ function AuthenticatedApp({
   bulkDeleteImpact: { productCount: number; photosRemoved: number } | null;
   bulkDeleting: boolean;
   handleDeleteProducts: (ids: string[]) => Promise<void>;
+  topBarStyle: TopBarStyle;
+  setTopBarStyle: (style: TopBarStyle) => void;
 }) {
   const { enqueueFiles, pendingLabel, requestLabel, dismissLabel, completeLabel } =
     useUploadQueue();
@@ -487,6 +503,7 @@ function AuthenticatedApp({
             : undefined
         }
         deletingAll={bulkDeleting}
+        styleVariant={topBarStyle}
       />
 
       {page === "browse" && !selectionMode && (
@@ -558,7 +575,12 @@ function AuthenticatedApp({
           }}
         />
       )}
-      {page === "settings" && <SettingsPage />}
+      {page === "settings" && (
+        <SettingsPage
+          topBarStyle={topBarStyle}
+          onTopBarStyleChange={setTopBarStyle}
+        />
+      )}
       {page === "compare" && (products.length > 0 || !productsLoading) && (
         <ComparePage
           products={products}

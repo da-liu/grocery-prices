@@ -9,6 +9,7 @@ import {
 } from "react";
 import {
   completeOnboarding,
+  fetchStoreLocations,
   fetchPhotoStatuses,
   uploadPhotos,
   type DuplicateAction,
@@ -49,11 +50,35 @@ interface UploadQueueState {
 const UploadQueueContext = createContext<UploadQueueState | null>(null);
 
 const POLL_INTERVAL_MS = 1500;
+const STATUS_POLL_MAX_FAILURES = 4;
+const STATUS_POLL_MAX_DELAY_MS = 10000;
+const MISSING_STATUS_MESSAGE =
+  "Upload progress was temporarily unavailable. Your photo may still finish processing; refresh in a moment.";
 
 function sleep(ms: number) {
   return new Promise<void>((resolve) => {
     window.setTimeout(resolve, ms);
   });
+}
+
+export function statusPollRetryDelayMs(consecutiveFailures: number): number {
+  if (consecutiveFailures <= 0) return POLL_INTERVAL_MS;
+  return Math.min(
+    STATUS_POLL_MAX_DELAY_MS,
+    POLL_INTERVAL_MS * 2 ** Math.max(0, consecutiveFailures - 1),
+  );
+}
+
+function queueItemErrorMessage(err: unknown): string {
+  return err instanceof Error ? err.message : "Upload failed";
+}
+
+function hasPhotoGps(result: UploadResult): boolean {
+  return result.meta?.gps_latitude != null && result.meta?.gps_longitude != null;
+}
+
+export function shouldQueueStoreLabel(hasGps: boolean, savedStoreCount: number): boolean {
+  return hasGps || savedStoreCount > 0;
 }
 
 function applyUploadResult(result: UploadResult): Partial<UploadQueueItem> {
@@ -86,7 +111,6 @@ function applyUploadResult(result: UploadResult): Partial<UploadQueueItem> {
     productCount,
     imageId: result.image_id,
     extractionEmpty: result.extraction_empty,
-    overlappingCount: result.overlapping_products?.length ?? 0,
   };
 }
 
@@ -154,16 +178,32 @@ export function UploadQueueProvider({
         return;
       }
 
+      let toastNote: string | undefined;
       if (result.needs_store_label) {
-        setLabelQueue((prev) => [
-          ...prev,
-          {
-            imageId: result.image_id,
-            thumbnailUrl: item.thumbnailUrl,
-            latitude: result.meta?.gps_latitude ?? null,
-            longitude: result.meta?.gps_longitude ?? null,
-          },
-        ]);
+        const labelRequest = {
+          imageId: result.image_id,
+          thumbnailUrl: item.thumbnailUrl,
+          latitude: result.meta?.gps_latitude ?? null,
+          longitude: result.meta?.gps_longitude ?? null,
+        };
+        const gpsPresent = hasPhotoGps(result);
+        let shouldQueue = gpsPresent;
+
+        if (!gpsPresent) {
+          try {
+            const stores = await fetchStoreLocations();
+            shouldQueue = shouldQueueStoreLabel(false, stores.length);
+          } catch {
+            shouldQueue = false;
+          }
+        }
+
+        if (shouldQueue) {
+          setLabelQueue((prev) => [...prev, labelRequest]);
+        } else {
+          toastNote =
+            "No GPS or saved stores yet, so this photo was kept as Unknown store. You can label it later after adding a store.";
+        }
       }
 
       setToast({
@@ -171,7 +211,7 @@ export function UploadQueueProvider({
         productCount: productCountFromResult(result),
         imageId: result.image_id,
         extractionEmpty: result.extraction_empty,
-        overlappingCount: result.overlapping_products?.length ?? 0,
+        note: toastNote,
       });
 
       try {
@@ -195,21 +235,30 @@ export function UploadQueueProvider({
 
   const waitForExtraction = useCallback(
     async (item: UploadQueueItem, imageId: string) => {
+      let consecutiveFailures = 0;
       for (;;) {
-        await sleep(POLL_INTERVAL_MS);
-        const { results } = await fetchPhotoStatuses([imageId]);
-        const status = results[0];
-        if (!status) {
-          throw new Error("Extraction status not found");
+        await sleep(statusPollRetryDelayMs(consecutiveFailures));
+        try {
+          const { results } = await fetchPhotoStatuses([imageId]);
+          const status = results[0];
+          if (!status) {
+            throw new Error(MISSING_STATUS_MESSAGE);
+          }
+          consecutiveFailures = 0;
+          if (
+            status.extraction_status === "pending" ||
+            status.extraction_status === "processing"
+          ) {
+            continue;
+          }
+          await finishUpload(item, status);
+          return;
+        } catch (err) {
+          consecutiveFailures += 1;
+          if (consecutiveFailures >= STATUS_POLL_MAX_FAILURES) {
+            throw new Error(queueItemErrorMessage(err));
+          }
         }
-        if (
-          status.extraction_status === "pending" ||
-          status.extraction_status === "processing"
-        ) {
-          continue;
-        }
-        await finishUpload(item, status);
-        return;
       }
     },
     [finishUpload],
@@ -275,6 +324,7 @@ export function UploadQueueProvider({
           batch[0].source,
         );
 
+        const backgroundTasks: Promise<void>[] = [];
         for (let index = 0; index < batch.length; index += 1) {
           const item = batch[index];
           const result = bulk.results[index];
@@ -285,10 +335,32 @@ export function UploadQueueProvider({
             });
             continue;
           }
-          await handleItemResult(item, result);
+
+          const runItem = async () => {
+            try {
+              await handleItemResult(item, result);
+            } catch (err) {
+              updateItem(item.id, {
+                status: "failed",
+                error: queueItemErrorMessage(err),
+              });
+            }
+          };
+
+          if (
+            result.extraction_status === "pending" ||
+            result.extraction_status === "processing"
+          ) {
+            backgroundTasks.push(runItem());
+            continue;
+          }
+
+          await runItem();
         }
+
+        await Promise.all(backgroundTasks);
       } catch (err) {
-        const message = err instanceof Error ? err.message : "Upload failed";
+        const message = queueItemErrorMessage(err);
         for (const item of batch) {
           updateItem(item.id, { status: "failed", error: message });
         }
@@ -460,4 +532,4 @@ export function useUploadQueue() {
 }
 
 // Exported for unit tests.
-export { claimNextBatch };
+export { claimNextBatch, queueItemErrorMessage };
