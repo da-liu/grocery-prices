@@ -29,13 +29,10 @@ import { AuthLoadingScreen } from "./AuthLoadingScreen";
 import { SignInPage } from "./SignInPage";
 import { StoreLabelModal } from "./StoreLabelModal";
 import { TopBar } from "./TopBar";
-import {
-  loadTopBarStyle,
-  saveTopBarStyle,
-  type TopBarStyle,
-} from "./topBarStyle";
-import { UploadQueueProvider, useUploadQueue } from "./UploadQueueContext";
-import { UploadStatusBar } from "./UploadStatusBar";
+import { AppHeader } from "./AppHeader";
+import { DEFAULT_TOP_BAR_STYLE } from "./topBarStyle";
+import { UploadQueueProvider, useUploadQueueActions } from "./UploadQueueContext";
+import { UploadStatusPanel, UploadStatusToasts } from "./UploadStatusBar";
 import {
   DEV_FORCE_LOADING,
   DEV_PREVIEW_EMPTY_IMAGE_URL,
@@ -85,7 +82,7 @@ function AppShell() {
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [bulkDeletePending, setBulkDeletePending] = useState<string[] | null>(null);
   const [bulkDeleting, setBulkDeleting] = useState(false);
-  const [topBarStyle, setTopBarStyle] = useState<TopBarStyle>(() => loadTopBarStyle());
+  const [highlightProductId, setHighlightProductId] = useState<string | null>(null);
 
   const refreshProducts = useCallback((options?: { silent?: boolean }) => {
     if (!user) return Promise.resolve();
@@ -127,10 +124,6 @@ function AppShell() {
     syncBrowseQueryToUrl(browseQuery);
   }, [browseQuery]);
 
-  useEffect(() => {
-    saveTopBarStyle(topBarStyle);
-  }, [topBarStyle]);
-
   function navigate(next: Page) {
     window.location.hash = next === "browse" ? "" : `#/${next}`;
     setPage(next);
@@ -166,6 +159,34 @@ function AppShell() {
   const activeChipCount = useMemo(
     () => countActiveChips(browseQuery, priceExtentsForChips),
     [browseQuery, priceExtentsForChips],
+  );
+
+  const navigateToProduct = useCallback(
+    (productId: string) => {
+      const target = products.find((product) => product.id === productId);
+      if (!target) return;
+
+      const visible = filterProducts(products, browseQuery, browseSearch, {
+        extents: getPriceExtents(products),
+      }).some((product) => product.id === productId);
+
+      if (!visible) {
+        setBrowseSearch("");
+        setBrowseQuery({ ...EMPTY_BROWSE_QUERY, viewMode: "products" });
+      } else if (browseQuery.viewMode === "photos") {
+        setBrowseQuery({ ...browseQuery, viewMode: "products" });
+      }
+
+      window.setTimeout(() => {
+        document.getElementById(`product-${productId}`)?.scrollIntoView({
+          behavior: "smooth",
+          block: "center",
+        });
+        setHighlightProductId(productId);
+        window.setTimeout(() => setHighlightProductId(null), 2000);
+      }, visible ? 0 : 50);
+    },
+    [products, browseQuery, browseSearch],
   );
 
   const browseStats = useMemo(() => {
@@ -349,8 +370,8 @@ function AppShell() {
         bulkDeleteImpact={bulkDeleteImpact}
         bulkDeleting={bulkDeleting}
         handleDeleteProducts={handleDeleteProducts}
-        topBarStyle={topBarStyle}
-        setTopBarStyle={setTopBarStyle}
+        navigateToProduct={navigateToProduct}
+        highlightProductId={highlightProductId}
       />
     </UploadQueueProvider>
   );
@@ -400,8 +421,8 @@ function AuthenticatedApp({
   bulkDeleteImpact,
   bulkDeleting,
   handleDeleteProducts,
-  topBarStyle,
-  setTopBarStyle,
+  navigateToProduct,
+  highlightProductId,
 }: {
   page: Page;
   navigate: (next: Page) => void;
@@ -452,11 +473,11 @@ function AuthenticatedApp({
   bulkDeleteImpact: { productCount: number; photosRemoved: number } | null;
   bulkDeleting: boolean;
   handleDeleteProducts: (ids: string[]) => Promise<void>;
-  topBarStyle: TopBarStyle;
-  setTopBarStyle: (style: TopBarStyle) => void;
+  navigateToProduct: (productId: string) => void;
+  highlightProductId: string | null;
 }) {
   const { enqueueFiles, pendingLabel, requestLabel, dismissLabel, completeLabel } =
-    useUploadQueue();
+    useUploadQueueActions();
   const photoInputRef = useRef<HTMLInputElement>(null);
 
   function openPhotoPicker() {
@@ -488,29 +509,33 @@ function AuthenticatedApp({
 
   return (
     <div className="app">
-      <TopBar
-        page={page}
-        {...searchProps}
-        user={user}
-        onLogout={() => void logout()}
-        onNavigate={navigate}
-        photoInputRef={photoInputRef}
-        onPhotosSelected={(files) => enqueueFiles(files, "shelf")}
-        onReceiptsSelected={(files) => enqueueFiles(files, "receipt")}
-        showSortFilter={page === "browse"}
-        sortFilterOpen={sortFilterOpen}
-        activeChipCount={activeChipCount}
-        onToggleSortFilter={() => setSortFilterOpen(!sortFilterOpen)}
-        browseStats={products.length > 0 ? browseStats : undefined}
-        onShowOnboarding={() => setShowOnboarding(true)}
-        onDeleteAllProducts={
-          products.length > 0
-            ? () => void handleDeleteProducts(products.map((product) => product.id))
-            : undefined
-        }
-        deletingAll={bulkDeleting}
-        styleVariant={topBarStyle}
-      />
+      <AppHeader>
+        <TopBar
+          page={page}
+          {...searchProps}
+          user={user}
+          onLogout={() => void logout()}
+          onNavigate={navigate}
+          photoInputRef={photoInputRef}
+          onPhotosSelected={(files) => enqueueFiles(files, "shelf")}
+          showSortFilter={page === "browse"}
+          sortFilterOpen={sortFilterOpen}
+          activeChipCount={activeChipCount}
+          onToggleSortFilter={() => setSortFilterOpen(!sortFilterOpen)}
+          browseStats={products.length > 0 ? browseStats : undefined}
+          onShowOnboarding={() => setShowOnboarding(true)}
+          onDeleteAllProducts={
+            products.length > 0
+              ? () => void handleDeleteProducts(products.map((product) => product.id))
+              : undefined
+          }
+          deletingAll={bulkDeleting}
+          styleVariant={DEFAULT_TOP_BAR_STYLE}
+        />
+        <UploadStatusPanel />
+      </AppHeader>
+
+      <UploadStatusToasts />
 
       {page === "browse" && !selectionMode && (
         <BrowseQueryChips
@@ -540,8 +565,6 @@ function AuthenticatedApp({
         />
       )}
 
-      <UploadStatusBar />
-
       {error && (
         <p className="status error app-error">
           {error}
@@ -558,6 +581,7 @@ function AuthenticatedApp({
         <BrowsePage
           products={browseDisplayed}
           catalogEmpty={products.length === 0}
+          viewMode={browseQuery.viewMode}
           onStartUpload={openPhotoPicker}
           onDeleteProduct={(id) => void handleDeleteProduct(id)}
           deletingId={deletingId}
@@ -570,6 +594,8 @@ function AuthenticatedApp({
           selectedIds={selectedIds}
           onToggleSelect={toggleProductSelection}
           gridColumns={browseQuery.gridColumns}
+          onNavigateToProduct={navigateToProduct}
+          highlightProductId={highlightProductId}
           onLabelLocation={(product) => {
             const { latitude, longitude } = product.location;
             requestLabel({
@@ -581,12 +607,7 @@ function AuthenticatedApp({
           }}
         />
       )}
-      {page === "settings" && (
-        <SettingsPage
-          topBarStyle={topBarStyle}
-          onTopBarStyleChange={setTopBarStyle}
-        />
-      )}
+      {page === "settings" && <SettingsPage />}
       {page === "compare" && (products.length > 0 || !productsLoading) && (
         <ComparePage
           products={products}

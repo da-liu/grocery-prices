@@ -1,13 +1,15 @@
 import { ProductCard } from "./ProductCard";
+import { PhotoGroupCard } from "./PhotoGroupCard";
 import { productImageUrl } from "./api";
 import type { ManualProductInput, ProductUpdateInput } from "./api";
 import type { Product } from "./types";
 
-import type { GridColumns } from "./browseQuery";
+import { groupProductsByImageId, type GridColumns, type ViewMode } from "./browseQuery";
 
 export function BrowsePage({
   products,
   catalogEmpty,
+  viewMode,
   onStartUpload,
   onDeleteProduct,
   deletingId,
@@ -21,9 +23,12 @@ export function BrowsePage({
   selectedIds,
   onToggleSelect,
   gridColumns,
+  onNavigateToProduct,
+  highlightProductId,
 }: {
   products: Product[];
   catalogEmpty: boolean;
+  viewMode: ViewMode;
   onStartUpload?: () => void;
   onDeleteProduct?: (productId: string) => void;
   deletingId?: string | null;
@@ -37,6 +42,8 @@ export function BrowsePage({
   selectedIds?: ReadonlySet<string>;
   onToggleSelect?: (productId: string) => void;
   gridColumns: GridColumns;
+  onNavigateToProduct?: (productId: string) => void;
+  highlightProductId?: string | null;
 }) {
   if (catalogEmpty) {
     return (
@@ -55,31 +62,44 @@ export function BrowsePage({
   const compact = selectionMode || gridColumns > 1;
   const gridClass = `grid grid--cols-${gridColumns}${compact ? " grid--compact" : ""}`;
 
-  return (
-    <>
-      <main className={gridClass}>
-        {products.map((product) => (
-          <ProductCard
-            key={product.id}
-            product={product}
-            imgSrc={productImageUrl(product.image_id)}
-            onDelete={selectionMode ? undefined : onDeleteProduct}
-            deleting={deletingId === product.id}
-            onLabelLocation={selectionMode ? undefined : onLabelLocation}
-            onEdit={selectionMode ? undefined : onEditProduct}
-            onReextract={selectionMode ? undefined : onReextractPhoto}
-            onAddManual={selectionMode ? undefined : onAddManualProduct}
-            reextracting={reextractingId === product.image_id}
-            saving={savingId === product.id}
-            compact={compact}
-            selectionMode={selectionMode}
-            selected={selectedIds?.has(product.id)}
-            onToggleSelect={onToggleSelect}
+  if (viewMode === "photos" && !selectionMode) {
+    const groups = groupProductsByImageId(products);
+    return (
+      <main className="grid grid--photo-groups">
+        {groups.map((group) => (
+          <PhotoGroupCard
+            key={group.imageId}
+            group={group}
+            onNavigateToProduct={onNavigateToProduct}
           />
         ))}
       </main>
+    );
+  }
 
-      {products.length === 0 && <p className="status">No products match your filters.</p>}
-    </>
+  return (
+    <main className={gridClass}>
+      {products.map((product) => (
+        <ProductCard
+          key={product.id}
+          product={product}
+          imgSrc={productImageUrl(product.image_id)}
+          highlighted={highlightProductId === product.id}
+          onDelete={selectionMode ? undefined : onDeleteProduct}
+          deleting={deletingId === product.id}
+          onLabelLocation={selectionMode ? undefined : onLabelLocation}
+          onEdit={selectionMode ? undefined : onEditProduct}
+          onReextract={selectionMode ? undefined : onReextractPhoto}
+          onAddManual={selectionMode ? undefined : onAddManualProduct}
+          onNavigateToProduct={onNavigateToProduct}
+          reextracting={reextractingId === product.image_id}
+          saving={savingId === product.id}
+          compact={compact}
+          selectionMode={selectionMode}
+          selected={selectedIds?.has(product.id)}
+          onToggleSelect={onToggleSelect}
+        />
+      ))}
+    </main>
   );
 }

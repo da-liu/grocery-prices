@@ -9,7 +9,6 @@ import {
 } from "react";
 import {
   completeOnboarding,
-  fetchStoreLocations,
   fetchPhotoStatuses,
   uploadPhotos,
   type DuplicateAction,
@@ -22,7 +21,9 @@ import {
   MAX_BULK_BATCH,
   productCountFromResult,
   revokeQueueItem,
+  UNKNOWN_STORE_HINT_KEY,
   UPLOAD_CONCURRENCY,
+  shouldNotifyUnknownStoreHint,
   type PendingDuplicate,
   type UploadQueueItem,
   type UploadSource,
@@ -31,23 +32,29 @@ import {
 
 import type { StoreLabelRequest } from "./types";
 
-interface UploadQueueState {
-  items: UploadQueueItem[];
-  toast: UploadToast | null;
-  activeCount: number;
-  queuedCount: number;
+interface UploadQueueActions {
   enqueueFiles: (files: File[], source: UploadSource) => void;
-  dismissToast: () => void;
-  clearFinished: () => void;
-  expanded: boolean;
-  setExpanded: (open: boolean) => void;
   pendingLabel: StoreLabelRequest | null;
   requestLabel: (request: StoreLabelRequest) => void;
   dismissLabel: () => void;
   completeLabel: () => void;
 }
 
-const UploadQueueContext = createContext<UploadQueueState | null>(null);
+interface UploadQueueStatus {
+  items: UploadQueueItem[];
+  toast: UploadToast | null;
+  unknownStoreHint: boolean;
+  activeCount: number;
+  queuedCount: number;
+  dismissToast: () => void;
+  dismissUnknownStoreHint: () => void;
+  clearFinished: () => void;
+}
+
+interface UploadQueueState extends UploadQueueActions, UploadQueueStatus {}
+
+const UploadQueueActionsContext = createContext<UploadQueueActions | null>(null);
+const UploadQueueStatusContext = createContext<UploadQueueStatus | null>(null);
 
 const POLL_INTERVAL_MS = 1500;
 const STATUS_POLL_MAX_FAILURES = 4;
@@ -73,12 +80,20 @@ function queueItemErrorMessage(err: unknown): string {
   return err instanceof Error ? err.message : "Upload failed";
 }
 
-function hasPhotoGps(result: UploadResult): boolean {
-  return result.meta?.gps_latitude != null && result.meta?.gps_longitude != null;
+function unknownStoreHintAlreadyShown(): boolean {
+  try {
+    return sessionStorage.getItem(UNKNOWN_STORE_HINT_KEY) === "1";
+  } catch {
+    return false;
+  }
 }
 
-export function shouldQueueStoreLabel(hasGps: boolean, savedStoreCount: number): boolean {
-  return hasGps || savedStoreCount > 0;
+function markUnknownStoreHintShown(): void {
+  try {
+    sessionStorage.setItem(UNKNOWN_STORE_HINT_KEY, "1");
+  } catch {
+    // ignore storage errors
+  }
 }
 
 function applyUploadResult(result: UploadResult): Partial<UploadQueueItem> {
@@ -111,6 +126,7 @@ function applyUploadResult(result: UploadResult): Partial<UploadQueueItem> {
     productCount,
     imageId: result.image_id,
     extractionEmpty: result.extraction_empty,
+    detectedReceipt: result.detected_receipt,
   };
 }
 
@@ -144,7 +160,7 @@ export function UploadQueueProvider({
 }) {
   const [items, setItems] = useState<UploadQueueItem[]>([]);
   const [toast, setToast] = useState<UploadToast | null>(null);
-  const [expanded, setExpanded] = useState(false);
+  const [unknownStoreHint, setUnknownStoreHint] = useState(false);
   const [labelQueue, setLabelQueue] = useState<StoreLabelRequest[]>([]);
   const [pendingDuplicate, setPendingDuplicate] = useState<PendingDuplicate | null>(null);
   const itemsRef = useRef(items);
@@ -178,32 +194,14 @@ export function UploadQueueProvider({
         return;
       }
 
-      let toastNote: string | undefined;
-      if (result.needs_store_label) {
-        const labelRequest = {
-          imageId: result.image_id,
-          thumbnailUrl: item.thumbnailUrl,
-          latitude: result.meta?.gps_latitude ?? null,
-          longitude: result.meta?.gps_longitude ?? null,
-        };
-        const gpsPresent = hasPhotoGps(result);
-        let shouldQueue = gpsPresent;
-
-        if (!gpsPresent) {
-          try {
-            const stores = await fetchStoreLocations();
-            shouldQueue = shouldQueueStoreLabel(false, stores.length);
-          } catch {
-            shouldQueue = false;
-          }
-        }
-
-        if (shouldQueue) {
-          setLabelQueue((prev) => [...prev, labelRequest]);
-        } else {
-          toastNote =
-            "No GPS or saved stores yet, so this photo was kept as Unknown store. You can label it later after adding a store.";
-        }
+      if (
+        shouldNotifyUnknownStoreHint(
+          Boolean(result.needs_store_label),
+          unknownStoreHintAlreadyShown(),
+        )
+      ) {
+        markUnknownStoreHintShown();
+        setUnknownStoreHint(true);
       }
 
       setToast({
@@ -211,7 +209,6 @@ export function UploadQueueProvider({
         productCount: productCountFromResult(result),
         imageId: result.image_id,
         extractionEmpty: result.extraction_empty,
-        note: toastNote,
       });
 
       try {
@@ -302,6 +299,7 @@ export function UploadQueueProvider({
         updateItem(item.id, {
           status: "processing",
           imageId: result.image_id,
+          detectedReceipt: result.detected_receipt,
         });
         await waitForExtraction(item, result.image_id);
         return;
@@ -402,7 +400,6 @@ export function UploadQueueProvider({
       if (!files.length) return;
       const added = files.map((file) => createQueueItem(file, source));
       setItems((prev) => [...prev, ...added]);
-      setExpanded(true);
 
       for (const item of added) {
         void prepareUploadFile(item.file)
@@ -419,6 +416,8 @@ export function UploadQueueProvider({
   );
 
   const dismissToast = useCallback(() => setToast(null), []);
+
+  const dismissUnknownStoreHint = useCallback(() => setUnknownStoreHint(false), []);
 
   const requestLabel = useCallback((request: StoreLabelRequest) => {
     setLabelQueue((prev) => {
@@ -478,57 +477,71 @@ export function UploadQueueProvider({
     ? items.find((item) => item.id === pendingDuplicate.itemId)
     : null;
 
-  const value = useMemo(
+  const actionsValue = useMemo(
     () => ({
-      items,
-      toast,
-      activeCount,
-      queuedCount,
       enqueueFiles,
-      dismissToast,
-      clearFinished,
-      expanded,
-      setExpanded,
       pendingLabel: labelQueue[0] ?? null,
       requestLabel,
       dismissLabel,
       completeLabel,
     }),
+    [enqueueFiles, labelQueue, requestLabel, dismissLabel, completeLabel],
+  );
+
+  const statusValue = useMemo(
+    () => ({
+      items,
+      toast,
+      unknownStoreHint,
+      activeCount,
+      queuedCount,
+      dismissToast,
+      dismissUnknownStoreHint,
+      clearFinished,
+    }),
     [
       items,
       toast,
+      unknownStoreHint,
       activeCount,
       queuedCount,
-      enqueueFiles,
       dismissToast,
+      dismissUnknownStoreHint,
       clearFinished,
-      expanded,
-      labelQueue,
-      requestLabel,
-      dismissLabel,
-      completeLabel,
     ],
   );
 
   return (
-    <UploadQueueContext.Provider value={value}>
-      {children}
-      {pendingDuplicate && duplicateItem && (
-        <DuplicatePhotoModal
-          duplicateOf={pendingDuplicate.duplicateOf}
-          fileName={duplicateItem.label}
-          thumbnailUrl={duplicateItem.thumbnailUrl}
-          onChoose={(action) => pendingDuplicate.resolve(action)}
-        />
-      )}
-    </UploadQueueContext.Provider>
+    <UploadQueueActionsContext.Provider value={actionsValue}>
+      <UploadQueueStatusContext.Provider value={statusValue}>
+        {children}
+        {pendingDuplicate && duplicateItem && (
+          <DuplicatePhotoModal
+            duplicateOf={pendingDuplicate.duplicateOf}
+            fileName={duplicateItem.label}
+            thumbnailUrl={duplicateItem.thumbnailUrl}
+            onChoose={(action) => pendingDuplicate.resolve(action)}
+          />
+        )}
+      </UploadQueueStatusContext.Provider>
+    </UploadQueueActionsContext.Provider>
   );
 }
 
-export function useUploadQueue() {
-  const ctx = useContext(UploadQueueContext);
-  if (!ctx) throw new Error("useUploadQueue must be used within UploadQueueProvider");
+export function useUploadQueueActions() {
+  const ctx = useContext(UploadQueueActionsContext);
+  if (!ctx) throw new Error("useUploadQueueActions must be used within UploadQueueProvider");
   return ctx;
+}
+
+export function useUploadQueueStatus() {
+  const ctx = useContext(UploadQueueStatusContext);
+  if (!ctx) throw new Error("useUploadQueueStatus must be used within UploadQueueProvider");
+  return ctx;
+}
+
+export function useUploadQueue(): UploadQueueState {
+  return { ...useUploadQueueActions(), ...useUploadQueueStatus() };
 }
 
 // Exported for unit tests.

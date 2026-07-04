@@ -68,6 +68,13 @@ def _token_from_request(
     return cookie_token
 
 
+def get_request_session_token(
+    credentials: Annotated[HTTPAuthorizationCredentials | None, Depends(_bearer)],
+    grocery_session: Annotated[str | None, Cookie(alias=SESSION_COOKIE)] = None,
+) -> str | None:
+    return _token_from_request(credentials, grocery_session)
+
+
 def resolve_auth_user(token: str | None) -> AuthUser | None:
     if not token:
         return None

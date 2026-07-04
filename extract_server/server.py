@@ -22,6 +22,7 @@ if str(ROOT) not in sys.path:
 
 from extract_server.auth import (  # noqa: E402
     AuthUser,
+    get_request_session_token,
     issue_session,
     logout_session,
     require_user,
@@ -38,10 +39,12 @@ from grocery_extract.ingest import accept_upload_batch, build_status_response  #
 from grocery_extract.photo_stores import set_image_store_location_id
 from grocery_extract.user_paths import find_user_jpg  # noqa: E402
 from grocery_extract.user_stores_db import (  # noqa: E402
+    count_photos_for_store,
     create_user_store,
     delete_user_store,
     get_user_store,
     list_user_stores,
+    merge_user_stores,
     store_to_api_dict,
     update_user_store,
 )
@@ -103,6 +106,11 @@ class StoreLocationBody(BaseModel):
 
 class AssignPhotoStoreBody(BaseModel):
     store_location_id: str
+
+
+class MergeStoreLocationsBody(BaseModel):
+    source_id: str
+    target_id: str
 
 
 class BulkDeleteProductsBody(BaseModel):
@@ -187,13 +195,17 @@ def logout(
 
 
 @app.get("/api/auth/me")
-def auth_me(user: Annotated[AuthUser, Depends(require_user)]) -> dict:
+def auth_me(
+    user: Annotated[AuthUser, Depends(require_user)],
+    token: Annotated[str | None, Depends(get_request_session_token)],
+) -> dict:
     upload_count = count_user_extractions(user.id)
     return {
         "authenticated": True,
         "username": user.username,
         "upload_count": upload_count,
         "needs_onboarding": user_needs_onboarding(user.id),
+        "token": token,
     }
 
 
@@ -283,7 +295,13 @@ def remove_products_bulk(
 
 @app.get("/api/store-locations")
 def list_store_locations(user: Annotated[AuthUser, Depends(require_user)]) -> list[dict]:
-    return [store_to_api_dict(store) for store in list_user_stores(user.id)]
+    return [
+        store_to_api_dict(
+            store,
+            photo_count=count_photos_for_store(user.id, store.id),
+        )
+        for store in list_user_stores(user.id)
+    ]
 
 
 @app.post("/api/store-locations")
@@ -292,10 +310,33 @@ def create_store_location(
     user: Annotated[AuthUser, Depends(require_user)],
 ) -> dict:
     try:
-        store = create_user_store(user.id, **body.model_dump())
+        result = create_user_store(user.id, **body.model_dump())
     except ValueError as err:
         raise HTTPException(status_code=400, detail=str(err)) from err
-    return store_to_api_dict(store)
+    return {
+        **store_to_api_dict(
+            result.store,
+            photo_count=count_photos_for_store(user.id, result.store.id),
+        ),
+        "matched_existing": result.matched_existing,
+    }
+
+
+@app.post("/api/store-locations/merge")
+def merge_store_locations(
+    body: MergeStoreLocationsBody,
+    user: Annotated[AuthUser, Depends(require_user)],
+) -> dict:
+    try:
+        merged = merge_user_stores(user.id, body.source_id, body.target_id)
+    except ValueError as err:
+        raise HTTPException(status_code=400, detail=str(err)) from err
+    if merged is None:
+        raise HTTPException(status_code=404, detail="Store location not found")
+    return store_to_api_dict(
+        merged,
+        photo_count=count_photos_for_store(user.id, merged.id),
+    )
 
 
 @app.put("/api/store-locations/{store_id}")

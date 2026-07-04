@@ -21,6 +21,7 @@ export function StoreLabelModal({ request, onDone, onDismiss }: StoreLabelModalP
   const [error, setError] = useState<string | null>(null);
   const [mode, setMode] = useState<"pick" | "create">("pick");
   const [name, setName] = useState("");
+  const [matchedNote, setMatchedNote] = useState<string | null>(null);
 
   useEffect(() => {
     fetchStoreLocations()
@@ -60,6 +61,11 @@ export function StoreLabelModal({ request, onDone, onDismiss }: StoreLabelModalP
         longitude: request.longitude,
       });
       await assignPhotoStore(request.imageId, store.id);
+      if (store.matched_existing) {
+        setMatchedNote(`Matched to existing store "${store.name}".`);
+        window.setTimeout(() => onDone(), 1200);
+        return;
+      }
       onDone();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Could not save store");
@@ -106,6 +112,7 @@ export function StoreLabelModal({ request, onDone, onDismiss }: StoreLabelModalP
         <div className="store-label-content">
           {loading && <p className="status">Loading your stores…</p>}
           {error && <p className="status error">{error}</p>}
+          {matchedNote && <p className="status">{matchedNote}</p>}
 
           {!loading && mode === "pick" && (
             <div className="store-label-actions">

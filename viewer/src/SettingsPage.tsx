@@ -1,25 +1,27 @@
 import { useCallback, useEffect, useState } from "react";
-import { deleteStoreLocation, fetchStoreLocations } from "./api";
-import { MapPreview } from "./MapPreview";
-import { hasValidCoords } from "./maps";
 import {
-  TOP_BAR_STYLE_OPTIONS,
-  type TopBarStyle,
-} from "./topBarStyle";
+  deleteStoreLocation,
+  fetchStoreLocations,
+  mergeStoreLocations,
+} from "./api";
+import { MapPreview } from "./MapPreview";
+import { StoreEditModal } from "./StoreEditModal";
+import { StoreMergeMap } from "./StoreMergeMap";
+import { hasValidCoords } from "./maps";
 import { DEV_FORCE_LOADING } from "./devPreview";
 import type { StoreLocation } from "./types";
 
-interface SettingsPageProps {
-  topBarStyle: TopBarStyle;
-  onTopBarStyleChange: (style: TopBarStyle) => void;
-}
-
-export function SettingsPage({ topBarStyle, onTopBarStyleChange }: SettingsPageProps) {
+export function SettingsPage() {
   const [stores, setStores] = useState<StoreLocation[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
+  const [editingStore, setEditingStore] = useState<StoreLocation | null>(null);
+  const [mergeRequest, setMergeRequest] = useState<{
+    sourceId: string;
+    targetId: string;
+  } | null>(null);
 
   const loadStores = useCallback(() => {
     if (DEV_FORCE_LOADING) return Promise.resolve();
@@ -49,14 +51,42 @@ export function SettingsPage({ topBarStyle, onTopBarStyleChange }: SettingsPageP
     }
   }
 
+  async function handleMerge(sourceId: string, targetId: string) {
+    setMergeRequest({ sourceId, targetId });
+  }
+
+  async function confirmMerge() {
+    if (!mergeRequest) return;
+    const source = stores.find((store) => store.id === mergeRequest.sourceId);
+    const target = stores.find((store) => store.id === mergeRequest.targetId);
+    if (!source || !target) return;
+
+    setBusy(true);
+    setError(null);
+    try {
+      await mergeStoreLocations(mergeRequest.sourceId, mergeRequest.targetId);
+      setMergeRequest(null);
+      await loadStores();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Could not merge stores");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  const mergeSource = mergeRequest
+    ? stores.find((store) => store.id === mergeRequest.sourceId)
+    : null;
+  const mergeTarget = mergeRequest
+    ? stores.find((store) => store.id === mergeRequest.targetId)
+    : null;
+
   return (
     <section className="panel settings-page">
       <div className="panel-header">
         <div>
           <h1>Settings</h1>
-          <p className="subtitle">
-            Compare header styles and manage saved store labels.
-          </p>
+          <p className="subtitle">Manage saved store labels.</p>
         </div>
       </div>
 
@@ -64,39 +94,17 @@ export function SettingsPage({ topBarStyle, onTopBarStyleChange }: SettingsPageP
 
       <section className="settings-section">
         <div className="settings-section-header">
-          <h2>Header style</h2>
-          <p className="subtitle">Try a few sticky header separators live.</p>
-        </div>
-        <div className="settings-choice-grid" role="list" aria-label="Header style options">
-          {TOP_BAR_STYLE_OPTIONS.map((option) => {
-            const active = topBarStyle === option.id;
-            return (
-              <button
-                key={option.id}
-                type="button"
-                role="listitem"
-                className={`settings-choice${active ? " active" : ""}`}
-                aria-pressed={active}
-                onClick={() => onTopBarStyleChange(option.id)}
-              >
-                <strong>{option.label}</strong>
-                <span>{option.description}</span>
-              </button>
-            );
-          })}
-        </div>
-      </section>
-
-      <section className="settings-section">
-        <div className="settings-section-header">
           <h2>Store locations</h2>
           <p className="subtitle">
-            Saved store labels with map previews. Label photos from Browse with the pin icon, or
-            after upload.
+            Saved store labels with map previews. Label photos from Browse with the pin icon.
           </p>
         </div>
 
         {loading && <p className="status">Loading stores…</p>}
+
+        {!loading && stores.length > 1 && (
+          <StoreMergeMap stores={stores} onMergeRequest={handleMerge} />
+        )}
 
         {!loading && stores.length > 0 && (
           <ul className="store-list">
@@ -113,8 +121,11 @@ export function SettingsPage({ topBarStyle, onTopBarStyleChange }: SettingsPageP
                 <div className="store-list-main">
                   <strong>{store.name}</strong>
                   <span className="store-list-coords">
-                    {store.latitude.toFixed(5)}, {store.longitude.toFixed(5)} · {store.match_radius_m}m
-                    radius
+                    {store.latitude.toFixed(5)}, {store.longitude.toFixed(5)}
+                  </span>
+                  <span className="store-list-coords">
+                    {store.match_radius_m}m radius
+                    {store.photo_count != null ? ` · ${store.photo_count} photos` : ""}
                   </span>
                 </div>
                 <div className="store-list-actions">
@@ -122,11 +133,11 @@ export function SettingsPage({ topBarStyle, onTopBarStyleChange }: SettingsPageP
                     <>
                       <button
                         type="button"
-                        className="store-delete-confirm"
+                        className="danger-outline"
                         disabled={busy}
                         onClick={() => void handleDelete(store.id)}
                       >
-                        Confirm delete
+                        Confirm
                       </button>
                       <button
                         type="button"
@@ -137,13 +148,22 @@ export function SettingsPage({ topBarStyle, onTopBarStyleChange }: SettingsPageP
                       </button>
                     </>
                   ) : (
-                    <button
-                      type="button"
-                      className="ghost store-delete"
-                      onClick={() => setConfirmDeleteId(store.id)}
-                    >
-                      Delete
-                    </button>
+                    <>
+                      <button
+                        type="button"
+                        className="ghost"
+                        onClick={() => setEditingStore(store)}
+                      >
+                        Edit
+                      </button>
+                      <button
+                        type="button"
+                        className="ghost store-delete"
+                        onClick={() => setConfirmDeleteId(store.id)}
+                      >
+                        Delete
+                      </button>
+                    </>
                   )}
                 </div>
               </li>
@@ -157,6 +177,38 @@ export function SettingsPage({ topBarStyle, onTopBarStyleChange }: SettingsPageP
           </p>
         )}
       </section>
+
+      {editingStore && (
+        <StoreEditModal
+          store={editingStore}
+          onDone={(updated) => {
+            setStores((rows) => rows.map((row) => (row.id === updated.id ? updated : row)));
+            setEditingStore(null);
+          }}
+          onDismiss={() => setEditingStore(null)}
+        />
+      )}
+
+      {mergeRequest && mergeSource && mergeTarget && (
+        <div className="onboarding-backdrop" role="dialog" aria-modal="true">
+          <div className="onboarding-card store-merge-confirm">
+            <h2>Merge stores?</h2>
+            <p className="onboarding-body">
+              Move {mergeSource.photo_count ?? 0} photo
+              {mergeSource.photo_count === 1 ? "" : "s"} from <strong>{mergeSource.name}</strong> into{" "}
+              <strong>{mergeTarget.name}</strong>?
+            </p>
+            <div className="onboarding-actions">
+              <button type="button" className="ghost" disabled={busy} onClick={() => setMergeRequest(null)}>
+                Cancel
+              </button>
+              <button type="button" disabled={busy} onClick={() => void confirmMerge()}>
+                {busy ? "Merging…" : "Merge"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </section>
   );
 }

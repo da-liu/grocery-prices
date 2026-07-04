@@ -1,8 +1,10 @@
 from __future__ import annotations
 
+import logging
 import os
 import shutil
 import subprocess
+import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime
 from pathlib import Path
@@ -12,8 +14,10 @@ from zoneinfo import ZoneInfo
 from grocery_extract.catalog_db import (
     allocate_image_ids,
     blob_keys,
+    compute_extraction_timing_metrics,
     finalize_photo_extraction,
     find_photo_by_content_hash,
+    get_photo,
     get_photos_extraction_status,
     list_products_for_matching,
     next_image_id,
@@ -32,6 +36,7 @@ from grocery_extract.exif import (
 )
 from grocery_extract.extract_worker import ExtractionJob, enqueue_extraction
 from grocery_extract.pipeline import extract_from_upload
+from grocery_extract.photo_classifier import classify_photo_type
 from grocery_extract.photo_stores import image_needs_store_label
 from grocery_extract.product_matching import overlapping_product_keys, products_to_match_rows
 from grocery_extract.stores import store_from_gps
@@ -39,6 +44,7 @@ from grocery_extract.user_paths import user_photos_dir, user_root
 
 TORONTO = ZoneInfo("America/Toronto")
 DEFAULT_UPLOAD_WORKERS = int(os.environ.get("GROCERY_UPLOAD_WORKERS", "4"))
+logger = logging.getLogger(__name__)
 
 
 def _today_folder() -> str:
@@ -163,6 +169,8 @@ def accept_upload(
 
     image_id = image_id or next_image_id(user_id)
     photo_type = photo_type_from_ingest_source(source)
+    detected_receipt = False
+    classify_ms: int | None = None
 
     exif = extract_exif(upload_path) if upload_path.exists() else {}
     raw_dt = exif.get("DateTimeOriginal")
@@ -170,6 +178,18 @@ def accept_upload(
     captured_at = captured_at_from_exif(raw_dt)
 
     original_key, jpeg_key, _suffix = _persist_image(upload_path, image_id, date_folder, user_id)
+
+    if source == "upload":
+        jpg_path = user_photos_dir(user_id, date_folder) / "jpg" / f"{image_id}.jpg"
+        try:
+            classification = classify_photo_type(jpg_path)
+            classify_ms = classification.classify_ms
+            if classification.photo_type == "receipt":
+                photo_type = "receipt"
+                detected_receipt = True
+        except Exception:
+            # Keep shelf type when classification fails.
+            pass
 
     if user_stores is None:
         from grocery_extract.user_stores_db import list_user_stores_as_dicts
@@ -224,9 +244,11 @@ def accept_upload(
         "overlapping_products": [],
         "duplicate": False,
         "extraction_status": "pending",
+        "detected_receipt": detected_receipt,
         "_job": {
             "exif": exif,
             "photo_type": photo_type,
+            "classify_ms": classify_ms,
             "date_folder": date_folder,
             "captured_at": captured_at,
             "store_location_id": store_location_id,
@@ -242,6 +264,7 @@ def run_extraction(job: ExtractionJob) -> dict:
 
     jpg_path = user_photos_dir(job.user_id, job.date_folder) / "jpg" / f"{job.image_id}.jpg"
     try:
+        extraction_start = time.perf_counter()
         result = extract_from_upload(
             jpg_path,
             image_id=job.image_id,
@@ -251,12 +274,46 @@ def run_extraction(job: ExtractionJob) -> dict:
             skip_normalize=True,
         )
         products = [product.to_product_dict() for product in result.products]
+        timing = result.timing
+        if job.classify_ms is not None:
+            if timing is None:
+                from grocery_extract.schema import ExtractionTiming
+
+                timing = ExtractionTiming(classify_ms=job.classify_ms)
+            else:
+                timing = timing.model_copy(update={"classify_ms": job.classify_ms})
+        duration_ms = timing.duration_ms if timing else int((time.perf_counter() - extraction_start) * 1000)
+        photo = get_photo(job.user_id, job.image_id)
+        queue_wait_ms, total_ms = compute_extraction_timing_metrics(
+            created_at=photo["created_at"] if photo else None,
+            extraction_started_at=photo.get("extraction_started_at") if photo else None,
+            duration_ms=duration_ms,
+            classify_ms=timing.classify_ms if timing else None,
+        )
         product_count = finalize_photo_extraction(
             job.user_id,
             job.image_id,
             extractor=result.extractor,
             raw_response=result.raw_response,
             products=products,
+            duration_ms=duration_ms,
+            prep_ms=timing.prep_ms if timing else None,
+            llm_ms=timing.llm_ms if timing else None,
+            model=timing.model if timing else None,
+            photo_type=job.photo_type,
+            classify_ms=timing.classify_ms if timing else None,
+        )
+        logger.info(
+            "extraction_complete photo_id=%s user_id=%s extract_ms=%s queue_wait_ms=%s "
+            "classify_ms=%s model=%s products=%s total_ms=%s",
+            job.image_id,
+            job.user_id,
+            duration_ms,
+            queue_wait_ms,
+            timing.classify_ms if timing else None,
+            timing.model if timing else None,
+            product_count,
+            total_ms,
         )
 
         location = _location_for_accept(
@@ -335,6 +392,7 @@ def _job_from_accept_result(result: dict, *, user_id: str, source: str, api_key:
         captured_at=job_data["captured_at"],
         store_location_id=job_data["store_location_id"],
         content_hash=result["content_hash"],
+        classify_ms=job_data.get("classify_ms"),
     )
 
 

@@ -4,6 +4,7 @@ import base64
 from pathlib import Path
 
 from grocery_extract.cursor_extractor import (
+    ExtractImageResult,
     default_extract_model,
     current_extractor_name,
     extract_products_from_image,
@@ -100,10 +101,10 @@ def test_extract_products_from_image_posts_to_gemini_direct(tmp_path: Path, monk
 
     monkeypatch.setattr("grocery_extract.cursor_extractor.httpx.Client", FakeClient)
 
-    products, raw = extract_products_from_image(source)
+    result = extract_products_from_image(source)
 
-    assert products[0].product_name == "Milk"
-    assert raw.startswith('{"products"')
+    assert result.products[0].product_name == "Milk"
+    assert result.raw_response.startswith('{"products"')
     assert captured["url"] == (
         "https://generativelanguage.googleapis.com/v1beta/models/"
         "gemini-3.1-flash-lite:generateContent"
@@ -121,9 +122,12 @@ def test_extract_from_upload_uses_backend_extractor_label(tmp_path: Path, monkey
 
     monkeypatch.setattr(
         "grocery_extract.pipeline.extract_products_from_image",
-        lambda *_args, **_kwargs: (
-            [ExtractedProduct(product_name="Milk", price=4.99, category="dairy")],
-            '{"products":[{"product_name":"Milk","price":4.99,"category":"dairy"}]}',
+        lambda *_args, **_kwargs: ExtractImageResult(
+            products=[ExtractedProduct(product_name="Milk", price=4.99, category="dairy")],
+            raw_response='{"products":[{"product_name":"Milk","price":4.99,"category":"dairy"}]}',
+            prep_ms=1,
+            llm_ms=2,
+            model="gemini-3.1-flash-lite",
         ),
     )
     monkeypatch.setattr("grocery_extract.pipeline.current_extractor_name", lambda: "gemini_direct")

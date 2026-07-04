@@ -30,6 +30,10 @@ export const GRID_COLUMN_OPTIONS: { value: GridColumns; label: string }[] = [
 
 export const DEFAULT_GRID_COLUMNS: GridColumns = 1;
 
+export type ViewMode = "products" | "photos";
+
+export const DEFAULT_VIEW_MODE: ViewMode = "products";
+
 export interface BrowseQueryState {
   sort: SortOption;
   stores: string[];
@@ -42,6 +46,7 @@ export interface BrowseQueryState {
   capturedAfter: string | null;
   capturedBefore: string | null;
   gridColumns: GridColumns;
+  viewMode: ViewMode;
 }
 
 export const EMPTY_BROWSE_QUERY: BrowseQueryState = {
@@ -56,6 +61,7 @@ export const EMPTY_BROWSE_QUERY: BrowseQueryState = {
   capturedAfter: null,
   capturedBefore: null,
   gridColumns: DEFAULT_GRID_COLUMNS,
+  viewMode: DEFAULT_VIEW_MODE,
 };
 
 export interface PriceExtents {
@@ -674,7 +680,43 @@ export function mergeBrowseQuery(
   const cols = partial.gridColumns ?? merged.gridColumns;
   merged.gridColumns =
     cols === 1 || cols === 2 || cols === 3 || cols === 4 ? cols : DEFAULT_GRID_COLUMNS;
+  merged.viewMode = partial.viewMode === "photos" ? "photos" : partial.viewMode === "products" ? "products" : merged.viewMode;
   return merged;
+}
+
+export interface PhotoGroup {
+  imageId: string;
+  products: Product[];
+  capturedAt?: string;
+  store: string;
+  photoType: "shelf" | "receipt";
+}
+
+export function groupProductsByImageId(products: Product[]): PhotoGroup[] {
+  const groups = new Map<string, Product[]>();
+  for (const product of products) {
+    const bucket = groups.get(product.image_id) ?? [];
+    bucket.push(product);
+    groups.set(product.image_id, bucket);
+  }
+
+  return [...groups.entries()]
+    .map(([imageId, groupProducts]) => {
+      const sorted = [...groupProducts].sort((a, b) => {
+        const aTs = a.captured_at ?? "";
+        const bTs = b.captured_at ?? "";
+        return bTs.localeCompare(aTs);
+      });
+      const lead = sorted[0];
+      return {
+        imageId,
+        products: sorted,
+        capturedAt: lead.captured_at,
+        store: lead.location.store,
+        photoType: lead.photo_type ?? "shelf",
+      };
+    })
+    .sort((a, b) => (b.capturedAt ?? "").localeCompare(a.capturedAt ?? ""));
 }
 
 export function toggleListValue(list: string[], value: string): string[] {

@@ -32,6 +32,7 @@ class ExtractionJob:
     captured_at: str | None
     store_location_id: str | None
     content_hash: str
+    classify_ms: int | None = None
 
 
 def register_extraction_complete(callback: Callable[[str, dict[str, Any]], None]) -> None:

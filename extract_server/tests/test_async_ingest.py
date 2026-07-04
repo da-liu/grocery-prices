@@ -47,7 +47,7 @@ def test_run_extraction_completes_photo(tmp_path: Path, monkeypatch):
     monkeypatch.setattr("grocery_extract.user_paths.DATA_DIR", tmp_path / "data")
 
     from extract_server.users_db import init_db, register_user
-    from grocery_extract.catalog_db import get_photo
+    from grocery_extract.catalog_db import get_extraction, get_photo
 
     init_db()
     user = register_user("extract-user", "password12345")
@@ -78,7 +78,7 @@ def test_run_extraction_completes_photo(tmp_path: Path, monkeypatch):
     )
 
     def fake_extract(upload_path: Path, **kwargs):
-        from grocery_extract.schema import ExtractionResult, ExtractedProduct, ImageMeta
+        from grocery_extract.schema import ExtractionResult, ExtractedProduct, ExtractionTiming, ImageMeta
 
         return ExtractionResult(
             image_path=str(upload_path),
@@ -88,6 +88,7 @@ def test_run_extraction_completes_photo(tmp_path: Path, monkeypatch):
             ],
             raw_response='[{"product_name":"Milk","price":4.99,"category":"dairy"}]',
             extractor="cursor_sdk",
+            timing=ExtractionTiming(prep_ms=50, llm_ms=2000, duration_ms=2050, model="auto"),
         )
 
     monkeypatch.setattr("grocery_extract.ingest.extract_from_upload", fake_extract)
@@ -97,6 +98,17 @@ def test_run_extraction_completes_photo(tmp_path: Path, monkeypatch):
     assert result["product_count"] == 1
     photo = get_photo(user.id, accepted["image_id"])
     assert photo["extraction_status"] == "done"
+    assert photo.get("extraction_started_at") is not None
+
+    extraction = get_extraction(user.id, accepted["image_id"])
+    assert extraction is not None
+    assert extraction["duration_ms"] == 2050
+    assert extraction["prep_ms"] == 50
+    assert extraction["llm_ms"] == 2000
+    assert extraction["model"] == "auto"
+    assert extraction["queue_wait_ms"] is not None
+    assert extraction["queue_wait_ms"] >= 0
+    assert extraction["total_ms"] == extraction["queue_wait_ms"] + 2050
 
 
 def test_photos_status_endpoint(client, monkeypatch, tmp_path: Path):

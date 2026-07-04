@@ -151,7 +151,13 @@ function ManualProductForm({ saving, onSave, onCancel }: ManualProductFormProps)
   );
 }
 
-function PriceInsights({ insights }: { insights: PriceInsight[] }) {
+function PriceInsights({
+  insights,
+  onNavigateToProduct,
+}: {
+  insights: PriceInsight[];
+  onNavigateToProduct?: (productId: string) => void;
+}) {
   if (!insights.length) return null;
   return (
     <div className="price-insights">
@@ -159,17 +165,23 @@ function PriceInsights({ insights }: { insights: PriceInsight[] }) {
       <ul>
         {insights.map((insight) => (
           <li key={`${insight.product_id}-${insight.captured_at ?? insight.price}`}>
-            <span className="price-insights-label">{insightLabel(insight)}</span>
-            <span className="price-insights-value">{formatPrice(insight.price)}</span>
-            {insight.store && <span className="price-insights-store">{insight.store}</span>}
-            {insight.captured_at && (
-              <span className="price-insights-when" title={formatCapturedAt(insight.captured_at) ?? undefined}>
-                {formatCapturedAgo(insight.captured_at)}
-              </span>
-            )}
-            {formatDelta(insight.price_delta) && (
-              <span className="price-insights-delta">{formatDelta(insight.price_delta)}</span>
-            )}
+            <button
+              type="button"
+              className="price-insights-row"
+              onClick={() => onNavigateToProduct?.(insight.product_id)}
+            >
+              <span className="price-insights-label">{insightLabel(insight)}</span>
+              <span className="price-insights-value">{formatPrice(insight.price)}</span>
+              {insight.store && <span className="price-insights-store">{insight.store}</span>}
+              {insight.captured_at && (
+                <span className="price-insights-when" title={formatCapturedAt(insight.captured_at) ?? undefined}>
+                  {formatCapturedAgo(insight.captured_at)}
+                </span>
+              )}
+              {formatDelta(insight.price_delta) && (
+                <span className="price-insights-delta">{formatDelta(insight.price_delta)}</span>
+              )}
+            </button>
           </li>
         ))}
       </ul>
@@ -229,6 +241,8 @@ export function ProductCard({
   selectionMode,
   selected,
   onToggleSelect,
+  onNavigateToProduct,
+  highlighted,
 }: {
   product: Product;
   imgSrc: string;
@@ -244,6 +258,8 @@ export function ProductCard({
   selectionMode?: boolean;
   selected?: boolean;
   onToggleSelect?: (productId: string) => void;
+  onNavigateToProduct?: (productId: string) => void;
+  highlighted?: boolean;
 }) {
   const isEmpty = product.extraction_empty === true;
   const { store } = product.location;
@@ -285,7 +301,8 @@ export function ProductCard({
 
   return (
     <article
-      className={`card${isEmpty ? " card--empty" : ""}${compact ? " card--compact" : ""}${selected ? " card--selected" : ""}`}
+      id={`product-${product.id}`}
+      className={`card${isEmpty ? " card--empty" : ""}${compact ? " card--compact" : ""}${selected ? " card--selected" : ""}${highlighted ? " card--highlight" : ""}`}
       onClick={selecting ? () => handleToggleSelect() : undefined}
     >
       {selecting && onToggleSelect && (
@@ -459,7 +476,10 @@ export function ProductCard({
                 </div>
                 {product.promo && <p className="promo">{product.promo}</p>}
                 {product.price_insights && product.price_insights.length > 0 && (
-                  <PriceInsights insights={product.price_insights} />
+                  <PriceInsights
+                    insights={product.price_insights}
+                    onNavigateToProduct={onNavigateToProduct}
+                  />
                 )}
               </>
             )}

@@ -1,6 +1,6 @@
-import { useEffect } from "react";
+import { useEffect, useRef, useState } from "react";
 import { DEV_FORCE_LOADING, DEV_PREVIEW_UPLOAD } from "./devPreview";
-import { useUploadQueue } from "./UploadQueueContext";
+import { useUploadQueueStatus } from "./UploadQueueContext";
 import type { UploadQueueItem } from "./uploadQueue";
 
 function buildPreviewUploadItems(scenario: {
@@ -67,7 +67,7 @@ function statusLabel(item: UploadQueueItem): string {
     case "queued":
       return "Waiting…";
     case "processing":
-      return "Reading prices…";
+      return item.detectedReceipt ? "Detected receipt · reading prices…" : "Reading prices…";
     case "awaiting_duplicate":
       return "Duplicate detected";
     case "done":
@@ -104,17 +104,10 @@ function ChevronIcon({ expanded }: { expanded: boolean }) {
   );
 }
 
-export function UploadStatusBar() {
-  const {
-    items,
-    toast,
-    activeCount,
-    queuedCount,
-    dismissToast,
-    clearFinished,
-    expanded,
-    setExpanded,
-  } = useUploadQueue();
+function useUploadStatusDisplay() {
+  const { items, activeCount, queuedCount, clearFinished } = useUploadQueueStatus();
+  const [expanded, setExpanded] = useState(false);
+  const itemCountRef = useRef(items.length);
 
   const processing = items.some((item) => item.status === "processing");
   const previewActive = DEV_FORCE_LOADING && PREVIEW_UPLOAD_ITEMS.length > 0;
@@ -132,22 +125,27 @@ export function UploadStatusBar() {
 
   useEffect(() => {
     if (previewActive) setExpanded(true);
-  }, [previewActive, setExpanded]);
+  }, [previewActive]);
 
   useEffect(() => {
-    if (!toast) return;
-    const timer = window.setTimeout(dismissToast, 6000);
-    return () => window.clearTimeout(timer);
-  }, [toast, dismissToast]);
+    if (items.length > itemCountRef.current) {
+      setExpanded(true);
+    }
+    itemCountRef.current = items.length;
+  }, [items.length]);
 
   useEffect(() => {
-    if (activeCount === 0 && items.some((item) => item.status === "done" || item.status === "failed" || item.status === "skipped")) {
+    if (
+      activeCount === 0 &&
+      items.some(
+        (item) =>
+          item.status === "done" || item.status === "failed" || item.status === "skipped",
+      )
+    ) {
       const timer = window.setTimeout(clearFinished, 15000);
       return () => window.clearTimeout(timer);
     }
   }, [activeCount, items, clearFinished]);
-
-  if (!hasPanel && !toast) return null;
 
   const pillLabel = displayProcessing
     ? displayQueuedCount > 0
@@ -157,50 +155,104 @@ export function UploadStatusBar() {
       ? `${displayQueuedCount} photo${displayQueuedCount === 1 ? "" : "s"} queued`
       : "Processing photos…";
 
+  return {
+    displayItems,
+    hasPanel,
+    displayActiveCount,
+    expanded,
+    setExpanded,
+    pillLabel,
+  };
+}
+
+export function UploadStatusPanel() {
+  const {
+    displayItems,
+    hasPanel,
+    displayActiveCount,
+    expanded,
+    setExpanded,
+    pillLabel,
+  } = useUploadStatusDisplay();
+
+  if (!hasPanel) return null;
+
+  return (
+    <section className="upload-status" aria-live="polite">
+      <button
+        type="button"
+        className="upload-status-pill"
+        aria-expanded={expanded}
+        onClick={() => setExpanded(!expanded)}
+      >
+        {displayActiveCount > 0 && <Spinner />}
+        <span>{pillLabel}</span>
+        <ChevronIcon expanded={expanded} />
+      </button>
+
+      <div className="upload-status-sheet" hidden={!expanded}>
+          <p className="upload-status-hint">
+            You can keep browsing. New products appear when each photo finishes.
+          </p>
+          <ul className="upload-status-list">
+            {displayItems.map((item) => (
+              <li
+                key={item.id}
+                className={`upload-status-item upload-status-item--${item.status}`}
+              >
+                {item.thumbnailUrl ? (
+                  <img src={item.thumbnailUrl} alt="" className="upload-status-thumb" />
+                ) : (
+                  <div className="upload-status-thumb" aria-hidden="true" />
+                )}
+                <div className="upload-status-copy">
+                  <strong>{item.label}</strong>
+                  <span>{statusLabel(item)}</span>
+                </div>
+                {(item.status === "preparing" ||
+                  item.status === "queued" ||
+                  item.status === "processing") && <Spinner />}
+              </li>
+            ))}
+          </ul>
+        </div>
+    </section>
+  );
+}
+
+export function UploadStatusToasts() {
+  const { toast, unknownStoreHint, dismissToast, dismissUnknownStoreHint } = useUploadQueueStatus();
+
+  useEffect(() => {
+    if (!unknownStoreHint) return;
+    const timer = window.setTimeout(dismissUnknownStoreHint, 8000);
+    return () => window.clearTimeout(timer);
+  }, [unknownStoreHint, dismissUnknownStoreHint]);
+
+  useEffect(() => {
+    if (!toast) return;
+    const timer = window.setTimeout(dismissToast, 6000);
+    return () => window.clearTimeout(timer);
+  }, [toast, dismissToast]);
+
+  if (!toast && !unknownStoreHint) return null;
+
   return (
     <>
-      {hasPanel && (
-        <section className="upload-status" aria-live="polite">
+      {unknownStoreHint && (
+        <div className="upload-toast upload-toast--hint" role="status">
+          <span>
+            Some photos have an unknown store. Tap the pin on a product card to label.
+          </span>
           <button
             type="button"
-            className="upload-status-pill"
-            aria-expanded={expanded}
-            onClick={() => setExpanded(!expanded)}
+            className="upload-toast-dismiss"
+            aria-label="Dismiss"
+            onClick={dismissUnknownStoreHint}
           >
-            {displayActiveCount > 0 && <Spinner />}
-            <span>{pillLabel}</span>
-            <ChevronIcon expanded={expanded} />
+            ×
           </button>
-
-          {expanded && (
-            <div className="upload-status-sheet">
-              <p className="upload-status-hint">
-                You can keep browsing. New products appear when each photo finishes.
-              </p>
-              <ul className="upload-status-list">
-                {displayItems.map((item) => (
-                  <li
-                    key={item.id}
-                    className={`upload-status-item upload-status-item--${item.status}`}
-                  >
-                    {item.thumbnailUrl ? (
-                      <img src={item.thumbnailUrl} alt="" className="upload-status-thumb" />
-                    ) : (
-                      <div className="upload-status-thumb" aria-hidden="true" />
-                    )}
-                    <div className="upload-status-copy">
-                      <strong>{item.label}</strong>
-                      <span>{statusLabel(item)}</span>
-                    </div>
-                    {(item.status === "preparing" ||
-                      item.status === "queued" ||
-                      item.status === "processing") && <Spinner />}
-                  </li>
-                ))}
-              </ul>
-            </div>
-          )}
-        </section>
+        </div>
       )}
 
       {toast && (
@@ -211,11 +263,25 @@ export function UploadStatusBar() {
               : `Added ${toast.productCount} product${toast.productCount === 1 ? "" : "s"}`}
             {toast.note ? ` ${toast.note}` : ""}
           </span>
-          <button type="button" className="upload-toast-dismiss" aria-label="Dismiss" onClick={dismissToast}>
+          <button
+            type="button"
+            className="upload-toast-dismiss"
+            aria-label="Dismiss"
+            onClick={dismissToast}
+          >
             ×
           </button>
         </div>
       )}
+    </>
+  );
+}
+
+export function UploadStatusBar() {
+  return (
+    <>
+      <UploadStatusPanel />
+      <UploadStatusToasts />
     </>
   );
 }

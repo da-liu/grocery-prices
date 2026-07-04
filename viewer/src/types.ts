@@ -13,6 +13,12 @@ export interface StoreLocation {
   longitude: number;
   match_radius_m: number;
   maps_url: string | null;
+  anchors?: { latitude: number; longitude: number }[] | null;
+  photo_count?: number;
+}
+
+export interface CreateStoreLocationResult extends StoreLocation {
+  matched_existing?: boolean;
 }
 
 export interface StoreLabelRequest {
@@ -68,5 +74,6 @@ export interface Product {
   captured_at?: string;
   location: Location;
   extraction_empty?: boolean;
+  photo_type?: "shelf" | "receipt";
   price_insights?: PriceInsight[];
 }

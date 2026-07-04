@@ -1,5 +1,13 @@
 import { describe, expect, it } from "vitest";
-import { describeRequestError } from "./api";
+import { ApiError, describeRequestError, isAuthError } from "./api";
+
+describe("isAuthError", () => {
+  it("returns true only for 401 ApiError", () => {
+    expect(isAuthError(new ApiError("Sign in required", 401))).toBe(true);
+    expect(isAuthError(new ApiError("Server error", 500))).toBe(false);
+    expect(isAuthError(new Error("Failed to fetch"))).toBe(false);
+  });
+});
 
 describe("describeRequestError", () => {
   it("keeps non-network error messages unchanged", () => {

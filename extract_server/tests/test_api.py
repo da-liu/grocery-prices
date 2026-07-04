@@ -2,6 +2,7 @@ from unittest.mock import patch
 import uuid
 
 import json
+from fastapi.testclient import TestClient
 
 
 def test_health_requires_auth(client):
@@ -25,7 +26,7 @@ def test_register_with_email(client):
     assert login.status_code == 200
 
 
-def test_register_login_and_scoped_products(client):
+def test_register_login_and_scoped_products(client, app):
     reg = client.post(
         "/api/auth/register",
         json={"username": "testuser", "password": "password123"},
@@ -39,6 +40,14 @@ def test_register_login_and_scoped_products(client):
     me = client.get("/api/auth/me", headers={"Authorization": f"Bearer {token}"})
     assert me.status_code == 200
     assert me.json()["username"] == "testuser"
+    assert me.json()["token"] == token
+
+    cookie_client = TestClient(app)
+    cookie_client.cookies.set("grocery_session", token)
+    me_cookie = cookie_client.get("/api/auth/me")
+    assert me_cookie.status_code == 200
+    assert me_cookie.json()["username"] == "testuser"
+    assert me_cookie.json()["token"] == token
 
     unauth = client.get("/api/products")
     assert unauth.status_code == 401
@@ -229,3 +238,67 @@ def test_store_locations_crud(client):
     deleted = client.delete(f"/api/store-locations/{store_id}", headers=headers)
     assert deleted.status_code == 200
     assert client.get("/api/store-locations", headers=headers).json() == []
+
+
+def test_store_location_snap_and_merge(client):
+    username = f"stores_merge_{uuid.uuid4().hex[:8]}"
+    reg = client.post(
+        "/api/auth/register",
+        json={"username": username, "password": "password123"},
+    )
+    assert reg.status_code == 200, reg.text
+    token = reg.json()["token"]
+    headers = {"Authorization": f"Bearer {token}"}
+
+    first = client.post(
+        "/api/store-locations",
+        headers=headers,
+        json={
+            "name": "Farm Boy",
+            "latitude": 43.639428,
+            "longitude": -79.380294,
+            "match_radius_m": 150,
+        },
+    )
+    assert first.status_code == 200, first.text
+    first_store = first.json()
+    assert first_store["matched_existing"] is False
+
+    second = client.post(
+        "/api/store-locations",
+        headers=headers,
+        json={
+            "name": "Farm Boy Duplicate",
+            "latitude": 43.639606,
+            "longitude": -79.380394,
+            "match_radius_m": 150,
+        },
+    )
+    assert second.status_code == 200, second.text
+    second_store = second.json()
+    assert second_store["matched_existing"] is True
+    assert second_store["id"] == first_store["id"]
+
+    third = client.post(
+        "/api/store-locations",
+        headers=headers,
+        json={
+            "name": "Longos",
+            "latitude": 43.642394,
+            "longitude": -79.381181,
+            "match_radius_m": 150,
+        },
+    )
+    assert third.status_code == 200, third.text
+    longos_id = third.json()["id"]
+
+    merged = client.post(
+        "/api/store-locations/merge",
+        headers=headers,
+        json={"source_id": longos_id, "target_id": first_store["id"]},
+    )
+    assert merged.status_code == 200, merged.text
+    assert merged.json()["id"] == first_store["id"]
+
+    listed = client.get("/api/store-locations", headers=headers)
+    assert len(listed.json()) == 1

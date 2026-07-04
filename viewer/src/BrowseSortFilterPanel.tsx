@@ -165,6 +165,46 @@ export function BrowseSortFilterPanel({
 
         <div className="browse-filter-body">
           <fieldset className="browse-filter-group">
+            <legend>View</legend>
+            <div className="browse-tristate">
+              <button
+                type="button"
+                className={`browse-tristate-btn${query.viewMode === "products" ? " active" : ""}`}
+                aria-pressed={query.viewMode === "products"}
+                onClick={() => update("viewMode", "products")}
+              >
+                By product
+              </button>
+              <button
+                type="button"
+                className={`browse-tristate-btn${query.viewMode === "photos" ? " active" : ""}`}
+                aria-pressed={query.viewMode === "photos"}
+                onClick={() => update("viewMode", "photos")}
+              >
+                By photo
+              </button>
+            </div>
+          </fieldset>
+
+          <fieldset className="browse-filter-group">
+            <legend>Cards per row (mobile)</legend>
+            <p className="browse-filter-hint">Desktop fits as many cards as the screen allows.</p>
+            <div className="browse-tristate browse-grid-cols">
+              {GRID_COLUMN_OPTIONS.map((opt) => (
+                <button
+                  key={opt.value}
+                  type="button"
+                  className={`browse-tristate-btn${query.gridColumns === opt.value ? " active" : ""}`}
+                  aria-pressed={query.gridColumns === opt.value}
+                  onClick={() => update("gridColumns", opt.value)}
+                >
+                  {opt.label}
+                </button>
+              ))}
+            </div>
+          </fieldset>
+
+          <fieldset className="browse-filter-group">
             <legend>Sort</legend>
             <div className="browse-sort-list">
               {SORT_OPTIONS.map((opt) => (
@@ -259,24 +299,6 @@ export function BrowseSortFilterPanel({
               onChange({ ...query, capturedAfter, capturedBefore })
             }
           />
-
-          <fieldset className="browse-filter-group">
-            <legend>Cards per row (mobile)</legend>
-            <p className="browse-filter-hint">Desktop fits as many cards as the screen allows.</p>
-            <div className="browse-tristate browse-grid-cols">
-              {GRID_COLUMN_OPTIONS.map((opt) => (
-                <button
-                  key={opt.value}
-                  type="button"
-                  className={`browse-tristate-btn${query.gridColumns === opt.value ? " active" : ""}`}
-                  aria-pressed={query.gridColumns === opt.value}
-                  onClick={() => update("gridColumns", opt.value)}
-                >
-                  {opt.label}
-                </button>
-              ))}
-            </div>
-          </fieldset>
         </div>
 
         <footer className="browse-filter-footer">

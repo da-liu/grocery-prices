@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from grocery_extract.catalog_db import (
     add_sighting,
+    extraction_timing_payload,
     get_extraction,
     get_photo,
     list_product_rows,
@@ -80,6 +81,8 @@ def reextract_photo(user_id: str, image_id: str, *, api_key: str | None = None) 
     )
 
     products = [product.to_product_dict() for product in result.products]
+    timing = result.timing
+    duration_ms = timing.duration_ms if timing else None
     product_count = replace_photo_extraction(
         user_id,
         image_id,
@@ -87,6 +90,12 @@ def reextract_photo(user_id: str, image_id: str, *, api_key: str | None = None) 
         raw_response=result.raw_response,
         products=products,
         reextracted=True,
+        duration_ms=duration_ms,
+        prep_ms=timing.prep_ms if timing else None,
+        llm_ms=timing.llm_ms if timing else None,
+        model=timing.model if timing else None,
+        photo_type=photo["type"],
+        classify_ms=timing.classify_ms if timing else None,
     )
 
     from grocery_extract.product_matching import overlapping_product_keys
@@ -96,10 +105,14 @@ def reextract_photo(user_id: str, image_id: str, *, api_key: str | None = None) 
     existing_rows = [row for row in all_products if row["image_id"] != image_id]
     overlaps = overlapping_product_keys(new_rows, existing_rows)
 
+    updated = get_extraction(user_id, image_id)
+    timing = extraction_timing_payload(updated) if updated else None
+
     return {
         "image_id": image_id,
         "products": products,
         "product_count": product_count,
         "overlapping_products": overlaps,
         "extraction_empty": len(products) == 0,
+        **({"extraction_timing": timing} if timing else {}),
     }

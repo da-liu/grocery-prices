@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import sqlite3
 import uuid
 from datetime import datetime, timezone
 from pathlib import Path
@@ -105,6 +106,78 @@ def init_catalog_tables() -> None:
             )
         if "extraction_error" not in photo_columns:
             conn.execute("ALTER TABLE photos ADD COLUMN extraction_error TEXT")
+        _ensure_photo_metric_columns(conn)
+        _ensure_extraction_metric_columns(conn)
+
+
+def _ensure_photo_metric_columns(conn: sqlite3.Connection) -> None:
+    columns = {row[1] for row in conn.execute("PRAGMA table_info(photos)")}
+    if "extraction_started_at" not in columns:
+        conn.execute("ALTER TABLE photos ADD COLUMN extraction_started_at TEXT")
+
+
+def _ensure_extraction_metric_columns(conn: sqlite3.Connection) -> None:
+    columns = {row[1] for row in conn.execute("PRAGMA table_info(extractions)")}
+    additions = {
+        "duration_ms": "INTEGER",
+        "prep_ms": "INTEGER",
+        "llm_ms": "INTEGER",
+        "model": "TEXT",
+        "product_count": "INTEGER",
+        "photo_type": "TEXT",
+        "classify_ms": "INTEGER",
+        "queue_wait_ms": "INTEGER",
+        "total_ms": "INTEGER",
+    }
+    for name, col_type in additions.items():
+        if name not in columns:
+            conn.execute(f"ALTER TABLE extractions ADD COLUMN {name} {col_type}")
+
+
+def _parse_iso_datetime(value: str) -> datetime:
+    parsed = datetime.fromisoformat(value.replace("Z", "+00:00"))
+    if parsed.tzinfo is None:
+        return parsed.replace(tzinfo=timezone.utc)
+    return parsed
+
+
+def _ms_between(start_iso: str | None, end_iso: str | None) -> int | None:
+    if not start_iso or not end_iso:
+        return None
+    try:
+        delta_ms = (_parse_iso_datetime(end_iso) - _parse_iso_datetime(start_iso)).total_seconds() * 1000
+        return max(0, int(delta_ms))
+    except ValueError:
+        return None
+
+
+def compute_extraction_timing_metrics(
+    *,
+    created_at: str | None,
+    extraction_started_at: str | None,
+    duration_ms: int | None,
+    classify_ms: int | None,
+) -> tuple[int | None, int | None]:
+    queue_wait_ms = _ms_between(created_at, extraction_started_at)
+    if queue_wait_ms is None and duration_ms is None and classify_ms is None:
+        return None, None
+    total_ms = (queue_wait_ms or 0) + (classify_ms or 0) + (duration_ms or 0)
+    return queue_wait_ms, total_ms
+
+
+def extraction_timing_payload(row: dict[str, Any]) -> dict[str, Any] | None:
+    if row.get("duration_ms") is None and row.get("llm_ms") is None:
+        return None
+    payload = {
+        "classify_ms": row.get("classify_ms"),
+        "prep_ms": row.get("prep_ms"),
+        "llm_ms": row.get("llm_ms"),
+        "extract_ms": row.get("duration_ms"),
+        "queue_wait_ms": row.get("queue_wait_ms"),
+        "total_ms": row.get("total_ms"),
+        "model": row.get("model"),
+    }
+    return {key: value for key, value in payload.items() if value is not None}
 
 
 def blob_keys(
@@ -237,7 +310,8 @@ def get_photo(user_id: str, photo_id: str) -> dict[str, Any] | None:
             """
             SELECT id, user_id, type, original_blob_key, jpeg_blob_key, content_hash,
                    gps_latitude, gps_longitude, captured_at, store_location_id,
-                   created_at, updated_at, extraction_status, extraction_error
+                   created_at, updated_at, extraction_status, extraction_error,
+                   extraction_started_at
             FROM photos
             WHERE user_id = ? AND id = ?
             """,
@@ -379,13 +453,37 @@ def set_extraction_status(
 ) -> None:
     now = _utc_now()
     with _connect() as conn:
+        if status == "processing":
+            conn.execute(
+                """
+                UPDATE photos
+                SET extraction_status = ?, extraction_error = ?, updated_at = ?,
+                    extraction_started_at = ?
+                WHERE user_id = ? AND id = ?
+                """,
+                (status, error, now, now, user_id, photo_id),
+            )
+        else:
+            conn.execute(
+                """
+                UPDATE photos
+                SET extraction_status = ?, extraction_error = ?, updated_at = ?
+                WHERE user_id = ? AND id = ?
+                """,
+                (status, error, now, user_id, photo_id),
+            )
+
+
+def set_photo_type(user_id: str, photo_id: str, photo_type: str) -> None:
+    now = _utc_now()
+    with _connect() as conn:
         conn.execute(
             """
             UPDATE photos
-            SET extraction_status = ?, extraction_error = ?, updated_at = ?
+            SET type = ?, updated_at = ?
             WHERE user_id = ? AND id = ?
             """,
-            (status, error, now, user_id, photo_id),
+            (photo_type, now, user_id, photo_id),
         )
 
 
@@ -396,17 +494,54 @@ def finalize_photo_extraction(
     extractor: str,
     raw_response: str | None,
     products: list[dict[str, Any]],
+    duration_ms: int | None = None,
+    prep_ms: int | None = None,
+    llm_ms: int | None = None,
+    model: str | None = None,
+    photo_type: str | None = None,
+    classify_ms: int | None = None,
 ) -> int:
     now = _utc_now()
     with _connect() as conn:
         conn.execute("BEGIN IMMEDIATE")
+        photo = conn.execute(
+            """
+            SELECT created_at, extraction_started_at
+            FROM photos
+            WHERE user_id = ? AND id = ?
+            """,
+            (user_id, photo_id),
+        ).fetchone()
+        queue_wait_ms, total_ms = compute_extraction_timing_metrics(
+            created_at=photo["created_at"] if photo else None,
+            extraction_started_at=photo["extraction_started_at"] if photo else None,
+            duration_ms=duration_ms,
+            classify_ms=classify_ms,
+        )
         conn.execute(
             """
             INSERT INTO extractions (
-                user_id, photo_id, extractor, extracted_at, raw_response
-            ) VALUES (?, ?, ?, ?, ?)
+                user_id, photo_id, extractor, extracted_at, raw_response,
+                duration_ms, prep_ms, llm_ms, model, product_count, photo_type, classify_ms,
+                queue_wait_ms, total_ms
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """,
-            (user_id, photo_id, extractor, _toronto_now(), raw_response),
+            (
+                user_id,
+                photo_id,
+                extractor,
+                _toronto_now(),
+                raw_response,
+                duration_ms,
+                prep_ms,
+                llm_ms,
+                model,
+                len(products),
+                photo_type,
+                classify_ms,
+                queue_wait_ms,
+                total_ms,
+            ),
         )
         for index, product in enumerate(products, start=1):
             product_name, brand, price, extras = _split_product_fields(product)
@@ -457,6 +592,11 @@ def save_photo_ingest(
     extractor: str,
     raw_response: str | None,
     products: list[dict[str, Any]],
+    duration_ms: int | None = None,
+    prep_ms: int | None = None,
+    llm_ms: int | None = None,
+    model: str | None = None,
+    classify_ms: int | None = None,
 ) -> int:
     now = _utc_now()
     with _connect() as conn:
@@ -484,13 +624,36 @@ def save_photo_ingest(
                 now,
             ),
         )
+        queue_wait_ms, total_ms = compute_extraction_timing_metrics(
+            created_at=now,
+            extraction_started_at=now,
+            duration_ms=duration_ms,
+            classify_ms=classify_ms,
+        )
         conn.execute(
             """
             INSERT INTO extractions (
-                user_id, photo_id, extractor, extracted_at, raw_response
-            ) VALUES (?, ?, ?, ?, ?)
+                user_id, photo_id, extractor, extracted_at, raw_response,
+                duration_ms, prep_ms, llm_ms, model, product_count, photo_type, classify_ms,
+                queue_wait_ms, total_ms
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """,
-            (user_id, photo_id, extractor, _toronto_now(), raw_response),
+            (
+                user_id,
+                photo_id,
+                extractor,
+                _toronto_now(),
+                raw_response,
+                duration_ms,
+                prep_ms,
+                llm_ms,
+                model,
+                len(products),
+                photo_type,
+                classify_ms,
+                queue_wait_ms,
+                total_ms,
+            ),
         )
         for index, product in enumerate(products, start=1):
             product_name, brand, price, extras = _split_product_fields(product)
@@ -527,28 +690,55 @@ def replace_photo_extraction(
     raw_response: str | None,
     products: list[dict[str, Any]],
     reextracted: bool = False,
+    duration_ms: int | None = None,
+    prep_ms: int | None = None,
+    llm_ms: int | None = None,
+    model: str | None = None,
+    photo_type: str | None = None,
+    classify_ms: int | None = None,
 ) -> int:
     now = _utc_now()
     with _connect() as conn:
         conn.execute("BEGIN IMMEDIATE")
         extracted_at = _toronto_now()
+        queue_wait_ms, total_ms = compute_extraction_timing_metrics(
+            created_at=now,
+            extraction_started_at=now,
+            duration_ms=duration_ms,
+            classify_ms=classify_ms,
+        )
+        timing_sets = (
+            ", duration_ms = ?, prep_ms = ?, llm_ms = ?, model = ?, product_count = ?, "
+            "photo_type = ?, classify_ms = ?, queue_wait_ms = ?, total_ms = ?"
+        )
+        timing_values = (
+            duration_ms,
+            prep_ms,
+            llm_ms,
+            model,
+            len(products),
+            photo_type,
+            classify_ms,
+            queue_wait_ms,
+            total_ms,
+        )
         if reextracted:
             conn.execute(
-                """
+                f"""
                 UPDATE extractions
-                SET extractor = ?, extracted_at = ?, reextracted_at = ?, raw_response = ?
+                SET extractor = ?, extracted_at = ?, reextracted_at = ?, raw_response = ?{timing_sets}
                 WHERE user_id = ? AND photo_id = ?
                 """,
-                (extractor, extracted_at, extracted_at, raw_response, user_id, photo_id),
+                (extractor, extracted_at, extracted_at, raw_response, *timing_values, user_id, photo_id),
             )
         else:
             conn.execute(
-                """
+                f"""
                 UPDATE extractions
-                SET extractor = ?, extracted_at = ?, raw_response = ?
+                SET extractor = ?, extracted_at = ?, raw_response = ?{timing_sets}
                 WHERE user_id = ? AND photo_id = ?
                 """,
-                (extractor, extracted_at, raw_response, user_id, photo_id),
+                (extractor, extracted_at, raw_response, *timing_values, user_id, photo_id),
             )
         conn.execute(
             "DELETE FROM product_sightings WHERE user_id = ? AND photo_id = ?",
@@ -585,7 +775,8 @@ def get_extraction(user_id: str, photo_id: str) -> dict[str, Any] | None:
         row = conn.execute(
             """
             SELECT user_id, photo_id, extractor, extracted_at, reextracted_at,
-                   manually_edited_at, raw_response
+                   manually_edited_at, raw_response, duration_ms, prep_ms, llm_ms, model,
+                   product_count, photo_type, classify_ms, queue_wait_ms, total_ms
             FROM extractions
             WHERE user_id = ? AND photo_id = ?
             """,
@@ -907,6 +1098,7 @@ def list_product_rows(user_id: str) -> list[dict[str, Any]]:
                     "price_currency": "CAD",
                     "captured_at": captured_at,
                     "location": location,
+                    "photo_type": photo_dict.get("type") or "shelf",
                     "product_name": "No products extracted",
                     "category": "pantry",
                     "price": None,
@@ -925,6 +1117,7 @@ def list_product_rows(user_id: str) -> list[dict[str, Any]]:
                     "price_currency": "CAD",
                     "captured_at": captured_at,
                     "location": location,
+                    "photo_type": photo_dict.get("type") or "shelf",
                     **merged,
                 }
             )
@@ -1007,7 +1200,17 @@ def get_photos_extraction_status(user_id: str, image_ids: list[str]) -> list[dic
             """,
             (user_id, *image_ids),
         ).fetchall()
+        extractions = conn.execute(
+            f"""
+            SELECT photo_id, duration_ms, prep_ms, llm_ms, model, classify_ms,
+                   queue_wait_ms, total_ms
+            FROM extractions
+            WHERE user_id = ? AND photo_id IN ({placeholders})
+            """,
+            (user_id, *image_ids),
+        ).fetchall()
 
+    extraction_by_photo = {row["photo_id"]: dict(row) for row in extractions}
     sightings_by_photo: dict[str, list[dict[str, Any]]] = {}
     for row in sightings:
         merged = _merge_sighting_row(row)
@@ -1037,6 +1240,9 @@ def get_photos_extraction_status(user_id: str, image_ids: list[str]) -> list[dic
         }
         if photo.get("extraction_error"):
             payload["extraction_error"] = photo["extraction_error"]
+        timing = extraction_timing_payload(extraction_by_photo.get(image_id, {}))
+        if timing:
+            payload["extraction_timing"] = timing
         results.append(payload)
     return results
 

@@ -12,7 +12,7 @@ from grocery_extract.exif import (
     date_folder_from_exif,
     extract_exif,
 )
-from grocery_extract.schema import ExtractionResult, ExtractedProduct, ImageMeta
+from grocery_extract.schema import ExtractionResult, ExtractedProduct, ExtractionTiming, ImageMeta
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -80,7 +80,7 @@ def extract_from_upload(
                 captured_at=captured_at_from_exif(raw_dt),
                 date_folder=date_folder,
             )
-            products, raw = extract_products_from_image(
+            products_result = extract_products_from_image(
                 jpg_path,
                 api_key=api_key,
                 prompt_variant=prompt_variant,
@@ -88,9 +88,15 @@ def extract_from_upload(
             return ExtractionResult(
                 image_path=find_image_path(stem, date_folder) if (ROOT / "data").exists() else str(jpg_path),
                 meta=meta,
-                products=products,
-                raw_response=raw,
+                products=products_result.products,
+                raw_response=products_result.raw_response,
                 extractor=current_extractor_name(),
+                timing=ExtractionTiming(
+                    prep_ms=products_result.prep_ms,
+                    llm_ms=products_result.llm_ms,
+                    duration_ms=products_result.prep_ms + products_result.llm_ms,
+                    model=products_result.model,
+                ),
             )
 
     raw_dt = meta_exif.get("DateTimeOriginal")
@@ -103,7 +109,7 @@ def extract_from_upload(
         captured_at=captured_at_from_exif(raw_dt),
         date_folder=date_folder,
     )
-    products, raw = extract_products_from_image(
+    products_result = extract_products_from_image(
         jpg_path,
         api_key=api_key,
         prompt_variant=prompt_variant,
@@ -111,12 +117,17 @@ def extract_from_upload(
     return ExtractionResult(
         image_path=find_image_path(stem, date_folder) if (ROOT / "data").exists() else str(jpg_path),
         meta=meta,
-        products=products,
-        raw_response=raw,
+        products=products_result.products,
+        raw_response=products_result.raw_response,
         extractor=current_extractor_name(),
+        timing=ExtractionTiming(
+            prep_ms=products_result.prep_ms,
+            llm_ms=products_result.llm_ms,
+            duration_ms=products_result.prep_ms + products_result.llm_ms,
+            model=products_result.model,
+        ),
     )
 
 
 def extract_from_existing_jpg(jpg_path: Path, *, api_key: str | None = None) -> list[ExtractedProduct]:
-    products, _ = extract_products_from_image(jpg_path, api_key=api_key)
-    return products
+    return extract_products_from_image(jpg_path, api_key=api_key).products

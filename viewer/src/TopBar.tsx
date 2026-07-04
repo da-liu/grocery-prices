@@ -21,7 +21,6 @@ interface TopBarProps {
   onNavigate: (page: Page) => void;
   photoInputRef: RefObject<HTMLInputElement | null>;
   onPhotosSelected: (files: File[]) => void;
-  onReceiptsSelected: (files: File[]) => void;
   showSortFilter?: boolean;
   sortFilterOpen?: boolean;
   activeChipCount?: number;
@@ -103,7 +102,6 @@ export function TopBar({
   onNavigate,
   photoInputRef,
   onPhotosSelected,
-  onReceiptsSelected,
   showSortFilter = false,
   sortFilterOpen = false,
   activeChipCount = 0,
@@ -116,7 +114,6 @@ export function TopBar({
 }: TopBarProps) {
   const [menuOpen, setMenuOpen] = useState(false);
   const [elevated, setElevated] = useState(false);
-  const receiptRef = useRef<HTMLInputElement>(null);
   const menuRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -183,19 +180,6 @@ export function TopBar({
           className="sr-only"
           onChange={(e) => {
             handlePhotos(e.target.files);
-            e.target.value = "";
-          }}
-        />
-        <input
-          ref={receiptRef}
-          type="file"
-          accept="image/*,.heic"
-          multiple
-          className="sr-only"
-          onChange={(e) => {
-            if (e.target.files?.length) {
-              onReceiptsSelected(Array.from(e.target.files));
-            }
             e.target.value = "";
           }}
         />
@@ -281,16 +265,6 @@ export function TopBar({
                 onClick={() => pickNav("compare")}
               >
                 Compare
-              </button>
-              <button
-                type="button"
-                role="menuitem"
-                onClick={() => {
-                  setMenuOpen(false);
-                  receiptRef.current?.click();
-                }}
-              >
-                Import receipts
               </button>
               <button
                 type="button"

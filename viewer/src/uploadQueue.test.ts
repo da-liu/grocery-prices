@@ -2,9 +2,9 @@ import { describe, expect, it } from "vitest";
 import {
   claimNextBatch,
   queueItemErrorMessage,
-  shouldQueueStoreLabel,
   statusPollRetryDelayMs,
 } from "./UploadQueueContext";
+import { shouldNotifyUnknownStoreHint } from "./uploadQueue";
 import type { UploadQueueItem } from "./uploadQueue";
 
 function item(id: string, status: UploadQueueItem["status"], source: UploadQueueItem["source"] = "shelf") {
@@ -84,16 +84,16 @@ describe("queueItemErrorMessage", () => {
   });
 });
 
-describe("shouldQueueStoreLabel", () => {
-  it("queues the modal when gps is present", () => {
-    expect(shouldQueueStoreLabel(true, 0)).toBe(true);
+describe("shouldNotifyUnknownStoreHint", () => {
+  it("shows hint when store label is needed and not yet shown", () => {
+    expect(shouldNotifyUnknownStoreHint(true, false)).toBe(true);
   });
 
-  it("queues the modal when saved stores exist", () => {
-    expect(shouldQueueStoreLabel(false, 2)).toBe(true);
+  it("skips hint when already shown this session", () => {
+    expect(shouldNotifyUnknownStoreHint(true, true)).toBe(false);
   });
 
-  it("skips the modal when gps is missing and no saved stores exist", () => {
-    expect(shouldQueueStoreLabel(false, 0)).toBe(false);
+  it("skips hint when store label is not needed", () => {
+    expect(shouldNotifyUnknownStoreHint(false, false)).toBe(false);
   });
 });

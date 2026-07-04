@@ -14,6 +14,20 @@ export interface UserProfile {
   needs_onboarding: boolean;
 }
 
+export class ApiError extends Error {
+  readonly status: number;
+
+  constructor(message: string, status: number) {
+    super(message);
+    this.name = "ApiError";
+    this.status = status;
+  }
+}
+
+export function isAuthError(err: unknown): boolean {
+  return err instanceof ApiError && err.status === 401;
+}
+
 async function parseError(resp: Response): Promise<string> {
   try {
     const body = await resp.json();
@@ -98,9 +112,25 @@ export async function logout() {
 }
 
 export async function fetchMe(): Promise<UserProfile> {
-  const resp = await authFetch(`${API_BASE}/api/auth/me`);
-  if (!resp.ok) throw new Error(await parseError(resp));
-  return resp.json();
+  let resp: Response;
+  try {
+    resp = await authFetch(`${API_BASE}/api/auth/me`);
+  } catch (err) {
+    throw err;
+  }
+  if (!resp.ok) {
+    throw new ApiError(await parseError(resp), resp.status);
+  }
+  const payload = await resp.json();
+  if (typeof payload.token === "string" && payload.token) {
+    setToken(payload.token);
+  }
+  return {
+    authenticated: true,
+    username: payload.username,
+    upload_count: payload.upload_count,
+    needs_onboarding: payload.needs_onboarding,
+  };
 }
 
 export async function completeOnboarding(): Promise<UserProfile> {
@@ -157,6 +187,16 @@ export type DuplicateAction = "skip" | "replace" | "new";
 
 export type ExtractionStatus = "pending" | "processing" | "done" | "failed";
 
+export interface ExtractionTiming {
+  classify_ms?: number;
+  prep_ms?: number;
+  llm_ms?: number;
+  extract_ms?: number;
+  queue_wait_ms?: number;
+  total_ms?: number;
+  model?: string;
+}
+
 export interface UploadResult {
   image_id: string;
   image_path: string;
@@ -175,7 +215,9 @@ export interface UploadResult {
   extraction_empty?: boolean;
   extraction_status?: ExtractionStatus;
   extraction_error?: string;
+  extraction_timing?: ExtractionTiming;
   overlapping_products?: import("./types").OverlappingProduct[];
+  detected_receipt?: boolean;
 }
 
 export interface ReextractResult {
@@ -183,6 +225,7 @@ export interface ReextractResult {
   products: ExtractedProductRow[];
   product_count: number;
   extraction_empty: boolean;
+  extraction_timing?: ExtractionTiming;
   overlapping_products?: import("./types").OverlappingProduct[];
 }
 
@@ -309,6 +352,16 @@ export async function createStoreLocation(body: StoreLocationInput) {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(body),
+  });
+  if (!resp.ok) throw new Error(await parseError(resp));
+  return resp.json() as Promise<import("./types").CreateStoreLocationResult>;
+}
+
+export async function mergeStoreLocations(sourceId: string, targetId: string) {
+  const resp = await authFetch(`${API_BASE}/api/store-locations/merge`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ source_id: sourceId, target_id: targetId }),
   });
   if (!resp.ok) throw new Error(await parseError(resp));
   return resp.json() as Promise<import("./types").StoreLocation>;

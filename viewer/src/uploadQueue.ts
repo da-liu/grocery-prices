@@ -24,6 +24,7 @@ export interface UploadQueueItem {
   error?: string;
   duplicateOf?: string;
   extractionEmpty?: boolean;
+  detectedReceipt?: boolean;
 }
 
 export interface UploadToast {
@@ -32,6 +33,15 @@ export interface UploadToast {
   imageId: string;
   extractionEmpty?: boolean;
   note?: string;
+}
+
+export const UNKNOWN_STORE_HINT_KEY = "grocery-unknown-store-hint";
+
+export function shouldNotifyUnknownStoreHint(
+  needsStoreLabel: boolean,
+  alreadyShownThisSession: boolean,
+): boolean {
+  return needsStoreLabel && !alreadyShownThisSession;
 }
 
 export interface PendingDuplicate {

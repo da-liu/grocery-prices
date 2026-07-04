@@ -8,7 +8,7 @@ interface MapPreviewProps {
   className?: string;
 }
 
-export function MapPreview({ lat, lon, zoom = 15, label, className }: MapPreviewProps) {
+export function MapPreview({ lat, lon, zoom = 13, label, className }: MapPreviewProps) {
   const title = label ?? `${lat.toFixed(5)}, ${lon.toFixed(5)}`;
 
   return (

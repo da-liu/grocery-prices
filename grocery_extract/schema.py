@@ -40,9 +40,18 @@ class ImageMeta(BaseModel):
     date_folder: str | None = None
 
 
+class ExtractionTiming(BaseModel):
+    prep_ms: int = 0
+    llm_ms: int = 0
+    duration_ms: int = 0
+    model: str | None = None
+    classify_ms: int | None = None
+
+
 class ExtractionResult(BaseModel):
     image_path: str
     meta: ImageMeta
     products: list[ExtractedProduct] = Field(default_factory=list)
     raw_response: str | None = None
     extractor: str = "cursor_sdk"
+    timing: ExtractionTiming | None = None

@@ -1,12 +1,13 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
 import {
   fetchMe,
+  isAuthError,
   login as apiLogin,
   logout as apiLogout,
   register as apiRegister,
   type UserProfile,
 } from "./api";
-import { clearToken, getToken } from "./auth";
+import { clearToken } from "./auth";
 
 interface AuthState {
   user: UserProfile | null;
@@ -24,15 +25,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   const refresh = useCallback(async () => {
-    if (!getToken()) {
-      setUser(null);
-      return;
-    }
     try {
       setUser(await fetchMe());
-    } catch {
-      clearToken();
-      setUser(null);
+    } catch (err) {
+      if (isAuthError(err)) {
+        clearToken();
+        setUser(null);
+      }
     }
   }, []);
 

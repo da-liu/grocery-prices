@@ -3,6 +3,8 @@ from __future__ import annotations
 import base64
 import json
 import os
+import time
+from dataclasses import dataclass
 from pathlib import Path
 
 import httpx
@@ -22,6 +24,15 @@ DEFAULT_GEMINI_DIRECT_MODEL = "gemini-3.1-flash-lite"
 
 class CursorExtractError(RuntimeError):
     pass
+
+
+@dataclass(frozen=True)
+class ExtractImageResult:
+    products: list[ExtractedProduct]
+    raw_response: str
+    prep_ms: int
+    llm_ms: int
+    model: str
 
 
 def current_extract_backend() -> str:
@@ -139,7 +150,7 @@ def extract_products_from_image(
     prompt_variant: str = "shelf",
     llm_max_dim: int | None = None,
     llm_scale_pct: int | None = None,
-) -> tuple[list[ExtractedProduct], str]:
+) -> ExtractImageResult:
     """Extract products from a grocery photo using the configured vision backend."""
     backend = backend or current_extract_backend()
     model = model or default_extract_model(backend)
@@ -148,24 +159,34 @@ def extract_products_from_image(
     if not image_path.exists():
         raise CursorExtractError(f"Image not found: {image_path}")
 
+    prep_start = time.perf_counter()
     llm_path = prepare_image_for_llm(
         image_path,
         scale_pct=llm_scale_pct if llm_scale_pct is not None else (None if llm_max_dim is not None else llm_scale_percent()),
         max_dim=llm_max_dim if llm_max_dim is not None else LLM_MAX_DIM,
     )
+    prep_ms = int((time.perf_counter() - prep_start) * 1000)
     cleanup_llm_path = llm_path != image_path
 
     cwd = cwd or ROOT
     prompt = build_receipt_prompt() if prompt_variant == "receipt" else build_prompt()
 
     try:
+        llm_start = time.perf_counter()
         if backend == GEMINI_DIRECT_BACKEND:
             raw = _run_gemini_direct(llm_path, prompt=prompt, api_key=api_key, model=model)
         else:
             raw = _run_cursor_sdk(llm_path, prompt=prompt, api_key=api_key, model=model, cwd=cwd)
+        llm_ms = int((time.perf_counter() - llm_start) * 1000)
     finally:
         if cleanup_llm_path:
             llm_path.unlink(missing_ok=True)
 
     products = parse_products_json(raw)
-    return products, raw
+    return ExtractImageResult(
+        products=products,
+        raw_response=raw,
+        prep_ms=prep_ms,
+        llm_ms=llm_ms,
+        model=model,
+    )
