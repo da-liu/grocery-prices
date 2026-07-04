@@ -6,6 +6,8 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
+    "generate:markers": "node scripts/generate-map-markers.mjs",
+    "prebuild": "npm run generate:markers",
     "lint": "oxlint",
     "preview": "vite preview",
     "test": "vitest run",
@@ -21,6 +23,7 @@
     "@types/react-dom": "^19.2.3",
     "@vitejs/plugin-react": "^6.0.2",
     "oxlint": "^1.69.0",
+    "sharp": "^0.34.3",
     "typescript": "~6.0.2",
     "vite": "^8.1.0",
     "vitest": "^3.2.4"

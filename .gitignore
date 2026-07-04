@@ -6,6 +6,7 @@ __pycache__/
 target/
 viewer/node_modules/
 viewer/dist/
+viewer/.env.local
 extract_server/.venv/
 extract_server/.env
 extract_server/data/
