@@ -104,7 +104,7 @@ function ChevronIcon({ expanded }: { expanded: boolean }) {
   );
 }
 
-export function UploadStatusBar({ onViewBrowse }: { onViewBrowse: () => void }) {
+export function UploadStatusBar() {
   const {
     items,
     toast,
@@ -211,9 +211,6 @@ export function UploadStatusBar({ onViewBrowse }: { onViewBrowse: () => void }) 
               : `Added ${toast.productCount} product${toast.productCount === 1 ? "" : "s"}`}
             {toast.note ? ` ${toast.note}` : ""}
           </span>
-          <button type="button" onClick={onViewBrowse}>
-            View
-          </button>
           <button type="button" className="upload-toast-dismiss" aria-label="Dismiss" onClick={dismissToast}>
             ×
           </button>

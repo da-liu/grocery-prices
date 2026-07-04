@@ -79,10 +79,15 @@ function ProductEditForm({ product, saving, onSave, onCancel }: ProductEditFormP
         <input value={barcode} onChange={(e) => setBarcode(e.target.value)} />
       </label>
       <div className="product-edit-actions">
-        <button type="button" onClick={onCancel} disabled={saving}>
+        <button
+          type="button"
+          className="product-form-btn product-form-btn--secondary"
+          onClick={onCancel}
+          disabled={saving}
+        >
           Cancel
         </button>
-        <button type="submit" disabled={saving}>
+        <button type="submit" className="product-form-btn product-form-btn--primary" disabled={saving}>
           {saving ? "Saving…" : "Save"}
         </button>
       </div>
@@ -126,11 +131,20 @@ function ManualProductForm({ saving, onSave, onCancel }: ManualProductFormProps)
         <input value={unit} onChange={(e) => setUnit(e.target.value)} />
       </label>
       <div className="product-edit-actions">
-        <button type="button" onClick={onCancel} disabled={saving}>
+        <button
+          type="button"
+          className="product-form-btn product-form-btn--secondary"
+          onClick={onCancel}
+          disabled={saving}
+        >
           Cancel
         </button>
-        <button type="submit" disabled={saving || !name.trim()}>
-          {saving ? "Adding…" : "Add product"}
+        <button
+          type="submit"
+          className="product-form-btn product-form-btn--secondary"
+          disabled={saving || !name.trim()}
+        >
+          {saving ? "Saving…" : "Add"}
         </button>
       </div>
     </form>
@@ -160,6 +174,43 @@ function PriceInsights({ insights }: { insights: PriceInsight[] }) {
         ))}
       </ul>
     </div>
+  );
+}
+
+function EditIcon() {
+  return (
+    <svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true">
+      <path
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.8"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        d="M12 20h9"
+      />
+      <path
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.8"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        d="M16.5 3.5a2.1 2.1 0 1 1 3 3L7 19l-4 1 1-4L16.5 3.5Z"
+      />
+    </svg>
+  );
+}
+
+function CloseIcon() {
+  return (
+    <svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true">
+      <path
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        d="M7 7l10 10M17 7 7 17"
+      />
+    </svg>
   );
 }
 
@@ -220,6 +271,12 @@ export function ProductCard({
     e?.stopPropagation();
     e?.preventDefault();
     onToggleSelect?.(product.id);
+  }
+
+  function handleEditClick(e: React.MouseEvent) {
+    e.stopPropagation();
+    e.preventDefault();
+    setEditing(true);
   }
 
   const compact = compactProp === true;
@@ -286,48 +343,56 @@ export function ProductCard({
           <>
         <div className="card-title-row">
           <h2>{isEmpty ? "No products extracted" : product.product_name}</h2>
-          {onDelete && (
-            <div className="card-delete-wrap">
-              {confirming ? (
-                <>
-                  <button
-                    type="button"
-                    className="card-delete-confirm"
-                    disabled={deleting}
-                    onClick={handleDeleteClick}
-                  >
-                    {deleting ? "…" : "Delete"}
-                  </button>
-                  <button
-                    type="button"
-                    className="card-delete-cancel"
-                    disabled={deleting}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setConfirming(false);
-                    }}
-                  >
-                    Cancel
-                  </button>
-                </>
-              ) : (
+          {(onDelete || (!isEmpty && onEdit && !editing)) && (
+            <div className="card-actions">
+              {!isEmpty && onEdit && !editing && !confirming && (
                 <button
                   type="button"
-                  className="card-delete"
-                  aria-label={isEmpty ? "Delete photo" : `Delete ${product.product_name}`}
-                  disabled={deleting}
-                  onClick={handleDeleteClick}
+                  className="card-icon-btn card-icon-btn--edit"
+                  aria-label={`Edit ${product.product_name}`}
+                  title="Edit"
+                  onClick={handleEditClick}
                 >
-                  <svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true">
-                    <path
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                      d="M7 7l10 10M17 7 7 17"
-                    />
-                  </svg>
+                  <EditIcon />
                 </button>
+              )}
+              {onDelete && (
+                <div className="card-delete-wrap">
+                  {confirming ? (
+                    <>
+                      <button
+                        type="button"
+                        className="card-delete-confirm"
+                        disabled={deleting}
+                        onClick={handleDeleteClick}
+                      >
+                        {deleting ? "…" : "Delete"}
+                      </button>
+                      <button
+                        type="button"
+                        className="card-delete-cancel"
+                        disabled={deleting}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setConfirming(false);
+                        }}
+                      >
+                        Cancel
+                      </button>
+                    </>
+                  ) : (
+                    <button
+                      type="button"
+                      className="card-icon-btn card-icon-btn--delete"
+                      aria-label={isEmpty ? "Delete photo" : `Delete ${product.product_name}`}
+                      title="Delete"
+                      disabled={deleting}
+                      onClick={handleDeleteClick}
+                    >
+                      <CloseIcon />
+                    </button>
+                  )}
+                </div>
               )}
             </div>
           )}
@@ -336,22 +401,29 @@ export function ProductCard({
         {isEmpty ? (
           <div className="empty-extraction-actions">
             <p className="subtitle">
-              Extraction found no priced products. Re-run vision extraction or add items manually.
+              No priced products found in this photo. Retry or add one manually.
             </p>
-            {onReextract && (
-              <button
-                type="button"
-                disabled={reextracting}
-                onClick={() => void onReextract(product.image_id)}
-              >
-                {reextracting ? "Re-extracting…" : "Re-extract"}
-              </button>
-            )}
-            {onAddManual && !addingManual && (
-              <button type="button" onClick={() => setAddingManual(true)}>
-                Add product manually
-              </button>
-            )}
+            <div className="empty-extraction-buttons">
+              {onReextract && (
+                <button
+                  type="button"
+                  className="empty-extraction-btn empty-extraction-btn--secondary"
+                  disabled={reextracting}
+                  onClick={() => void onReextract(product.image_id)}
+                >
+                  {reextracting ? "Trying again…" : "Try again"}
+                </button>
+              )}
+              {onAddManual && !addingManual && (
+                <button
+                  type="button"
+                  className="empty-extraction-btn empty-extraction-btn--secondary"
+                  onClick={() => setAddingManual(true)}
+                >
+                  Add manually
+                </button>
+              )}
+            </div>
             {addingManual && onAddManual && (
               <ManualProductForm
                 saving={!!saving}
@@ -383,11 +455,6 @@ export function ProductCard({
                   {product.unit && <span className="unit">/ {product.unit}</span>}
                   {product.regular_price != null && product.is_special && (
                     <span className="was">was {formatPrice(product.regular_price)}</span>
-                  )}
-                  {onEdit && (
-                    <button type="button" className="card-edit" onClick={() => setEditing(true)}>
-                      Edit
-                    </button>
                   )}
                 </div>
                 {product.promo && <p className="promo">{product.promo}</p>}

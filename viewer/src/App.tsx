@@ -6,6 +6,7 @@ import { BrowseQueryChips } from "./BrowseQueryChips";
 import { BrowseSelectionBar } from "./BrowseSelectionBar";
 import { BrowseSortFilterPanel } from "./BrowseSortFilterPanel";
 import { BulkDeleteConfirmModal } from "./BulkDeleteConfirmModal";
+import { ProductCard } from "./ProductCard";
 import { computeBulkDeleteImpact } from "./bulkDelete";
 import {
   EMPTY_BROWSE_QUERY,
@@ -35,7 +36,12 @@ import {
 } from "./topBarStyle";
 import { UploadQueueProvider, useUploadQueue } from "./UploadQueueContext";
 import { UploadStatusBar } from "./UploadStatusBar";
-import { DEV_FORCE_LOADING } from "./devPreview";
+import {
+  DEV_FORCE_LOADING,
+  DEV_PREVIEW_EMPTY_IMAGE_URL,
+  DEV_PREVIEW_EMPTY_PRODUCT,
+  DEV_PREVIEW_MODE,
+} from "./devPreview";
 import type { Product, StoreLabelRequest } from "./types";
 import type { ManualProductInput, ProductUpdateInput } from "./api";
 import "./App.css";
@@ -534,7 +540,7 @@ function AuthenticatedApp({
         />
       )}
 
-      <UploadStatusBar onViewBrowse={() => navigate("browse")} />
+      <UploadStatusBar />
 
       {error && (
         <p className="status error app-error">
@@ -645,7 +651,64 @@ function AuthenticatedApp({
   );
 }
 
+function delay(ms: number) {
+  return new Promise<void>((resolve) => {
+    window.setTimeout(resolve, ms);
+  });
+}
+
+function EmptyExtractionPreview() {
+  const [reextracting, setReextracting] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [savedProductName, setSavedProductName] = useState<string | null>(null);
+
+  async function handlePreviewReextract() {
+    setReextracting(true);
+    await delay(900);
+    setReextracting(false);
+  }
+
+  async function handlePreviewAddManual(_imageId: string, product: ManualProductInput) {
+    setSaving(true);
+    await delay(600);
+    setSaving(false);
+    setSavedProductName(product.product_name);
+  }
+
+  return (
+    <div className="app preview-app">
+      <section className="preview-hero">
+        <p className="eyebrow">Preview</p>
+        <h1>Empty extraction card</h1>
+        <p className="subtitle">
+          This mock route renders the real empty-state product card with sample data so you can
+          review button size, spacing, and hierarchy without logging in.
+        </p>
+      </section>
+
+      <main className="preview-grid">
+        <ProductCard
+          product={DEV_PREVIEW_EMPTY_PRODUCT}
+          imgSrc={DEV_PREVIEW_EMPTY_IMAGE_URL}
+          onReextract={handlePreviewReextract}
+          onAddManual={handlePreviewAddManual}
+          reextracting={reextracting}
+          saving={saving}
+        />
+      </main>
+
+      {savedProductName && (
+        <p className="preview-note">Mock save complete for “{savedProductName}”. Refresh to reset.</p>
+      )}
+    </div>
+  );
+}
+
 export default function App() {
+  if (DEV_PREVIEW_MODE === "empty-extraction") {
+    return <EmptyExtractionPreview />;
+  }
+
   return (
     <AuthProvider>
       <AppShell />
