@@ -1,5 +1,4 @@
 import { useEffect, useRef, useState, type RefObject } from "react";
-import type { TopBarStyle } from "./topBarStyle";
 
 type Page = "browse" | "compare" | "settings";
 
@@ -27,9 +26,6 @@ interface TopBarProps {
   onToggleSortFilter?: () => void;
   browseStats?: BrowseStats;
   onShowOnboarding?: () => void;
-  onDeleteAllProducts?: () => void;
-  deletingAll?: boolean;
-  styleVariant: TopBarStyle;
 }
 
 function CameraIcon() {
@@ -77,21 +73,6 @@ function FilterIcon() {
   );
 }
 
-function TrashIcon() {
-  return (
-    <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">
-      <path
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="1.75"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        d="M4 7h16M9 7V5.5A1.5 1.5 0 0 1 10.5 4h3A1.5 1.5 0 0 1 15 5.5V7m-9 0v11a1 1 0 0 0 1 1h10a1 1 0 0 0 1-1V7M10 11v5M14 11v5"
-      />
-    </svg>
-  );
-}
-
 export function TopBar({
   page,
   search,
@@ -108,12 +89,8 @@ export function TopBar({
   onToggleSortFilter,
   browseStats,
   onShowOnboarding,
-  onDeleteAllProducts,
-  deletingAll = false,
-  styleVariant,
 }: TopBarProps) {
   const [menuOpen, setMenuOpen] = useState(false);
-  const [elevated, setElevated] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -131,19 +108,6 @@ export function TopBar({
     setMenuOpen(false);
   }, [page]);
 
-  useEffect(() => {
-    if (styleVariant !== "shadow-scroll") {
-      setElevated(false);
-      return;
-    }
-    const updateElevation = () => {
-      setElevated(window.scrollY > 6);
-    };
-    updateElevation();
-    window.addEventListener("scroll", updateElevation, { passive: true });
-    return () => window.removeEventListener("scroll", updateElevation);
-  }, [styleVariant]);
-
   function handlePhotos(files: FileList | null | undefined) {
     if (!files?.length) return;
     onPhotosSelected(Array.from(files));
@@ -155,9 +119,7 @@ export function TopBar({
   }
 
   return (
-    <header
-      className={`top-bar top-bar--${styleVariant}${elevated ? " top-bar--elevated" : ""}`}
-    >
+    <header className="top-bar">
       {page === "settings" ? (
         <p className="top-bar-title">Settings</p>
       ) : (
@@ -191,18 +153,6 @@ export function TopBar({
         >
           <CameraIcon />
         </button>
-
-        {onDeleteAllProducts && (
-          <button
-            type="button"
-            className="top-bar-icon-btn top-bar-icon-btn--danger"
-            aria-label="Delete all products"
-            disabled={deletingAll}
-            onClick={() => onDeleteAllProducts()}
-          >
-            <TrashIcon />
-          </button>
-        )}
 
         {showSortFilter && (
           <button

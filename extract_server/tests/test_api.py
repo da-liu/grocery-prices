@@ -5,10 +5,10 @@ import json
 from fastapi.testclient import TestClient
 
 
-def test_health_requires_auth(client):
+def test_health(client):
     resp = client.get("/health")
     assert resp.status_code == 200
-    assert resp.json()["auth_required"] is True
+    assert resp.json() == {"status": "ok"}
 
 
 def test_register_with_email(client):
@@ -26,7 +26,7 @@ def test_register_with_email(client):
     assert login.status_code == 200
 
 
-def test_register_login_and_scoped_products(client, app):
+def test_register_login_and_scoped_products(client):
     reg = client.post(
         "/api/auth/register",
         json={"username": "testuser", "password": "password123"},
@@ -41,13 +41,6 @@ def test_register_login_and_scoped_products(client, app):
     assert me.status_code == 200
     assert me.json()["username"] == "testuser"
     assert me.json()["token"] == token
-
-    cookie_client = TestClient(app)
-    cookie_client.cookies.set("grocery_session", token)
-    me_cookie = cookie_client.get("/api/auth/me")
-    assert me_cookie.status_code == 200
-    assert me_cookie.json()["username"] == "testuser"
-    assert me_cookie.json()["token"] == token
 
     unauth = client.get("/api/products")
     assert unauth.status_code == 401

@@ -2,13 +2,9 @@ import { describe, expect, it } from "vitest";
 import {
   geoBoundsFromCoords,
   mapViewportForBounds,
-  mapsEmbedUrlForBounds,
   mapsStaticUrlForViewport,
   markerLabelForStore,
-  projectCoordsToPercent,
-  projectLatLonInViewport,
   staticMapMarkerParam,
-  zoomForGeoBounds,
 } from "./maps";
 
 const TORONTO_STORES = [
@@ -17,49 +13,25 @@ const TORONTO_STORES = [
   { latitude: 43.64239, longitude: -79.38118 },
 ];
 
-describe("mapsEmbedUrlForBounds", () => {
-  it("centers and zooms to fit nearby stores", () => {
-    const bounds = geoBoundsFromCoords([
-      { latitude: 43.63943, longitude: -79.38029 },
-      { latitude: 43.64239, longitude: -79.38118 },
-    ]);
+describe("mapViewportForBounds", () => {
+  it("fits nearby stores within the viewport dimensions", () => {
+    const bounds = geoBoundsFromCoords(TORONTO_STORES);
     expect(bounds).not.toBeNull();
 
-    const url = mapsEmbedUrlForBounds(bounds!);
-    expect(url).toContain("43.64091");
-    expect(url).toContain("-79.380735");
-    expect(url).toMatch(/z=1[4-7]/);
+    const viewport = mapViewportForBounds(bounds!, 640, 220);
+    expect(viewport.width).toBe(640);
+    expect(viewport.height).toBe(220);
+    expect(viewport.zoom).toBeGreaterThanOrEqual(0);
+    expect(viewport.centerLat).toBeGreaterThan(43.63);
+    expect(viewport.centerLat).toBeLessThan(43.65);
   });
 
   it("uses a minimum span for a single store", () => {
     const bounds = geoBoundsFromCoords([{ latitude: 43.64, longitude: -79.38 }]);
     expect(bounds).not.toBeNull();
-    expect(zoomForGeoBounds(bounds!)).toBeGreaterThanOrEqual(14);
-  });
-});
-
-describe("mapViewportForBounds", () => {
-  it("projects store coords back to their source pixels", () => {
-    const bounds = geoBoundsFromCoords(TORONTO_STORES);
-    expect(bounds).not.toBeNull();
 
     const viewport = mapViewportForBounds(bounds!, 640, 220);
-    for (const store of TORONTO_STORES) {
-      const pixel = projectLatLonInViewport(store.latitude, store.longitude, viewport);
-      expect(pixel.x).toBeGreaterThanOrEqual(0);
-      expect(pixel.x).toBeLessThanOrEqual(viewport.width);
-      expect(pixel.y).toBeGreaterThanOrEqual(0);
-      expect(pixel.y).toBeLessThanOrEqual(viewport.height);
-    }
-  });
-
-  it("keeps northwest store above and left of southeast store", () => {
-    const bounds = geoBoundsFromCoords(TORONTO_STORES);
-    const viewport = mapViewportForBounds(bounds!, 640, 220);
-    const [farmBoy, , longos] = projectCoordsToPercent(TORONTO_STORES, viewport);
-
-    expect(longos.y).toBeLessThan(farmBoy.y);
-    expect(longos.x).toBeLessThan(farmBoy.x);
+    expect(viewport.zoom).toBeGreaterThanOrEqual(10);
   });
 });
 
@@ -105,10 +77,10 @@ describe("staticMapMarkerParam", () => {
     expect(staticMapMarkerParam({
       latitude: 43.64,
       longitude: -79.38,
-      icon: "https://g.daliu.ca/markers/pin-accent-accent.png",
-      anchor: { x: 24, y: 52 },
+      icon: "https://g.daliu.ca/markers/ring-dot-list-test24.png",
+      anchor: { x: 12, y: 12 },
     })).toBe(
-      "icon:https://g.daliu.ca/markers/pin-accent-accent.png|anchor:24,52|43.64,-79.38",
+      "icon:https://g.daliu.ca/markers/ring-dot-list-test24.png|anchor:12,12|43.64,-79.38",
     );
   });
 

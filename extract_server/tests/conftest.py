@@ -38,9 +38,21 @@ def pytest_configure(config):
 
 def pytest_sessionfinish(session, exitstatus):
     global _TEST_ROOT
+    from extract_server.users_db import close_all_connections
+
+    close_all_connections()
     if _TEST_ROOT is not None and _TEST_ROOT.exists():
         shutil.rmtree(_TEST_ROOT)
         _TEST_ROOT = None
+
+
+@pytest.fixture(autouse=True)
+def reset_db_connections():
+    from extract_server.users_db import close_all_connections
+
+    close_all_connections()
+    yield
+    close_all_connections()
 
 
 @pytest.fixture(scope="session")

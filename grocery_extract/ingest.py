@@ -32,9 +32,11 @@ from grocery_extract.exif import (
     convert_heic_to_jpg,
     date_folder_from_exif,
     extract_exif,
+    normalize_client_exif,
     tool_path,
 )
-from grocery_extract.extract_worker import ExtractionJob, enqueue_extraction
+from grocery_extract.extract_worker import ExtractionJob, enqueue_extraction, record_extraction_failure
+from grocery_extract.request_context import get_request_id
 from grocery_extract.pipeline import extract_from_upload
 from grocery_extract.photo_classifier import classify_photo_type
 from grocery_extract.photo_stores import image_needs_store_label
@@ -149,6 +151,7 @@ def accept_upload(
     duplicate_action: str | None = None,
     existing_products: list[dict[str, Any]] | None = None,
     user_stores: list[dict[str, Any]] | None = None,
+    client_exif: dict | None = None,
 ) -> dict:
     """Persist an uploaded photo and return quickly with extraction_status=pending."""
     user_root(user_id).mkdir(parents=True, exist_ok=True)
@@ -172,7 +175,9 @@ def accept_upload(
     detected_receipt = False
     classify_ms: int | None = None
 
-    exif = extract_exif(upload_path) if upload_path.exists() else {}
+    exif = normalize_client_exif(client_exif) or (
+        extract_exif(upload_path) if upload_path.exists() else {}
+    )
     raw_dt = exif.get("DateTimeOriginal")
     date_folder = date_folder_from_exif(raw_dt) or _today_folder()
     captured_at = captured_at_from_exif(raw_dt)
@@ -188,8 +193,13 @@ def accept_upload(
                 photo_type = "receipt"
                 detected_receipt = True
         except Exception:
-            # Keep shelf type when classification fails.
-            pass
+            logger.warning(
+                "photo_classification_failed photo_id=%s user_id=%s request_id=%s",
+                image_id,
+                user_id,
+                get_request_id() or "-",
+                exc_info=True,
+            )
 
     if user_stores is None:
         from grocery_extract.user_stores_db import list_user_stores_as_dicts
@@ -260,6 +270,13 @@ def accept_upload(
 
 def run_extraction(job: ExtractionJob) -> dict:
     """Background worker: LLM extraction and catalog finalize."""
+    request_id = job.request_id or "-"
+    logger.info(
+        "extraction_started photo_id=%s user_id=%s request_id=%s",
+        job.image_id,
+        job.user_id,
+        request_id,
+    )
     set_extraction_status(job.user_id, job.image_id, "processing")
 
     jpg_path = user_photos_dir(job.user_id, job.date_folder) / "jpg" / f"{job.image_id}.jpg"
@@ -304,10 +321,11 @@ def run_extraction(job: ExtractionJob) -> dict:
             classify_ms=timing.classify_ms if timing else None,
         )
         logger.info(
-            "extraction_complete photo_id=%s user_id=%s extract_ms=%s queue_wait_ms=%s "
+            "extraction_complete photo_id=%s user_id=%s request_id=%s extract_ms=%s queue_wait_ms=%s "
             "classify_ms=%s model=%s products=%s total_ms=%s",
             job.image_id,
             job.user_id,
+            request_id,
             duration_ms,
             queue_wait_ms,
             timing.classify_ms if timing else None,
@@ -358,6 +376,14 @@ def run_extraction(job: ExtractionJob) -> dict:
             "extraction_status": "done",
         }
     except Exception as err:
+        record_extraction_failure(type(err).__name__)
+        logger.exception(
+            "extraction_failed photo_id=%s user_id=%s request_id=%s error_type=%s",
+            job.image_id,
+            job.user_id,
+            request_id,
+            type(err).__name__,
+        )
         set_extraction_status(job.user_id, job.image_id, "failed", error=str(err))
         return {
             "image_id": job.image_id,
@@ -393,6 +419,7 @@ def _job_from_accept_result(result: dict, *, user_id: str, source: str, api_key:
         store_location_id=job_data["store_location_id"],
         content_hash=result["content_hash"],
         classify_ms=job_data.get("classify_ms"),
+        request_id=result.get("request_id"),
     )
 
 
@@ -405,6 +432,8 @@ def accept_upload_batch(
     max_workers: int | None = None,
     api_key: str | None = None,
     enqueue: bool = True,
+    client_exifs: list[dict | None] | None = None,
+    request_id: str | None = None,
 ) -> list[dict]:
     image_ids = allocate_image_ids(user_id, len(upload_paths))
     workers = max(1, min(max_workers or DEFAULT_UPLOAD_WORKERS, len(upload_paths)))
@@ -414,7 +443,15 @@ def accept_upload_batch(
     user_stores = list_user_stores_as_dicts(user_id)
     existing_products = list_products_for_matching(user_id)
 
-    def accept_one(upload_path: Path, image_id: str) -> dict:
+    exifs = client_exifs if client_exifs is not None else [None] * len(upload_paths)
+    if len(exifs) != len(upload_paths):
+        raise ValueError("client_exifs length must match upload_paths")
+
+    def accept_one(
+        upload_path: Path,
+        image_id: str,
+        exif_payload: dict | None = None,
+    ) -> dict:
         return accept_upload(
             upload_path,
             user_id=user_id,
@@ -423,20 +460,26 @@ def accept_upload_batch(
             duplicate_action=duplicate_action,
             existing_products=existing_products,
             user_stores=user_stores,
+            client_exif=exif_payload,
         )
 
     if workers == 1:
         results = [
-            accept_one(upload_path, image_id)
-            for upload_path, image_id in zip(upload_paths, image_ids, strict=True)
+            accept_one(upload_path, image_id, exif_payload)
+            for upload_path, image_id, exif_payload in zip(
+                upload_paths,
+                image_ids,
+                exifs,
+                strict=True,
+            )
         ]
     else:
         results = [None] * len(upload_paths)
         with ThreadPoolExecutor(max_workers=workers) as executor:
             future_map = {
-                executor.submit(accept_one, upload_path, image_id): index
-                for index, (upload_path, image_id) in enumerate(
-                    zip(upload_paths, image_ids, strict=True)
+                executor.submit(accept_one, upload_path, image_id, exif_payload): index
+                for index, (upload_path, image_id, exif_payload) in enumerate(
+                    zip(upload_paths, image_ids, exifs, strict=True)
                 )
             }
             for future in as_completed(future_map):
@@ -444,24 +487,35 @@ def accept_upload_batch(
                 results[index] = future.result()
         results = [result for result in results if result is not None]
 
+    resolved_request_id = request_id or get_request_id()
+
     if enqueue:
         for result in results:
+            if resolved_request_id:
+                result["request_id"] = resolved_request_id
             job = _job_from_accept_result(result, user_id=user_id, source=source, api_key=api_key)
             if job is not None:
                 enqueue_extraction(job, run_extraction)
 
     for result in results:
         result.pop("_job", None)
+        result.pop("request_id", None)
 
     return results
 
 
 def build_status_response(user_id: str, image_ids: list[str]) -> list[dict]:
+    from extract_server.users_db import get_conn
     from grocery_extract.user_stores_db import list_user_stores_as_dicts
 
-    statuses = get_photos_extraction_status(user_id, image_ids)
-    existing_products = list_products_for_matching(user_id)
-    user_stores = list_user_stores_as_dicts(user_id)
+    conn = get_conn()
+    user_stores = list_user_stores_as_dicts(user_id, conn=conn)
+    statuses = get_photos_extraction_status(user_id, image_ids, conn=conn)
+    existing_products = list_products_for_matching(
+        user_id,
+        conn=conn,
+        user_stores=user_stores,
+    )
 
     enriched: list[dict] = []
     for status in statuses:
@@ -474,6 +528,7 @@ def build_status_response(user_id: str, image_ids: list[str]) -> list[dict]:
                 meta.get("gps_latitude"),
                 meta.get("gps_longitude"),
                 user_stores,
+                store_location_id=row.get("store_location_id") or meta.get("store_location_id"),
             )
             if row.get("products"):
                 location = {

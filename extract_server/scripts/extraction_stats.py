@@ -15,6 +15,7 @@ sys.path.insert(0, str(ROOT))
 sys.path.insert(0, str(ROOT / "extract_server"))
 
 from extract_server.users_db import _connect, init_db  # noqa: E402
+from grocery_extract.logging_config import configure_cli_logging  # noqa: E402
 
 
 def _percentile(values: list[float], pct: float) -> float:
@@ -80,7 +81,9 @@ def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--days", type=int, default=7, help="Limit to recent extractions (default: 7)")
     parser.add_argument("--all", action="store_true", help="Include all extractions regardless of age")
+    parser.add_argument("--verbose", action="store_true", help="Enable debug logging")
     args = parser.parse_args()
+    configure_cli_logging(verbose=args.verbose)
 
     if not os.environ.get("GROCERY_DB_PATH"):
         print("GROCERY_DB_PATH is not set", file=sys.stderr)

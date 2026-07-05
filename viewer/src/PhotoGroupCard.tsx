@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { productImageUrl } from "./api";
 import { formatCapturedAgo, formatCapturedAt } from "./formatCapturedAgo";
 import { PhotoLightbox } from "./PhotoLightbox";
@@ -15,19 +15,32 @@ function formatPrice(price: number | null | undefined) {
 export function PhotoGroupCard({
   group,
   onNavigateToProduct,
+  highlightProductId,
+  highlighted,
 }: {
   group: PhotoGroup;
   onNavigateToProduct?: (productId: string) => void;
+  highlightProductId?: string | null;
+  highlighted?: boolean;
 }) {
   const [expanded, setExpanded] = useState(false);
   const [lightboxOpen, setLightboxOpen] = useState(false);
+
+  useEffect(() => {
+    if (highlightProductId && group.products.some((product) => product.id === highlightProductId)) {
+      setExpanded(true);
+    }
+  }, [highlightProductId, group.products]);
   const imageUrl = productImageUrl(group.imageId);
   const preview = group.products.filter((product) => !product.extraction_empty);
   const visible = expanded ? preview : preview.slice(0, 2);
   const hiddenCount = Math.max(0, preview.length - visible.length);
 
   return (
-    <article className="photo-group-card">
+    <article
+      id={`photo-${group.imageId}`}
+      className={`photo-group-card${highlighted ? " photo-group-card--highlight" : ""}`}
+    >
       <div className="photo-group-card-hero">
         <button
           type="button"
@@ -72,7 +85,7 @@ export function PhotoGroupCard({
           <li key={product.id}>
             <button
               type="button"
-              className="photo-group-product-row"
+              className={`photo-group-product-row${highlightProductId === product.id ? " photo-group-product-row--highlight" : ""}`}
               onClick={() => onNavigateToProduct?.(product.id)}
             >
               <span>{product.product_name}</span>

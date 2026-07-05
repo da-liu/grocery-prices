@@ -1,69 +1,24 @@
 import { useEffect, useRef, useState } from "react";
-import { DEV_FORCE_LOADING, DEV_PREVIEW_UPLOAD } from "./devPreview";
 import { useUploadQueueStatus } from "./UploadQueueContext";
 import type { UploadQueueItem } from "./uploadQueue";
-
-function buildPreviewUploadItems(scenario: {
-  done: number;
-  processing: number;
-  queued: number;
-}): UploadQueueItem[] {
-  const items: UploadQueueItem[] = [];
-  let index = 0;
-
-  for (let i = 0; i < scenario.done; i += 1) {
-    items.push({
-      id: `preview-done-${i}`,
-      label: `IMG_${String(3000 + index)}.jpg`,
-      thumbnailUrl: "/onboarding-shelf-sample.jpg",
-      status: "done",
-      source: "shelf",
-      file: new File([], `IMG_${String(3000 + index)}.jpg`),
-      productCount: 4 + i,
-    });
-    index += 1;
-  }
-
-  for (let i = 0; i < scenario.processing; i += 1) {
-    items.push({
-      id: `preview-processing-${i}`,
-      label: `IMG_${String(3000 + index)}.jpg`,
-      thumbnailUrl: "/onboarding-shelf-sample.jpg",
-      status: "processing",
-      source: "shelf",
-      file: new File([], `IMG_${String(3000 + index)}.jpg`),
-    });
-    index += 1;
-  }
-
-  for (let i = 0; i < scenario.queued; i += 1) {
-    items.push({
-      id: `preview-queued-${i}`,
-      label: `IMG_${String(3000 + index)}.jpg`,
-      thumbnailUrl: "/onboarding-shelf-sample.jpg",
-      status: "queued",
-      source: i % 4 === 0 ? "receipt" : "shelf",
-      file: new File([], `IMG_${String(3000 + index)}.jpg`),
-    });
-    index += 1;
-  }
-
-  return items;
-}
-
-const PREVIEW_UPLOAD_ITEMS: UploadQueueItem[] =
-  DEV_FORCE_LOADING && DEV_PREVIEW_UPLOAD
-    ? buildPreviewUploadItems(DEV_PREVIEW_UPLOAD)
-    : [];
 
 function Spinner() {
   return <span className="upload-spinner" aria-hidden="true" />;
 }
 
+function preparingLabel(item: UploadQueueItem): string {
+  switch (item.preparePhase) {
+    case "ready":
+      return "Ready";
+    default:
+      return "Preparing…";
+  }
+}
+
 function statusLabel(item: UploadQueueItem): string {
   switch (item.status) {
     case "preparing":
-      return "Compressing…";
+      return preparingLabel(item);
     case "queued":
       return "Waiting…";
     case "processing":
@@ -110,22 +65,7 @@ function useUploadStatusDisplay() {
   const itemCountRef = useRef(items.length);
 
   const processing = items.some((item) => item.status === "processing");
-  const previewActive = DEV_FORCE_LOADING && PREVIEW_UPLOAD_ITEMS.length > 0;
-  const displayItems = previewActive ? PREVIEW_UPLOAD_ITEMS : items;
-  const hasPanel = displayItems.length > 0;
-  const displayActiveCount = previewActive
-    ? PREVIEW_UPLOAD_ITEMS.filter(
-        (item) => item.status === "queued" || item.status === "processing",
-      ).length
-    : activeCount;
-  const displayQueuedCount = previewActive
-    ? PREVIEW_UPLOAD_ITEMS.filter((item) => item.status === "queued").length
-    : queuedCount;
-  const displayProcessing = previewActive || processing;
-
-  useEffect(() => {
-    if (previewActive) setExpanded(true);
-  }, [previewActive]);
+  const hasPanel = items.length > 0;
 
   useEffect(() => {
     if (items.length > itemCountRef.current) {
@@ -147,18 +87,18 @@ function useUploadStatusDisplay() {
     }
   }, [activeCount, items, clearFinished]);
 
-  const pillLabel = displayProcessing
-    ? displayQueuedCount > 0
-      ? `Reading prices · ${displayQueuedCount + 1} in queue`
+  const pillLabel = processing
+    ? queuedCount > 0
+      ? `Reading prices · ${queuedCount + 1} in queue`
       : "Reading prices from your photo…"
-    : displayQueuedCount > 0
-      ? `${displayQueuedCount} photo${displayQueuedCount === 1 ? "" : "s"} queued`
+    : queuedCount > 0
+      ? `${queuedCount} photo${queuedCount === 1 ? "" : "s"} queued`
       : "Processing photos…";
 
   return {
-    displayItems,
+    items,
     hasPanel,
-    displayActiveCount,
+    activeCount,
     expanded,
     setExpanded,
     pillLabel,
@@ -167,9 +107,9 @@ function useUploadStatusDisplay() {
 
 export function UploadStatusPanel() {
   const {
-    displayItems,
+    items,
     hasPanel,
-    displayActiveCount,
+    activeCount,
     expanded,
     setExpanded,
     pillLabel,
@@ -185,7 +125,7 @@ export function UploadStatusPanel() {
         aria-expanded={expanded}
         onClick={() => setExpanded(!expanded)}
       >
-        {displayActiveCount > 0 && <Spinner />}
+        {activeCount > 0 && <Spinner />}
         <span>{pillLabel}</span>
         <ChevronIcon expanded={expanded} />
       </button>
@@ -195,7 +135,7 @@ export function UploadStatusPanel() {
             You can keep browsing. New products appear when each photo finishes.
           </p>
           <ul className="upload-status-list">
-            {displayItems.map((item) => (
+            {items.map((item) => (
               <li
                 key={item.id}
                 className={`upload-status-item upload-status-item--${item.status}`}

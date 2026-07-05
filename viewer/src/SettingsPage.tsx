@@ -4,7 +4,6 @@ import { MapPreview } from "./MapPreview";
 import { StoreEditModal } from "./StoreEditModal";
 import { StoresMap } from "./StoresMap";
 import { hasValidCoords } from "./maps";
-import { DEV_FORCE_LOADING } from "./devPreview";
 import type { StoreLocation } from "./types";
 
 export function SettingsPage() {
@@ -16,7 +15,6 @@ export function SettingsPage() {
   const [editingStore, setEditingStore] = useState<StoreLocation | null>(null);
 
   const loadStores = useCallback(() => {
-    if (DEV_FORCE_LOADING) return Promise.resolve();
     setLoading(true);
     setError(null);
     return fetchStoreLocations()

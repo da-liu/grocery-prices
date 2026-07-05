@@ -6,7 +6,6 @@ import { BrowseQueryChips } from "./BrowseQueryChips";
 import { BrowseSelectionBar } from "./BrowseSelectionBar";
 import { BrowseSortFilterPanel } from "./BrowseSortFilterPanel";
 import { BulkDeleteConfirmModal } from "./BulkDeleteConfirmModal";
-import { ProductCard } from "./ProductCard";
 import { computeBulkDeleteImpact } from "./bulkDelete";
 import {
   EMPTY_BROWSE_QUERY,
@@ -30,16 +29,9 @@ import { SignInPage } from "./SignInPage";
 import { StoreLabelModal } from "./StoreLabelModal";
 import { TopBar } from "./TopBar";
 import { AppHeader } from "./AppHeader";
-import { DEFAULT_TOP_BAR_STYLE } from "./topBarStyle";
 import { UploadQueueProvider, useUploadQueueActions } from "./UploadQueueContext";
 import { UploadStatusPanel, UploadStatusToasts } from "./UploadStatusBar";
-import {
-  DEV_FORCE_LOADING,
-  DEV_PREVIEW_EMPTY_IMAGE_URL,
-  DEV_PREVIEW_EMPTY_PRODUCT,
-  DEV_PREVIEW_MODE,
-} from "./devPreview";
-import type { Product, StoreLabelRequest } from "./types";
+import type { Product } from "./types";
 import type { ManualProductInput, ProductUpdateInput } from "./api";
 import "./App.css";
 
@@ -83,6 +75,7 @@ function AppShell() {
   const [bulkDeletePending, setBulkDeletePending] = useState<string[] | null>(null);
   const [bulkDeleting, setBulkDeleting] = useState(false);
   const [highlightProductId, setHighlightProductId] = useState<string | null>(null);
+  const [highlightPhotoGroupId, setHighlightPhotoGroupId] = useState<string | null>(null);
 
   const refreshProducts = useCallback((options?: { silent?: boolean }) => {
     if (!user) return Promise.resolve();
@@ -188,6 +181,43 @@ function AppShell() {
     },
     [products, browseQuery, browseSearch],
   );
+
+  const navigateToPhotoGroup = useCallback(
+    (imageId: string, productId: string) => {
+      const visible = filterProducts(products, browseQuery, browseSearch, {
+        extents: getPriceExtents(products),
+      }).some((product) => product.image_id === imageId);
+
+      if (!visible) {
+        setBrowseSearch("");
+        setBrowseQuery({ ...EMPTY_BROWSE_QUERY, viewMode: "photos" });
+      } else if (browseQuery.viewMode !== "photos") {
+        setBrowseQuery({ ...browseQuery, viewMode: "photos" });
+      }
+
+      window.setTimeout(() => {
+        document.getElementById(`photo-${imageId}`)?.scrollIntoView({
+          behavior: "smooth",
+          block: "center",
+        });
+        setHighlightPhotoGroupId(imageId);
+        setHighlightProductId(productId);
+        window.setTimeout(() => {
+          setHighlightPhotoGroupId(null);
+          setHighlightProductId(null);
+        }, 2000);
+      }, visible ? 0 : 50);
+    },
+    [products, browseQuery, browseSearch],
+  );
+
+  const photoGroupSizes = useMemo(() => {
+    const counts = new Map<string, number>();
+    for (const product of products) {
+      counts.set(product.image_id, (counts.get(product.image_id) ?? 0) + 1);
+    }
+    return counts;
+  }, [products]);
 
   const browseStats = useMemo(() => {
     const priced = browseDisplayed.filter((p) => p.price != null);
@@ -371,7 +401,10 @@ function AppShell() {
         bulkDeleting={bulkDeleting}
         handleDeleteProducts={handleDeleteProducts}
         navigateToProduct={navigateToProduct}
+        navigateToPhotoGroup={navigateToPhotoGroup}
         highlightProductId={highlightProductId}
+        highlightPhotoGroupId={highlightPhotoGroupId}
+        photoGroupSizes={photoGroupSizes}
       />
     </UploadQueueProvider>
   );
@@ -422,7 +455,10 @@ function AuthenticatedApp({
   bulkDeleting,
   handleDeleteProducts,
   navigateToProduct,
+  navigateToPhotoGroup,
   highlightProductId,
+  highlightPhotoGroupId,
+  photoGroupSizes,
 }: {
   page: Page;
   navigate: (next: Page) => void;
@@ -474,7 +510,10 @@ function AuthenticatedApp({
   bulkDeleting: boolean;
   handleDeleteProducts: (ids: string[]) => Promise<void>;
   navigateToProduct: (productId: string) => void;
+  navigateToPhotoGroup: (imageId: string, productId: string) => void;
   highlightProductId: string | null;
+  highlightPhotoGroupId: string | null;
+  photoGroupSizes: Map<string, number>;
 }) {
   const { enqueueFiles, pendingLabel, requestLabel, dismissLabel, completeLabel } =
     useUploadQueueActions();
@@ -484,15 +523,7 @@ function AuthenticatedApp({
     photoInputRef.current?.click();
   }
 
-  const previewLabelRequest: StoreLabelRequest | null = DEV_FORCE_LOADING
-    ? {
-        imageId: "PREVIEW",
-        thumbnailUrl: "/onboarding-shelf-sample.jpg",
-        latitude: 43.65349,
-        longitude: -79.39821,
-      }
-    : null;
-  const labelRequest = pendingLabel ?? previewLabelRequest;
+  const labelRequest = pendingLabel;
 
   const searchProps =
     page === "compare"
@@ -524,13 +555,6 @@ function AuthenticatedApp({
           onToggleSortFilter={() => setSortFilterOpen(!sortFilterOpen)}
           browseStats={products.length > 0 ? browseStats : undefined}
           onShowOnboarding={() => setShowOnboarding(true)}
-          onDeleteAllProducts={
-            products.length > 0
-              ? () => void handleDeleteProducts(products.map((product) => product.id))
-              : undefined
-          }
-          deletingAll={bulkDeleting}
-          styleVariant={DEFAULT_TOP_BAR_STYLE}
         />
         <UploadStatusPanel />
       </AppHeader>
@@ -595,7 +619,10 @@ function AuthenticatedApp({
           onToggleSelect={toggleProductSelection}
           gridColumns={browseQuery.gridColumns}
           onNavigateToProduct={navigateToProduct}
+          onNavigateToPhotoGroup={selectionMode ? undefined : navigateToPhotoGroup}
+          photoGroupSizes={photoGroupSizes}
           highlightProductId={highlightProductId}
+          highlightPhotoGroupId={highlightPhotoGroupId}
           onLabelLocation={(product) => {
             const { latitude, longitude } = product.location;
             requestLabel({
@@ -638,6 +665,12 @@ function AuthenticatedApp({
             setSelectionMode(false);
             setSelectedIds(new Set());
           }}
+          onDeleteAllProducts={
+            products.length > 0
+              ? () => void handleDeleteProducts(products.map((product) => product.id))
+              : undefined
+          }
+          deletingAll={bulkDeleting}
         />
       )}
 
@@ -672,64 +705,7 @@ function AuthenticatedApp({
   );
 }
 
-function delay(ms: number) {
-  return new Promise<void>((resolve) => {
-    window.setTimeout(resolve, ms);
-  });
-}
-
-function EmptyExtractionPreview() {
-  const [reextracting, setReextracting] = useState(false);
-  const [saving, setSaving] = useState(false);
-  const [savedProductName, setSavedProductName] = useState<string | null>(null);
-
-  async function handlePreviewReextract() {
-    setReextracting(true);
-    await delay(900);
-    setReextracting(false);
-  }
-
-  async function handlePreviewAddManual(_imageId: string, product: ManualProductInput) {
-    setSaving(true);
-    await delay(600);
-    setSaving(false);
-    setSavedProductName(product.product_name);
-  }
-
-  return (
-    <div className="app preview-app">
-      <section className="preview-hero">
-        <p className="eyebrow">Preview</p>
-        <h1>Empty extraction card</h1>
-        <p className="subtitle">
-          This mock route renders the real empty-state product card with sample data so you can
-          review button size, spacing, and hierarchy without logging in.
-        </p>
-      </section>
-
-      <main className="preview-grid">
-        <ProductCard
-          product={DEV_PREVIEW_EMPTY_PRODUCT}
-          imgSrc={DEV_PREVIEW_EMPTY_IMAGE_URL}
-          onReextract={handlePreviewReextract}
-          onAddManual={handlePreviewAddManual}
-          reextracting={reextracting}
-          saving={saving}
-        />
-      </main>
-
-      {savedProductName && (
-        <p className="preview-note">Mock save complete for “{savedProductName}”. Refresh to reset.</p>
-      )}
-    </div>
-  );
-}
-
 export default function App() {
-  if (DEV_PREVIEW_MODE === "empty-extraction") {
-    return <EmptyExtractionPreview />;
-  }
-
   return (
     <AuthProvider>
       <AppShell />

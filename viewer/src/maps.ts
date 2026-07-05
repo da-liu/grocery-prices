@@ -13,11 +13,6 @@ export interface MapViewport {
   height: number;
 }
 
-export interface PinPercentPosition {
-  x: number;
-  y: number;
-}
-
 export const STATIC_MAP_MAX_WIDTH = 640;
 export const STATIC_MAP_DEFAULT_HEIGHT = 220;
 
@@ -64,21 +59,6 @@ export function paddedGeoBounds(bounds: GeoBounds, paddingFactor = 1.35): GeoBou
     minLon: bounds.minLon - lonPad,
     maxLon: bounds.maxLon + lonPad,
   };
-}
-
-export function zoomForGeoBounds(bounds: GeoBounds, paddingFactor = 1.35): number {
-  const latSpan = Math.max((bounds.maxLat - bounds.minLat) * paddingFactor, MIN_GEO_SPAN);
-  const lonSpan = Math.max((bounds.maxLon - bounds.minLon) * paddingFactor, MIN_GEO_SPAN);
-  const span = Math.max(latSpan, lonSpan);
-  const zoom = Math.round(Math.log2(360 / span)) - 1;
-  return Math.min(18, Math.max(10, zoom));
-}
-
-export function mapsEmbedUrlForBounds(bounds: GeoBounds, paddingFactor = 1.35): string {
-  const centerLat = (bounds.minLat + bounds.maxLat) / 2;
-  const centerLon = (bounds.minLon + bounds.maxLon) / 2;
-  const zoom = zoomForGeoBounds(bounds, paddingFactor);
-  return mapsEmbedUrl(centerLat, centerLon, zoom);
 }
 
 export function staticMapDimensions(containerWidth: number, containerHeight: number) {
@@ -147,42 +127,6 @@ export function mapViewportForBounds(
     width,
     height,
   };
-}
-
-export function projectLatLonInViewport(
-  lat: number,
-  lon: number,
-  viewport: MapViewport,
-): { x: number; y: number } {
-  const scale = 2 ** viewport.zoom;
-  const center = latLngToWorld(viewport.centerLat, viewport.centerLon);
-  const point = latLngToWorld(lat, lon);
-  const centerPx = { x: center.x * scale, y: center.y * scale };
-  const pointPx = { x: point.x * scale, y: point.y * scale };
-
-  return {
-    x: viewport.width / 2 + (pointPx.x - centerPx.x),
-    y: viewport.height / 2 + (pointPx.y - centerPx.y),
-  };
-}
-
-export function projectLatLonToPercent(
-  lat: number,
-  lon: number,
-  viewport: MapViewport,
-): PinPercentPosition {
-  const pixel = projectLatLonInViewport(lat, lon, viewport);
-  return {
-    x: (pixel.x / viewport.width) * 100,
-    y: (pixel.y / viewport.height) * 100,
-  };
-}
-
-export function projectCoordsToPercent(
-  coords: ReadonlyArray<{ latitude: number; longitude: number }>,
-  viewport: MapViewport,
-): PinPercentPosition[] {
-  return coords.map((coord) => projectLatLonToPercent(coord.latitude, coord.longitude, viewport));
 }
 
 export interface StaticMapMarker {

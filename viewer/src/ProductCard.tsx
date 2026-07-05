@@ -4,6 +4,7 @@ import type { ManualProductInput, ProductUpdateInput } from "./api";
 import { PhotoLightbox } from "./PhotoLightbox";
 import { LocationLabelButton } from "./LocationLabelButton";
 import { StoreLink } from "./StoreLink";
+import { photoGroupLinkLabel } from "./browseQuery";
 import type { PriceInsight, Product } from "./types";
 
 function formatPrice(price: number | null | undefined, currency = "CAD") {
@@ -242,6 +243,8 @@ export function ProductCard({
   selected,
   onToggleSelect,
   onNavigateToProduct,
+  onNavigateToPhotoGroup,
+  photoGroupProductCount,
   highlighted,
 }: {
   product: Product;
@@ -259,6 +262,8 @@ export function ProductCard({
   selected?: boolean;
   onToggleSelect?: (productId: string) => void;
   onNavigateToProduct?: (productId: string) => void;
+  onNavigateToPhotoGroup?: (imageId: string, productId: string) => void;
+  photoGroupProductCount?: number;
   highlighted?: boolean;
 }) {
   const isEmpty = product.extraction_empty === true;
@@ -539,6 +544,23 @@ export function ProductCard({
             <>
               <dt>Taken</dt>
               <dd title={capturedLabel ?? undefined}>{capturedAgo}</dd>
+            </>
+          )}
+          {onNavigateToPhotoGroup && (
+            <>
+              <dt>Photo</dt>
+              <dd>
+                <button
+                  type="button"
+                  className="meta-link"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onNavigateToPhotoGroup(product.image_id, product.id);
+                  }}
+                >
+                  {photoGroupLinkLabel(photoGroupProductCount ?? 1)}
+                </button>
+              </dd>
             </>
           )}
         </dl>

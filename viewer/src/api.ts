@@ -3,10 +3,6 @@ import type { Product } from "./types";
 
 const API_BASE = import.meta.env.VITE_API_URL ?? "";
 
-const fetchOpts: RequestInit = {
-  credentials: "include",
-};
-
 export interface UserProfile {
   authenticated: boolean;
   username: string;
@@ -57,9 +53,18 @@ export function describeRequestError(
   return `Could not reach API at ${apiBase}. Check network or try again.`;
 }
 
-function authFetch(url: string, init: RequestInit = {}) {
+function apiFetch(url: string, init: RequestInit = {}) {
   return fetch(url, {
-    ...fetchOpts,
+    credentials: "omit",
+    ...init,
+    headers: {
+      ...(init.headers ?? {}),
+    },
+  });
+}
+
+function authFetch(url: string, init: RequestInit = {}) {
+  return apiFetch(url, {
     ...init,
     headers: {
       ...authHeaders(),
@@ -68,18 +73,11 @@ function authFetch(url: string, init: RequestInit = {}) {
   });
 }
 
-export async function fetchHealth(): Promise<{ auth_required: boolean }> {
-  const resp = await fetch(`${API_BASE}/health`, fetchOpts);
-  if (!resp.ok) throw new Error(await parseError(resp));
-  return resp.json();
-}
-
 async function authAction(
   path: string,
   body: { username: string; password: string },
 ): Promise<UserProfile> {
-  const resp = await fetch(`${API_BASE}${path}`, {
-    ...fetchOpts,
+  const resp = await apiFetch(`${API_BASE}${path}`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(body),
@@ -112,19 +110,11 @@ export async function logout() {
 }
 
 export async function fetchMe(): Promise<UserProfile> {
-  let resp: Response;
-  try {
-    resp = await authFetch(`${API_BASE}/api/auth/me`);
-  } catch (err) {
-    throw err;
-  }
+  const resp = await authFetch(`${API_BASE}/api/auth/me`);
   if (!resp.ok) {
     throw new ApiError(await parseError(resp), resp.status);
   }
   const payload = await resp.json();
-  if (typeof payload.token === "string" && payload.token) {
-    setToken(payload.token);
-  }
   return {
     authenticated: true,
     username: payload.username,
@@ -174,6 +164,7 @@ export async function deleteProductsBulk(productIds: string[]): Promise<BulkDele
 export function productImageUrl(imageId: string): string {
   const token = getToken();
   const base = `${API_BASE}/api/media/${imageId}`;
+  // <img> cannot send Authorization; pass token as query param instead.
   return token ? `${base}?access_token=${encodeURIComponent(token)}` : base;
 }
 
@@ -355,16 +346,6 @@ export async function createStoreLocation(body: StoreLocationInput) {
   });
   if (!resp.ok) throw new Error(await parseError(resp));
   return resp.json() as Promise<import("./types").CreateStoreLocationResult>;
-}
-
-export async function mergeStoreLocations(sourceId: string, targetId: string) {
-  const resp = await authFetch(`${API_BASE}/api/store-locations/merge`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ source_id: sourceId, target_id: targetId }),
-  });
-  if (!resp.ok) throw new Error(await parseError(resp));
-  return resp.json() as Promise<import("./types").StoreLocation>;
 }
 
 export async function updateStoreLocation(storeId: string, body: StoreLocationInput) {

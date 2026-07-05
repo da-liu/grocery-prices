@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import base64
 import json
+import logging
 import os
 import time
 from dataclasses import dataclass
@@ -10,6 +11,7 @@ from pathlib import Path
 import httpx
 from cursor_sdk import Agent, AgentOptions, CursorAgentError, LocalAgentOptions, SDKImage, UserMessage
 
+from grocery_extract.errors import ConfigError, CursorExtractError, ExtractionError
 from grocery_extract.image_prep import LLM_MAX_DIM, llm_scale_percent, prepare_image_for_llm
 from grocery_extract.parse_response import parse_products_json
 from grocery_extract.prompt import build_prompt, build_receipt_prompt
@@ -21,9 +23,7 @@ GEMINI_DIRECT_BACKEND = "gemini_direct"
 DEFAULT_CURSOR_MODEL = "auto"
 DEFAULT_GEMINI_DIRECT_MODEL = "gemini-3.1-flash-lite"
 
-
-class CursorExtractError(RuntimeError):
-    pass
+logger = logging.getLogger(__name__)
 
 
 @dataclass(frozen=True)
@@ -38,7 +38,7 @@ class ExtractImageResult:
 def current_extract_backend() -> str:
     backend = os.environ.get("GROCERY_EXTRACT_BACKEND", CURSOR_BACKEND).strip().lower()
     if backend not in {CURSOR_BACKEND, GEMINI_DIRECT_BACKEND}:
-        raise CursorExtractError(
+        raise ConfigError(
             f"Unsupported GROCERY_EXTRACT_BACKEND: {backend}. "
             f"Expected {CURSOR_BACKEND} or {GEMINI_DIRECT_BACKEND}."
         )
@@ -63,11 +63,11 @@ def configured_api_key(api_key: str | None = None, backend: str | None = None) -
     if backend == GEMINI_DIRECT_BACKEND:
         key = os.environ.get("GEMINI_API_KEY") or os.environ.get("GOOGLE_API_KEY")
         if not key:
-            raise CursorExtractError("GEMINI_API_KEY or GOOGLE_API_KEY is required for direct Gemini extraction")
+            raise ConfigError("GEMINI_API_KEY or GOOGLE_API_KEY is required for direct Gemini extraction")
         return key
     key = os.environ.get("CURSOR_API_KEY")
     if not key:
-        raise CursorExtractError("CURSOR_API_KEY is required for Cursor SDK extraction")
+        raise ConfigError("CURSOR_API_KEY is required for Cursor SDK extraction")
     return key
 
 
@@ -92,13 +92,15 @@ def _run_cursor_sdk(
             ),
         )
     except CursorAgentError as err:
-        raise CursorExtractError(f"Cursor agent startup failed: {err.message}") from err
+        logger.error("cursor_agent_startup_failed model=%s error=%s", model, err.message)
+        raise ExtractionError(f"Cursor agent startup failed: {err.message}") from err
 
     if result.status == "error":
-        raise CursorExtractError(f"Cursor agent run failed: {result.id}")
+        logger.error("cursor_agent_run_failed model=%s run_id=%s", model, result.id)
+        raise ExtractionError(f"Cursor agent run failed: {result.id}")
     raw = result.result or ""
     if not raw.strip():
-        raise CursorExtractError("Empty response from Cursor agent")
+        raise ExtractionError("Empty response from Cursor agent")
     return raw
 
 
@@ -129,14 +131,21 @@ def _run_gemini_direct(
     with httpx.Client(timeout=300.0) as client:
         resp = client.post(url, params={"key": api_key}, json=payload)
         if resp.status_code >= 400:
-            raise CursorExtractError(f"Gemini API {resp.status_code}: {resp.text[:500]}")
+            logger.error(
+                "gemini_api_error model=%s status=%s body_preview=%s",
+                model,
+                resp.status_code,
+                resp.text[:200],
+            )
+            raise ExtractionError(f"Gemini API {resp.status_code}: {resp.text[:500]}")
         body = resp.json()
     try:
         raw = body["candidates"][0]["content"]["parts"][0]["text"]
     except (KeyError, IndexError, TypeError) as err:
-        raise CursorExtractError(f"Unexpected Gemini response shape: {json.dumps(body)[:500]}") from err
+        logger.error("gemini_response_shape_error model=%s body_preview=%s", model, json.dumps(body)[:200])
+        raise ExtractionError(f"Unexpected Gemini response shape: {json.dumps(body)[:500]}") from err
     if not raw.strip():
-        raise CursorExtractError("Empty response from Gemini API")
+        raise ExtractionError("Empty response from Gemini API")
     return raw
 
 
@@ -157,7 +166,7 @@ def extract_products_from_image(
     api_key = configured_api_key(api_key, backend)
     image_path = image_path.resolve()
     if not image_path.exists():
-        raise CursorExtractError(f"Image not found: {image_path}")
+        raise ExtractionError(f"Image not found: {image_path}")
 
     prep_start = time.perf_counter()
     llm_path = prepare_image_for_llm(
@@ -183,6 +192,14 @@ def extract_products_from_image(
             llm_path.unlink(missing_ok=True)
 
     products = parse_products_json(raw)
+    logger.info(
+        "llm_extract_complete backend=%s model=%s prep_ms=%s llm_ms=%s products=%s",
+        backend,
+        model,
+        prep_ms,
+        llm_ms,
+        len(products),
+    )
     return ExtractImageResult(
         products=products,
         raw_response=raw,

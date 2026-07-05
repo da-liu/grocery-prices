@@ -24,7 +24,10 @@ export function BrowsePage({
   onToggleSelect,
   gridColumns,
   onNavigateToProduct,
+  onNavigateToPhotoGroup,
+  photoGroupSizes,
   highlightProductId,
+  highlightPhotoGroupId,
 }: {
   products: Product[];
   catalogEmpty: boolean;
@@ -43,7 +46,10 @@ export function BrowsePage({
   onToggleSelect?: (productId: string) => void;
   gridColumns: GridColumns;
   onNavigateToProduct?: (productId: string) => void;
+  onNavigateToPhotoGroup?: (imageId: string, productId: string) => void;
+  photoGroupSizes?: ReadonlyMap<string, number>;
   highlightProductId?: string | null;
+  highlightPhotoGroupId?: string | null;
 }) {
   if (catalogEmpty) {
     return (
@@ -71,6 +77,8 @@ export function BrowsePage({
             key={group.imageId}
             group={group}
             onNavigateToProduct={onNavigateToProduct}
+            highlightProductId={highlightProductId}
+            highlighted={highlightPhotoGroupId === group.imageId}
           />
         ))}
       </main>
@@ -92,6 +100,8 @@ export function BrowsePage({
           onReextract={selectionMode ? undefined : onReextractPhoto}
           onAddManual={selectionMode ? undefined : onAddManualProduct}
           onNavigateToProduct={onNavigateToProduct}
+          onNavigateToPhotoGroup={onNavigateToPhotoGroup}
+          photoGroupProductCount={photoGroupSizes?.get(product.image_id) ?? 1}
           reextracting={reextractingId === product.image_id}
           saving={savingId === product.id}
           compact={compact}

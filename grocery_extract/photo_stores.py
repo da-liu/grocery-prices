@@ -46,8 +46,13 @@ def image_needs_store_label(
     lat: float | None,
     lon: float | None,
     user_stores: list[dict],
+    *,
+    store_location_id: str | None = None,
 ) -> bool:
-    if get_image_store_location_id(user_id, image_id):
+    assigned = store_location_id
+    if assigned is None:
+        assigned = get_image_store_location_id(user_id, image_id)
+    if assigned:
         return False
     if lat is not None and lon is not None and store_from_gps(lat, lon, user_stores):
         return False

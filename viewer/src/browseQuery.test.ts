@@ -7,6 +7,7 @@ import {
   countActiveChips,
   filterProducts,
   getPriceExtents,
+  photoGroupLinkLabel,
   parseBrowseQueryFromSearch,
   removeChip,
   sortProducts,
@@ -215,5 +216,15 @@ describe("url sync", () => {
     expect(parsed.priceMin).toBe(2.5);
     expect(parsed.onSale).toBe(true);
     expect(parsed.capturedAfter).toBe("2026-01-01");
+  });
+});
+
+describe("photoGroupLinkLabel", () => {
+  it("uses singular copy for one product", () => {
+    expect(photoGroupLinkLabel(1)).toBe("View in photo view");
+  });
+
+  it("includes product count when grouped", () => {
+    expect(photoGroupLinkLabel(4)).toBe("View with 4 products");
   });
 });

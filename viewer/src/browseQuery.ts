@@ -508,14 +508,6 @@ export function countActiveChips(query: BrowseQueryState, extents: PriceExtents 
   return buildActiveChips(query, extents).length;
 }
 
-export function hasActiveBrowseFilters(
-  query: BrowseQueryState,
-  search: string,
-  extents: PriceExtents | null,
-): boolean {
-  return search.trim().length > 0 || countActiveChips(query, extents) > 0;
-}
-
 export function removeChip(query: BrowseQueryState, chipId: string): BrowseQueryState {
   if (chipId === "sort") return { ...query, sort: DEFAULT_SORT };
   if (chipId === "price") return { ...query, priceMin: null, priceMax: null };
@@ -690,6 +682,12 @@ export interface PhotoGroup {
   capturedAt?: string;
   store: string;
   photoType: "shelf" | "receipt";
+}
+
+export function photoGroupLinkLabel(productCount: number): string {
+  return productCount > 1
+    ? `View with ${productCount} products`
+    : "View in photo view";
 }
 
 export function groupProductsByImageId(products: Product[]): PhotoGroup[] {

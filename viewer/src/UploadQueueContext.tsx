@@ -15,7 +15,7 @@ import {
   type UploadResult,
 } from "./api";
 import { DuplicatePhotoModal } from "./DuplicatePhotoModal";
-import { prepareUploadFile } from "./compressForUpload";
+import { prepareUploadFile } from "./prepareUpload";
 import {
   createQueueItem,
   MAX_BULK_BATCH,
@@ -402,13 +402,20 @@ export function UploadQueueProvider({
       setItems((prev) => [...prev, ...added]);
 
       for (const item of added) {
-        void prepareUploadFile(item.file)
+        void prepareUploadFile(item.file, (phase) => {
+          updateItem(item.id, { preparePhase: phase });
+        })
           .then(({ uploadFile, thumbnailUrl }) => {
-            updateItem(item.id, { uploadFile, thumbnailUrl, status: "queued" });
+            updateItem(item.id, {
+              uploadFile,
+              thumbnailUrl,
+              preparePhase: undefined,
+              status: "queued",
+            });
           })
           .catch((err) => {
-            const message = err instanceof Error ? err.message : "Compression failed";
-            updateItem(item.id, { status: "failed", error: message });
+            const message = err instanceof Error ? err.message : "Upload prep failed";
+            updateItem(item.id, { status: "failed", error: message, preparePhase: undefined });
           });
       }
     },

@@ -1,3 +1,4 @@
+/** Session token in localStorage, sent as `Authorization: Bearer` (no cookies). */
 const TOKEN_KEY = "grocery_auth_token";
 
 export function getToken(): string | null {

@@ -33,6 +33,8 @@ interface BrowseSortFilterPanelProps {
   selectionMode: boolean;
   onEnterSelection: () => void;
   onExitSelection: () => void;
+  onDeleteAllProducts?: () => void;
+  deletingAll?: boolean;
 }
 
 function TriState({
@@ -120,6 +122,8 @@ export function BrowseSortFilterPanel({
   selectionMode,
   onEnterSelection,
   onExitSelection,
+  onDeleteAllProducts,
+  deletingAll = false,
 }: BrowseSortFilterPanelProps) {
   const titleId = useId();
 
@@ -299,6 +303,19 @@ export function BrowseSortFilterPanel({
               onChange({ ...query, capturedAfter, capturedBefore })
             }
           />
+
+          {onDeleteAllProducts && (
+            <div className="browse-filter-danger">
+              <button
+                type="button"
+                className="danger-outline"
+                disabled={deletingAll}
+                onClick={() => onDeleteAllProducts()}
+              >
+                {deletingAll ? "Deleting…" : "Delete all products"}
+              </button>
+            </div>
+          )}
         </div>
 
         <footer className="browse-filter-footer">

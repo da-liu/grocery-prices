@@ -8,7 +8,7 @@ from pathlib import Path
 from typing import Any
 from zoneinfo import ZoneInfo
 
-from extract_server.users_db import _connect
+from extract_server.users_db import get_conn
 from grocery_extract.exif import captured_at_from_exif
 from grocery_extract.product_matching import attach_price_insights
 from grocery_extract.stores import store_from_gps
@@ -29,85 +29,85 @@ def _toronto_now() -> str:
 
 
 def init_catalog_tables() -> None:
-    with _connect() as conn:
-        conn.executescript(
-            """
-            CREATE TABLE IF NOT EXISTS user_image_seq (
-                user_id TEXT PRIMARY KEY,
-                next_num INTEGER NOT NULL DEFAULT 1,
-                FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
-            );
+    conn = get_conn()
+    conn.executescript(
+        """
+        CREATE TABLE IF NOT EXISTS user_image_seq (
+            user_id TEXT PRIMARY KEY,
+            next_num INTEGER NOT NULL DEFAULT 1,
+            FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+        );
 
-            CREATE TABLE IF NOT EXISTS photos (
-                id TEXT NOT NULL,
-                user_id TEXT NOT NULL,
-                type TEXT NOT NULL CHECK (type IN ('shelf', 'receipt')),
-                original_blob_key TEXT,
-                jpeg_blob_key TEXT NOT NULL,
-                content_hash TEXT,
-                gps_latitude REAL,
-                gps_longitude REAL,
-                captured_at TEXT,
-                store_location_id TEXT,
-                created_at TEXT NOT NULL,
-                updated_at TEXT NOT NULL,
-                PRIMARY KEY (user_id, id),
-                FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
-                FOREIGN KEY (store_location_id) REFERENCES user_store_locations(id)
-                    ON DELETE SET NULL
-            );
+        CREATE TABLE IF NOT EXISTS photos (
+            id TEXT NOT NULL,
+            user_id TEXT NOT NULL,
+            type TEXT NOT NULL CHECK (type IN ('shelf', 'receipt')),
+            original_blob_key TEXT,
+            jpeg_blob_key TEXT NOT NULL,
+            content_hash TEXT,
+            gps_latitude REAL,
+            gps_longitude REAL,
+            captured_at TEXT,
+            store_location_id TEXT,
+            created_at TEXT NOT NULL,
+            updated_at TEXT NOT NULL,
+            PRIMARY KEY (user_id, id),
+            FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+            FOREIGN KEY (store_location_id) REFERENCES user_store_locations(id)
+                ON DELETE SET NULL
+        );
 
-            CREATE UNIQUE INDEX IF NOT EXISTS idx_photos_content_hash
-                ON photos(user_id, content_hash)
-                WHERE content_hash IS NOT NULL;
+        CREATE UNIQUE INDEX IF NOT EXISTS idx_photos_content_hash
+            ON photos(user_id, content_hash)
+            WHERE content_hash IS NOT NULL;
 
-            CREATE INDEX IF NOT EXISTS idx_photos_user_captured
-                ON photos(user_id, captured_at DESC);
+        CREATE INDEX IF NOT EXISTS idx_photos_user_captured
+            ON photos(user_id, captured_at DESC);
 
-            CREATE INDEX IF NOT EXISTS idx_photos_user_store
-                ON photos(user_id, store_location_id);
+        CREATE INDEX IF NOT EXISTS idx_photos_user_store
+            ON photos(user_id, store_location_id);
 
-            CREATE TABLE IF NOT EXISTS extractions (
-                user_id TEXT NOT NULL,
-                photo_id TEXT NOT NULL,
-                extractor TEXT NOT NULL,
-                extracted_at TEXT NOT NULL,
-                reextracted_at TEXT,
-                manually_edited_at TEXT,
-                raw_response TEXT,
-                PRIMARY KEY (user_id, photo_id),
-                FOREIGN KEY (user_id, photo_id) REFERENCES photos(user_id, id) ON DELETE CASCADE
-            );
+        CREATE TABLE IF NOT EXISTS extractions (
+            user_id TEXT NOT NULL,
+            photo_id TEXT NOT NULL,
+            extractor TEXT NOT NULL,
+            extracted_at TEXT NOT NULL,
+            reextracted_at TEXT,
+            manually_edited_at TEXT,
+            raw_response TEXT,
+            PRIMARY KEY (user_id, photo_id),
+            FOREIGN KEY (user_id, photo_id) REFERENCES photos(user_id, id) ON DELETE CASCADE
+        );
 
-            CREATE TABLE IF NOT EXISTS product_sightings (
-                id TEXT PRIMARY KEY,
-                user_id TEXT NOT NULL,
-                photo_id TEXT NOT NULL,
-                line_index INTEGER NOT NULL,
-                product_name TEXT NOT NULL,
-                brand TEXT,
-                price REAL,
-                extras TEXT NOT NULL DEFAULT '{}',
-                created_at TEXT NOT NULL,
-                updated_at TEXT NOT NULL,
-                FOREIGN KEY (user_id, photo_id) REFERENCES photos(user_id, id) ON DELETE CASCADE,
-                UNIQUE (user_id, photo_id, line_index),
-                CHECK (json_valid(extras))
-            );
+        CREATE TABLE IF NOT EXISTS product_sightings (
+            id TEXT PRIMARY KEY,
+            user_id TEXT NOT NULL,
+            photo_id TEXT NOT NULL,
+            line_index INTEGER NOT NULL,
+            product_name TEXT NOT NULL,
+            brand TEXT,
+            price REAL,
+            extras TEXT NOT NULL DEFAULT '{}',
+            created_at TEXT NOT NULL,
+            updated_at TEXT NOT NULL,
+            FOREIGN KEY (user_id, photo_id) REFERENCES photos(user_id, id) ON DELETE CASCADE,
+            UNIQUE (user_id, photo_id, line_index),
+            CHECK (json_valid(extras))
+        );
 
-            CREATE INDEX IF NOT EXISTS idx_sightings_user_photo
-                ON product_sightings(user_id, photo_id);
-            """
+        CREATE INDEX IF NOT EXISTS idx_sightings_user_photo
+            ON product_sightings(user_id, photo_id);
+        """
+    )
+    photo_columns = {row[1] for row in conn.execute("PRAGMA table_info(photos)")}
+    if "extraction_status" not in photo_columns:
+        conn.execute(
+            "ALTER TABLE photos ADD COLUMN extraction_status TEXT NOT NULL DEFAULT 'done'"
         )
-        photo_columns = {row[1] for row in conn.execute("PRAGMA table_info(photos)")}
-        if "extraction_status" not in photo_columns:
-            conn.execute(
-                "ALTER TABLE photos ADD COLUMN extraction_status TEXT NOT NULL DEFAULT 'done'"
-            )
-        if "extraction_error" not in photo_columns:
-            conn.execute("ALTER TABLE photos ADD COLUMN extraction_error TEXT")
-        _ensure_photo_metric_columns(conn)
-        _ensure_extraction_metric_columns(conn)
+    if "extraction_error" not in photo_columns:
+        conn.execute("ALTER TABLE photos ADD COLUMN extraction_error TEXT")
+    _ensure_photo_metric_columns(conn)
+    _ensure_extraction_metric_columns(conn)
 
 
 def _ensure_photo_metric_columns(conn: sqlite3.Connection) -> None:
@@ -255,25 +255,25 @@ def _bump_image_seq(conn, user_id: str, photo_id: str) -> None:
 def allocate_image_ids(user_id: str, count: int) -> list[str]:
     if count <= 0:
         return []
-    with _connect() as conn:
-        conn.execute("BEGIN IMMEDIATE")
-        row = conn.execute(
-            "SELECT next_num FROM user_image_seq WHERE user_id = ?",
-            (user_id,),
-        ).fetchone()
-        if row is None:
-            start = 1
-            conn.execute(
-                "INSERT INTO user_image_seq (user_id, next_num) VALUES (?, ?)",
-                (user_id, start + count),
-            )
-        else:
-            start = row["next_num"]
-            conn.execute(
-                "UPDATE user_image_seq SET next_num = ? WHERE user_id = ?",
-                (start + count, user_id),
-            )
-        conn.commit()
+    conn = get_conn()
+    conn.execute("BEGIN IMMEDIATE")
+    row = conn.execute(
+        "SELECT next_num FROM user_image_seq WHERE user_id = ?",
+        (user_id,),
+    ).fetchone()
+    if row is None:
+        start = 1
+        conn.execute(
+            "INSERT INTO user_image_seq (user_id, next_num) VALUES (?, ?)",
+            (user_id, start + count),
+        )
+    else:
+        start = row["next_num"]
+        conn.execute(
+            "UPDATE user_image_seq SET next_num = ? WHERE user_id = ?",
+            (start + count, user_id),
+        )
+    conn.commit()
     return [f"IMG_{start + index:04d}" for index in range(count)]
 
 
@@ -282,41 +282,41 @@ def next_image_id(user_id: str) -> str:
 
 
 def max_image_num(user_id: str) -> int:
-    with _connect() as conn:
-        row = conn.execute(
-            "SELECT next_num FROM user_image_seq WHERE user_id = ?",
-            (user_id,),
-        ).fetchone()
+    conn = get_conn()
+    row = conn.execute(
+        "SELECT next_num FROM user_image_seq WHERE user_id = ?",
+        (user_id,),
+    ).fetchone()
     if row is None:
         return 0
     return row["next_num"] - 1
 
 
 def find_photo_by_content_hash(user_id: str, content_hash: str) -> str | None:
-    with _connect() as conn:
-        row = conn.execute(
-            """
-            SELECT id FROM photos
-            WHERE user_id = ? AND content_hash = ?
-            """,
-            (user_id, content_hash),
-        ).fetchone()
+    conn = get_conn()
+    row = conn.execute(
+        """
+        SELECT id FROM photos
+        WHERE user_id = ? AND content_hash = ?
+        """,
+        (user_id, content_hash),
+    ).fetchone()
     return row["id"] if row else None
 
 
 def get_photo(user_id: str, photo_id: str) -> dict[str, Any] | None:
-    with _connect() as conn:
-        row = conn.execute(
-            """
-            SELECT id, user_id, type, original_blob_key, jpeg_blob_key, content_hash,
-                   gps_latitude, gps_longitude, captured_at, store_location_id,
-                   created_at, updated_at, extraction_status, extraction_error,
-                   extraction_started_at
-            FROM photos
-            WHERE user_id = ? AND id = ?
-            """,
-            (user_id, photo_id),
-        ).fetchone()
+    conn = get_conn()
+    row = conn.execute(
+        """
+        SELECT id, user_id, type, original_blob_key, jpeg_blob_key, content_hash,
+               gps_latitude, gps_longitude, captured_at, store_location_id,
+               created_at, updated_at, extraction_status, extraction_error,
+               extraction_started_at
+        FROM photos
+        WHERE user_id = ? AND id = ?
+        """,
+        (user_id, photo_id),
+    ).fetchone()
     return dict(row) if row else None
 
 
@@ -334,15 +334,15 @@ def set_photo_store_location_id(
     store_location_id: str | None,
 ) -> bool:
     now = _utc_now()
-    with _connect() as conn:
-        cur = conn.execute(
-            """
-            UPDATE photos
-            SET store_location_id = ?, updated_at = ?
-            WHERE user_id = ? AND id = ?
-            """,
-            (store_location_id, now, user_id, photo_id),
-        )
+    conn = get_conn()
+    cur = conn.execute(
+        """
+        UPDATE photos
+        SET store_location_id = ?, updated_at = ?
+        WHERE user_id = ? AND id = ?
+        """,
+        (store_location_id, now, user_id, photo_id),
+    )
     return cur.rowcount > 0
 
 
@@ -355,11 +355,11 @@ def get_photo_store_location_id(user_id: str, photo_id: str) -> str | None:
 
 
 def count_extractions(user_id: str) -> int:
-    with _connect() as conn:
-        row = conn.execute(
-            "SELECT COUNT(*) AS count FROM extractions WHERE user_id = ?",
-            (user_id,),
-        ).fetchone()
+    conn = get_conn()
+    row = conn.execute(
+        "SELECT COUNT(*) AS count FROM extractions WHERE user_id = ?",
+        (user_id,),
+    ).fetchone()
     return int(row["count"]) if row else 0
 
 
@@ -415,33 +415,33 @@ def save_photo_pending(
     store_location_id: str | None,
 ) -> None:
     now = _utc_now()
-    with _connect() as conn:
-        conn.execute("BEGIN IMMEDIATE")
-        conn.execute(
-            """
-            INSERT INTO photos (
-                id, user_id, type, original_blob_key, jpeg_blob_key, content_hash,
-                gps_latitude, gps_longitude, captured_at, store_location_id,
-                created_at, updated_at, extraction_status, extraction_error
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending', NULL)
-            """,
-            (
-                photo_id,
-                user_id,
-                photo_type,
-                original_blob_key,
-                jpeg_blob_key,
-                content_hash,
-                gps_latitude,
-                gps_longitude,
-                captured_at,
-                store_location_id,
-                now,
-                now,
-            ),
-        )
-        _bump_image_seq(conn, user_id, photo_id)
-        conn.commit()
+    conn = get_conn()
+    conn.execute("BEGIN IMMEDIATE")
+    conn.execute(
+        """
+        INSERT INTO photos (
+            id, user_id, type, original_blob_key, jpeg_blob_key, content_hash,
+            gps_latitude, gps_longitude, captured_at, store_location_id,
+            created_at, updated_at, extraction_status, extraction_error
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending', NULL)
+        """,
+        (
+            photo_id,
+            user_id,
+            photo_type,
+            original_blob_key,
+            jpeg_blob_key,
+            content_hash,
+            gps_latitude,
+            gps_longitude,
+            captured_at,
+            store_location_id,
+            now,
+            now,
+        ),
+    )
+    _bump_image_seq(conn, user_id, photo_id)
+    conn.commit()
 
 
 def set_extraction_status(
@@ -452,39 +452,39 @@ def set_extraction_status(
     error: str | None = None,
 ) -> None:
     now = _utc_now()
-    with _connect() as conn:
-        if status == "processing":
-            conn.execute(
-                """
-                UPDATE photos
-                SET extraction_status = ?, extraction_error = ?, updated_at = ?,
-                    extraction_started_at = ?
-                WHERE user_id = ? AND id = ?
-                """,
-                (status, error, now, now, user_id, photo_id),
-            )
-        else:
-            conn.execute(
-                """
-                UPDATE photos
-                SET extraction_status = ?, extraction_error = ?, updated_at = ?
-                WHERE user_id = ? AND id = ?
-                """,
-                (status, error, now, user_id, photo_id),
-            )
+    conn = get_conn()
+    if status == "processing":
+        conn.execute(
+            """
+            UPDATE photos
+            SET extraction_status = ?, extraction_error = ?, updated_at = ?,
+                extraction_started_at = ?
+            WHERE user_id = ? AND id = ?
+            """,
+            (status, error, now, now, user_id, photo_id),
+        )
+    else:
+        conn.execute(
+            """
+            UPDATE photos
+            SET extraction_status = ?, extraction_error = ?, updated_at = ?
+            WHERE user_id = ? AND id = ?
+            """,
+            (status, error, now, user_id, photo_id),
+        )
 
 
 def set_photo_type(user_id: str, photo_id: str, photo_type: str) -> None:
     now = _utc_now()
-    with _connect() as conn:
-        conn.execute(
-            """
-            UPDATE photos
-            SET type = ?, updated_at = ?
-            WHERE user_id = ? AND id = ?
-            """,
-            (photo_type, now, user_id, photo_id),
-        )
+    conn = get_conn()
+    conn.execute(
+        """
+        UPDATE photos
+        SET type = ?, updated_at = ?
+        WHERE user_id = ? AND id = ?
+        """,
+        (photo_type, now, user_id, photo_id),
+    )
 
 
 def finalize_photo_extraction(
@@ -502,78 +502,78 @@ def finalize_photo_extraction(
     classify_ms: int | None = None,
 ) -> int:
     now = _utc_now()
-    with _connect() as conn:
-        conn.execute("BEGIN IMMEDIATE")
-        photo = conn.execute(
-            """
-            SELECT created_at, extraction_started_at
-            FROM photos
-            WHERE user_id = ? AND id = ?
-            """,
-            (user_id, photo_id),
-        ).fetchone()
-        queue_wait_ms, total_ms = compute_extraction_timing_metrics(
-            created_at=photo["created_at"] if photo else None,
-            extraction_started_at=photo["extraction_started_at"] if photo else None,
-            duration_ms=duration_ms,
-            classify_ms=classify_ms,
-        )
+    conn = get_conn()
+    conn.execute("BEGIN IMMEDIATE")
+    photo = conn.execute(
+        """
+        SELECT created_at, extraction_started_at
+        FROM photos
+        WHERE user_id = ? AND id = ?
+        """,
+        (user_id, photo_id),
+    ).fetchone()
+    queue_wait_ms, total_ms = compute_extraction_timing_metrics(
+        created_at=photo["created_at"] if photo else None,
+        extraction_started_at=photo["extraction_started_at"] if photo else None,
+        duration_ms=duration_ms,
+        classify_ms=classify_ms,
+    )
+    conn.execute(
+        """
+        INSERT INTO extractions (
+            user_id, photo_id, extractor, extracted_at, raw_response,
+            duration_ms, prep_ms, llm_ms, model, product_count, photo_type, classify_ms,
+            queue_wait_ms, total_ms
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        """,
+        (
+            user_id,
+            photo_id,
+            extractor,
+            _toronto_now(),
+            raw_response,
+            duration_ms,
+            prep_ms,
+            llm_ms,
+            model,
+            len(products),
+            photo_type,
+            classify_ms,
+            queue_wait_ms,
+            total_ms,
+        ),
+    )
+    for index, product in enumerate(products, start=1):
+        product_name, brand, price, extras = _split_product_fields(product)
         conn.execute(
             """
-            INSERT INTO extractions (
-                user_id, photo_id, extractor, extracted_at, raw_response,
-                duration_ms, prep_ms, llm_ms, model, product_count, photo_type, classify_ms,
-                queue_wait_ms, total_ms
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            INSERT INTO product_sightings (
+                id, user_id, photo_id, line_index, product_name, brand, price,
+                extras, created_at, updated_at
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """,
             (
+                uuid.uuid4().hex,
                 user_id,
                 photo_id,
-                extractor,
-                _toronto_now(),
-                raw_response,
-                duration_ms,
-                prep_ms,
-                llm_ms,
-                model,
-                len(products),
-                photo_type,
-                classify_ms,
-                queue_wait_ms,
-                total_ms,
+                index,
+                product_name,
+                brand,
+                price,
+                json.dumps(extras, ensure_ascii=False),
+                now,
+                now,
             ),
         )
-        for index, product in enumerate(products, start=1):
-            product_name, brand, price, extras = _split_product_fields(product)
-            conn.execute(
-                """
-                INSERT INTO product_sightings (
-                    id, user_id, photo_id, line_index, product_name, brand, price,
-                    extras, created_at, updated_at
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-                """,
-                (
-                    uuid.uuid4().hex,
-                    user_id,
-                    photo_id,
-                    index,
-                    product_name,
-                    brand,
-                    price,
-                    json.dumps(extras, ensure_ascii=False),
-                    now,
-                    now,
-                ),
-            )
-        conn.execute(
-            """
-            UPDATE photos
-            SET extraction_status = 'done', extraction_error = NULL, updated_at = ?
-            WHERE user_id = ? AND id = ?
-            """,
-            (now, user_id, photo_id),
-        )
-        conn.commit()
+    conn.execute(
+        """
+        UPDATE photos
+        SET extraction_status = 'done', extraction_error = NULL, updated_at = ?
+        WHERE user_id = ? AND id = ?
+        """,
+        (now, user_id, photo_id),
+    )
+    conn.commit()
     return len(products)
 
 
@@ -599,86 +599,86 @@ def save_photo_ingest(
     classify_ms: int | None = None,
 ) -> int:
     now = _utc_now()
-    with _connect() as conn:
-        conn.execute("BEGIN IMMEDIATE")
+    conn = get_conn()
+    conn.execute("BEGIN IMMEDIATE")
+    conn.execute(
+        """
+        INSERT INTO photos (
+            id, user_id, type, original_blob_key, jpeg_blob_key, content_hash,
+            gps_latitude, gps_longitude, captured_at, store_location_id,
+            created_at, updated_at, extraction_status, extraction_error
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'done', NULL)
+        """,
+        (
+            photo_id,
+            user_id,
+            photo_type,
+            original_blob_key,
+            jpeg_blob_key,
+            content_hash,
+            gps_latitude,
+            gps_longitude,
+            captured_at,
+            store_location_id,
+            now,
+            now,
+        ),
+    )
+    queue_wait_ms, total_ms = compute_extraction_timing_metrics(
+        created_at=now,
+        extraction_started_at=now,
+        duration_ms=duration_ms,
+        classify_ms=classify_ms,
+    )
+    conn.execute(
+        """
+        INSERT INTO extractions (
+            user_id, photo_id, extractor, extracted_at, raw_response,
+            duration_ms, prep_ms, llm_ms, model, product_count, photo_type, classify_ms,
+            queue_wait_ms, total_ms
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        """,
+        (
+            user_id,
+            photo_id,
+            extractor,
+            _toronto_now(),
+            raw_response,
+            duration_ms,
+            prep_ms,
+            llm_ms,
+            model,
+            len(products),
+            photo_type,
+            classify_ms,
+            queue_wait_ms,
+            total_ms,
+        ),
+    )
+    for index, product in enumerate(products, start=1):
+        product_name, brand, price, extras = _split_product_fields(product)
         conn.execute(
             """
-            INSERT INTO photos (
-                id, user_id, type, original_blob_key, jpeg_blob_key, content_hash,
-                gps_latitude, gps_longitude, captured_at, store_location_id,
-                created_at, updated_at, extraction_status, extraction_error
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'done', NULL)
+            INSERT INTO product_sightings (
+                id, user_id, photo_id, line_index, product_name, brand, price,
+                extras, created_at, updated_at
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """,
             (
-                photo_id,
+                uuid.uuid4().hex,
                 user_id,
-                photo_type,
-                original_blob_key,
-                jpeg_blob_key,
-                content_hash,
-                gps_latitude,
-                gps_longitude,
-                captured_at,
-                store_location_id,
+                photo_id,
+                index,
+                product_name,
+                brand,
+                price,
+                json.dumps(extras, ensure_ascii=False),
                 now,
                 now,
             ),
         )
-        queue_wait_ms, total_ms = compute_extraction_timing_metrics(
-            created_at=now,
-            extraction_started_at=now,
-            duration_ms=duration_ms,
-            classify_ms=classify_ms,
-        )
-        conn.execute(
-            """
-            INSERT INTO extractions (
-                user_id, photo_id, extractor, extracted_at, raw_response,
-                duration_ms, prep_ms, llm_ms, model, product_count, photo_type, classify_ms,
-                queue_wait_ms, total_ms
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-            """,
-            (
-                user_id,
-                photo_id,
-                extractor,
-                _toronto_now(),
-                raw_response,
-                duration_ms,
-                prep_ms,
-                llm_ms,
-                model,
-                len(products),
-                photo_type,
-                classify_ms,
-                queue_wait_ms,
-                total_ms,
-            ),
-        )
-        for index, product in enumerate(products, start=1):
-            product_name, brand, price, extras = _split_product_fields(product)
-            conn.execute(
-                """
-                INSERT INTO product_sightings (
-                    id, user_id, photo_id, line_index, product_name, brand, price,
-                    extras, created_at, updated_at
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-                """,
-                (
-                    uuid.uuid4().hex,
-                    user_id,
-                    photo_id,
-                    index,
-                    product_name,
-                    brand,
-                    price,
-                    json.dumps(extras, ensure_ascii=False),
-                    now,
-                    now,
-                ),
-            )
-        _bump_image_seq(conn, user_id, photo_id)
-        conn.commit()
+    _bump_image_seq(conn, user_id, photo_id)
+    conn.commit()
     return len(products)
 
 
@@ -698,104 +698,104 @@ def replace_photo_extraction(
     classify_ms: int | None = None,
 ) -> int:
     now = _utc_now()
-    with _connect() as conn:
-        conn.execute("BEGIN IMMEDIATE")
-        extracted_at = _toronto_now()
-        queue_wait_ms, total_ms = compute_extraction_timing_metrics(
-            created_at=now,
-            extraction_started_at=now,
-            duration_ms=duration_ms,
-            classify_ms=classify_ms,
-        )
-        timing_sets = (
-            ", duration_ms = ?, prep_ms = ?, llm_ms = ?, model = ?, product_count = ?, "
-            "photo_type = ?, classify_ms = ?, queue_wait_ms = ?, total_ms = ?"
-        )
-        timing_values = (
-            duration_ms,
-            prep_ms,
-            llm_ms,
-            model,
-            len(products),
-            photo_type,
-            classify_ms,
-            queue_wait_ms,
-            total_ms,
-        )
-        if reextracted:
-            conn.execute(
-                f"""
-                UPDATE extractions
-                SET extractor = ?, extracted_at = ?, reextracted_at = ?, raw_response = ?{timing_sets}
-                WHERE user_id = ? AND photo_id = ?
-                """,
-                (extractor, extracted_at, extracted_at, raw_response, *timing_values, user_id, photo_id),
-            )
-        else:
-            conn.execute(
-                f"""
-                UPDATE extractions
-                SET extractor = ?, extracted_at = ?, raw_response = ?{timing_sets}
-                WHERE user_id = ? AND photo_id = ?
-                """,
-                (extractor, extracted_at, raw_response, *timing_values, user_id, photo_id),
-            )
+    conn = get_conn()
+    conn.execute("BEGIN IMMEDIATE")
+    extracted_at = _toronto_now()
+    queue_wait_ms, total_ms = compute_extraction_timing_metrics(
+        created_at=now,
+        extraction_started_at=now,
+        duration_ms=duration_ms,
+        classify_ms=classify_ms,
+    )
+    timing_sets = (
+        ", duration_ms = ?, prep_ms = ?, llm_ms = ?, model = ?, product_count = ?, "
+        "photo_type = ?, classify_ms = ?, queue_wait_ms = ?, total_ms = ?"
+    )
+    timing_values = (
+        duration_ms,
+        prep_ms,
+        llm_ms,
+        model,
+        len(products),
+        photo_type,
+        classify_ms,
+        queue_wait_ms,
+        total_ms,
+    )
+    if reextracted:
         conn.execute(
-            "DELETE FROM product_sightings WHERE user_id = ? AND photo_id = ?",
-            (user_id, photo_id),
+            f"""
+            UPDATE extractions
+            SET extractor = ?, extracted_at = ?, reextracted_at = ?, raw_response = ?{timing_sets}
+            WHERE user_id = ? AND photo_id = ?
+            """,
+            (extractor, extracted_at, extracted_at, raw_response, *timing_values, user_id, photo_id),
         )
-        for index, product in enumerate(products, start=1):
-            product_name, brand, price, extras = _split_product_fields(product)
-            conn.execute(
-                """
-                INSERT INTO product_sightings (
-                    id, user_id, photo_id, line_index, product_name, brand, price,
-                    extras, created_at, updated_at
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-                """,
-                (
-                    uuid.uuid4().hex,
-                    user_id,
-                    photo_id,
-                    index,
-                    product_name,
-                    brand,
-                    price,
-                    json.dumps(extras, ensure_ascii=False),
-                    now,
-                    now,
-                ),
-            )
-        conn.commit()
+    else:
+        conn.execute(
+            f"""
+            UPDATE extractions
+            SET extractor = ?, extracted_at = ?, raw_response = ?{timing_sets}
+            WHERE user_id = ? AND photo_id = ?
+            """,
+            (extractor, extracted_at, raw_response, *timing_values, user_id, photo_id),
+        )
+    conn.execute(
+        "DELETE FROM product_sightings WHERE user_id = ? AND photo_id = ?",
+        (user_id, photo_id),
+    )
+    for index, product in enumerate(products, start=1):
+        product_name, brand, price, extras = _split_product_fields(product)
+        conn.execute(
+            """
+            INSERT INTO product_sightings (
+                id, user_id, photo_id, line_index, product_name, brand, price,
+                extras, created_at, updated_at
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """,
+            (
+                uuid.uuid4().hex,
+                user_id,
+                photo_id,
+                index,
+                product_name,
+                brand,
+                price,
+                json.dumps(extras, ensure_ascii=False),
+                now,
+                now,
+            ),
+        )
+    conn.commit()
     return len(products)
 
 
 def get_extraction(user_id: str, photo_id: str) -> dict[str, Any] | None:
-    with _connect() as conn:
-        row = conn.execute(
-            """
-            SELECT user_id, photo_id, extractor, extracted_at, reextracted_at,
-                   manually_edited_at, raw_response, duration_ms, prep_ms, llm_ms, model,
-                   product_count, photo_type, classify_ms, queue_wait_ms, total_ms
-            FROM extractions
-            WHERE user_id = ? AND photo_id = ?
-            """,
-            (user_id, photo_id),
-        ).fetchone()
+    conn = get_conn()
+    row = conn.execute(
+        """
+        SELECT user_id, photo_id, extractor, extracted_at, reextracted_at,
+               manually_edited_at, raw_response, duration_ms, prep_ms, llm_ms, model,
+               product_count, photo_type, classify_ms, queue_wait_ms, total_ms
+        FROM extractions
+        WHERE user_id = ? AND photo_id = ?
+        """,
+        (user_id, photo_id),
+    ).fetchone()
     return dict(row) if row else None
 
 
 def get_sighting(user_id: str, sighting_id: str) -> dict[str, Any] | None:
-    with _connect() as conn:
-        row = conn.execute(
-            """
-            SELECT id, user_id, photo_id, line_index, product_name, brand, price,
-                   extras, created_at, updated_at
-            FROM product_sightings
-            WHERE user_id = ? AND id = ?
-            """,
-            (user_id, sighting_id),
-        ).fetchone()
+    conn = get_conn()
+    row = conn.execute(
+        """
+        SELECT id, user_id, photo_id, line_index, product_name, brand, price,
+               extras, created_at, updated_at
+        FROM product_sightings
+        WHERE user_id = ? AND id = ?
+        """,
+        (user_id, sighting_id),
+    ).fetchone()
     return dict(row) if row else None
 
 
@@ -813,33 +813,33 @@ def update_sighting(user_id: str, sighting_id: str, updates: dict[str, Any]) -> 
 
     product_name, brand, price, extras = _split_product_fields(merged)
     now = _utc_now()
-    with _connect() as conn:
-        conn.execute("BEGIN IMMEDIATE")
-        conn.execute(
-            """
-            UPDATE product_sightings
-            SET product_name = ?, brand = ?, price = ?, extras = ?, updated_at = ?
-            WHERE user_id = ? AND id = ?
-            """,
-            (
-                product_name,
-                brand,
-                price,
-                json.dumps(extras, ensure_ascii=False),
-                now,
-                user_id,
-                sighting_id,
-            ),
-        )
-        conn.execute(
-            """
-            UPDATE extractions
-            SET manually_edited_at = ?
-            WHERE user_id = ? AND photo_id = ?
-            """,
-            (_toronto_now(), user_id, row["photo_id"]),
-        )
-        conn.commit()
+    conn = get_conn()
+    conn.execute("BEGIN IMMEDIATE")
+    conn.execute(
+        """
+        UPDATE product_sightings
+        SET product_name = ?, brand = ?, price = ?, extras = ?, updated_at = ?
+        WHERE user_id = ? AND id = ?
+        """,
+        (
+            product_name,
+            brand,
+            price,
+            json.dumps(extras, ensure_ascii=False),
+            now,
+            user_id,
+            sighting_id,
+        ),
+    )
+    conn.execute(
+        """
+        UPDATE extractions
+        SET manually_edited_at = ?
+        WHERE user_id = ? AND photo_id = ?
+        """,
+        (_toronto_now(), user_id, row["photo_id"]),
+    )
+    conn.commit()
     return build_product_row(user_id, sighting_id)
 
 
@@ -850,47 +850,47 @@ def add_sighting(user_id: str, photo_id: str, product: dict[str, Any]) -> dict[s
     product_name, brand, price, extras = _split_product_fields(product)
     now = _utc_now()
     sighting_id = uuid.uuid4().hex
-    with _connect() as conn:
-        conn.execute("BEGIN IMMEDIATE")
-        if get_extraction(user_id, photo_id) is None:
-            conn.execute(
-                """
-                INSERT INTO extractions (
-                    user_id, photo_id, extractor, extracted_at, raw_response
-                ) VALUES (?, ?, ?, ?, ?)
-                """,
-                (user_id, photo_id, "manual", _toronto_now(), None),
-            )
-        row = conn.execute(
-            """
-            SELECT COALESCE(MAX(line_index), 0) AS max_index
-            FROM product_sightings
-            WHERE user_id = ? AND photo_id = ?
-            """,
-            (user_id, photo_id),
-        ).fetchone()
-        line_index = int(row["max_index"]) + 1
+    conn = get_conn()
+    conn.execute("BEGIN IMMEDIATE")
+    if get_extraction(user_id, photo_id) is None:
         conn.execute(
             """
-            INSERT INTO product_sightings (
-                id, user_id, photo_id, line_index, product_name, brand, price,
-                extras, created_at, updated_at
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            INSERT INTO extractions (
+                user_id, photo_id, extractor, extracted_at, raw_response
+            ) VALUES (?, ?, ?, ?, ?)
             """,
-            (
-                sighting_id,
-                user_id,
-                photo_id,
-                line_index,
-                product_name,
-                brand,
-                price,
-                json.dumps(extras, ensure_ascii=False),
-                now,
-                now,
-            ),
+            (user_id, photo_id, "manual", _toronto_now(), None),
         )
-        conn.commit()
+    row = conn.execute(
+        """
+        SELECT COALESCE(MAX(line_index), 0) AS max_index
+        FROM product_sightings
+        WHERE user_id = ? AND photo_id = ?
+        """,
+        (user_id, photo_id),
+    ).fetchone()
+    line_index = int(row["max_index"]) + 1
+    conn.execute(
+        """
+        INSERT INTO product_sightings (
+            id, user_id, photo_id, line_index, product_name, brand, price,
+            extras, created_at, updated_at
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        """,
+        (
+            sighting_id,
+            user_id,
+            photo_id,
+            line_index,
+            product_name,
+            brand,
+            price,
+            json.dumps(extras, ensure_ascii=False),
+            now,
+            now,
+        ),
+    )
+    conn.commit()
     return build_product_row(user_id, sighting_id)
 
 
@@ -900,11 +900,11 @@ def delete_photo(user_id: str, photo_id: str) -> bool:
         return False
 
     _delete_photo_files(photo)
-    with _connect() as conn:
-        cur = conn.execute(
-            "DELETE FROM photos WHERE user_id = ? AND id = ?",
-            (user_id, photo_id),
-        )
+    conn = get_conn()
+    cur = conn.execute(
+        "DELETE FROM photos WHERE user_id = ? AND id = ?",
+        (user_id, photo_id),
+    )
     return cur.rowcount > 0
 
 
@@ -918,17 +918,17 @@ def _delete_photo_files(photo: dict[str, Any]) -> None:
 
 
 def photo_id_for_empty_sighting(user_id: str, product_id: str) -> str | None:
-    with _connect() as conn:
-        rows = conn.execute(
-            """
-            SELECT p.id
-            FROM photos p
-            LEFT JOIN product_sightings s
-                ON s.user_id = p.user_id AND s.photo_id = p.id
-            WHERE p.user_id = ? AND s.id IS NULL
-            """,
-            (user_id,),
-        ).fetchall()
+    conn = get_conn()
+    rows = conn.execute(
+        """
+        SELECT p.id
+        FROM photos p
+        LEFT JOIN product_sightings s
+            ON s.user_id = p.user_id AND s.photo_id = p.id
+        WHERE p.user_id = ? AND s.id IS NULL
+        """,
+        (user_id,),
+    ).fetchall()
     for row in rows:
         if empty_sighting_id(user_id, row["id"]) == product_id:
             return row["id"]
@@ -945,19 +945,19 @@ def delete_sighting(user_id: str, sighting_id: str) -> bool:
         return False
 
     photo_id = row["photo_id"]
-    with _connect() as conn:
-        conn.execute(
-            "DELETE FROM product_sightings WHERE user_id = ? AND id = ?",
-            (user_id, sighting_id),
-        )
-        remaining = conn.execute(
-            """
-            SELECT COUNT(*) AS count
-            FROM product_sightings
-            WHERE user_id = ? AND photo_id = ?
-            """,
-            (user_id, photo_id),
-        ).fetchone()
+    conn = get_conn()
+    conn.execute(
+        "DELETE FROM product_sightings WHERE user_id = ? AND id = ?",
+        (user_id, sighting_id),
+    )
+    remaining = conn.execute(
+        """
+        SELECT COUNT(*) AS count
+        FROM product_sightings
+        WHERE user_id = ? AND photo_id = ?
+        """,
+        (user_id, photo_id),
+    ).fetchone()
 
     if int(remaining["count"]) == 0:
         return delete_photo(user_id, photo_id)
@@ -990,24 +990,24 @@ def delete_sightings_bulk(user_id: str, sighting_ids: list[str]) -> dict[str, An
             failed.append(sighting_id)
             continue
 
-        with _connect() as conn:
-            conn.execute(
-                "DELETE FROM product_sightings WHERE user_id = ? AND id = ?",
-                (user_id, sighting_id),
-            )
+        conn = get_conn()
+        conn.execute(
+            "DELETE FROM product_sightings WHERE user_id = ? AND id = ?",
+            (user_id, sighting_id),
+        )
         deleted += 1
         touched_photos.add(row["photo_id"])
 
     for photo_id in touched_photos:
-        with _connect() as conn:
-            remaining = conn.execute(
-                """
-                SELECT COUNT(*) AS count
-                FROM product_sightings
-                WHERE user_id = ? AND photo_id = ?
-                """,
-                (user_id, photo_id),
-            ).fetchone()
+        conn = get_conn()
+        remaining = conn.execute(
+            """
+            SELECT COUNT(*) AS count
+            FROM product_sightings
+            WHERE user_id = ? AND photo_id = ?
+            """,
+            (user_id, photo_id),
+        ).fetchone()
         if int(remaining["count"]) == 0 and delete_photo(user_id, photo_id):
             photos_removed += 1
 
@@ -1019,11 +1019,11 @@ def prune_orphan_photo_files(user_id: str) -> int:
     from grocery_extract.user_paths import DATA_DIR, user_root
 
     db_ids = set()
-    with _connect() as conn:
-        rows = conn.execute(
-            "SELECT id, jpeg_blob_key FROM photos WHERE user_id = ?",
-            (user_id,),
-        ).fetchall()
+    conn = get_conn()
+    rows = conn.execute(
+        "SELECT id, jpeg_blob_key FROM photos WHERE user_id = ?",
+        (user_id,),
+    ).fetchall()
     db_ids = {row["id"] for row in rows}
     db_jpegs = {row["jpeg_blob_key"] for row in rows}
 
@@ -1046,32 +1046,36 @@ def prune_orphan_photo_files(user_id: str) -> int:
     return removed
 
 
-def list_product_rows(user_id: str) -> list[dict[str, Any]]:
+def list_product_rows(
+    user_id: str,
+    *,
+    conn: sqlite3.Connection | None = None,
+) -> list[dict[str, Any]]:
     from grocery_extract.user_stores_db import list_user_stores_as_dicts
 
-    user_stores = list_user_stores_as_dicts(user_id)
+    db = conn or get_conn()
+    user_stores = list_user_stores_as_dicts(user_id, conn=db)
     user_store_by_id = {store["id"]: store for store in user_stores}
 
-    with _connect() as conn:
-        photos = conn.execute(
-            """
-            SELECT id, type, jpeg_blob_key, gps_latitude, gps_longitude,
-                   captured_at, store_location_id
-            FROM photos
-            WHERE user_id = ? AND extraction_status = 'done'
-            ORDER BY captured_at DESC, id DESC
-            """,
-            (user_id,),
-        ).fetchall()
-        sightings = conn.execute(
-            """
-            SELECT id, photo_id, line_index, product_name, brand, price, extras
-            FROM product_sightings
-            WHERE user_id = ?
-            ORDER BY photo_id, line_index
-            """,
-            (user_id,),
-        ).fetchall()
+    photos = db.execute(
+        """
+        SELECT id, type, jpeg_blob_key, gps_latitude, gps_longitude,
+               captured_at, store_location_id
+        FROM photos
+        WHERE user_id = ? AND extraction_status = 'done'
+        ORDER BY captured_at DESC, id DESC
+        """,
+        (user_id,),
+    ).fetchall()
+    sightings = db.execute(
+        """
+        SELECT id, photo_id, line_index, product_name, brand, price, extras
+        FROM product_sightings
+        WHERE user_id = ?
+        ORDER BY photo_id, line_index
+        """,
+        (user_id,),
+    ).fetchall()
 
     sightings_by_photo: dict[str, list[Any]] = {}
     for row in sightings:
@@ -1125,29 +1129,34 @@ def list_product_rows(user_id: str) -> list[dict[str, Any]]:
     return attach_price_insights(lines)
 
 
-def list_products_for_matching(user_id: str) -> list[dict[str, Any]]:
+def list_products_for_matching(
+    user_id: str,
+    *,
+    conn: sqlite3.Connection | None = None,
+    user_stores: list[dict[str, Any]] | None = None,
+) -> list[dict[str, Any]]:
     from grocery_extract.user_stores_db import list_user_stores_as_dicts
 
-    user_stores = list_user_stores_as_dicts(user_id)
-    user_store_by_id = {store["id"]: store for store in user_stores}
+    db = conn or get_conn()
+    stores = user_stores if user_stores is not None else list_user_stores_as_dicts(user_id, conn=db)
+    user_store_by_id = {store["id"]: store for store in stores}
 
-    with _connect() as conn:
-        photos = conn.execute(
-            """
-            SELECT id, gps_latitude, gps_longitude, captured_at, store_location_id
-            FROM photos
-            WHERE user_id = ? AND extraction_status = 'done'
-            """,
-            (user_id,),
-        ).fetchall()
-        sightings = conn.execute(
-            """
-            SELECT id, photo_id, product_name, brand, price, extras
-            FROM product_sightings
-            WHERE user_id = ?
-            """,
-            (user_id,),
-        ).fetchall()
+    photos = db.execute(
+        """
+        SELECT id, gps_latitude, gps_longitude, captured_at, store_location_id
+        FROM photos
+        WHERE user_id = ? AND extraction_status = 'done'
+        """,
+        (user_id,),
+    ).fetchall()
+    sightings = db.execute(
+        """
+        SELECT id, photo_id, product_name, brand, price, extras
+        FROM product_sightings
+        WHERE user_id = ?
+        """,
+        (user_id,),
+    ).fetchall()
 
     sightings_by_photo: dict[str, list[Any]] = {}
     for row in sightings:
@@ -1158,7 +1167,7 @@ def list_products_for_matching(user_id: str) -> list[dict[str, Any]]:
         photo_dict = dict(photo)
         location = _location_for_photo(
             photo_dict,
-            user_stores=user_stores,
+            user_stores=stores,
             user_store_by_id=user_store_by_id,
         )
         captured_at = photo_dict.get("captured_at")
@@ -1176,39 +1185,44 @@ def list_products_for_matching(user_id: str) -> list[dict[str, Any]]:
     return lines
 
 
-def get_photos_extraction_status(user_id: str, image_ids: list[str]) -> list[dict[str, Any]]:
+def get_photos_extraction_status(
+    user_id: str,
+    image_ids: list[str],
+    *,
+    conn: sqlite3.Connection | None = None,
+) -> list[dict[str, Any]]:
     if not image_ids:
         return []
 
     placeholders = ",".join("?" for _ in image_ids)
-    with _connect() as conn:
-        photos = conn.execute(
-            f"""
-            SELECT id, extraction_status, extraction_error, gps_latitude, gps_longitude,
-                   captured_at, store_location_id, type
-            FROM photos
-            WHERE user_id = ? AND id IN ({placeholders})
-            """,
-            (user_id, *image_ids),
-        ).fetchall()
-        sightings = conn.execute(
-            f"""
-            SELECT photo_id, product_name, brand, price, extras, line_index
-            FROM product_sightings
-            WHERE user_id = ? AND photo_id IN ({placeholders})
-            ORDER BY photo_id, line_index
-            """,
-            (user_id, *image_ids),
-        ).fetchall()
-        extractions = conn.execute(
-            f"""
-            SELECT photo_id, duration_ms, prep_ms, llm_ms, model, classify_ms,
-                   queue_wait_ms, total_ms
-            FROM extractions
-            WHERE user_id = ? AND photo_id IN ({placeholders})
-            """,
-            (user_id, *image_ids),
-        ).fetchall()
+    db = conn or get_conn()
+    photos = db.execute(
+        f"""
+        SELECT id, extraction_status, extraction_error, gps_latitude, gps_longitude,
+               captured_at, store_location_id, type
+        FROM photos
+        WHERE user_id = ? AND id IN ({placeholders})
+        """,
+        (user_id, *image_ids),
+    ).fetchall()
+    sightings = db.execute(
+        f"""
+        SELECT photo_id, product_name, brand, price, extras, line_index
+        FROM product_sightings
+        WHERE user_id = ? AND photo_id IN ({placeholders})
+        ORDER BY photo_id, line_index
+        """,
+        (user_id, *image_ids),
+    ).fetchall()
+    extractions = db.execute(
+        f"""
+        SELECT photo_id, duration_ms, prep_ms, llm_ms, model, classify_ms,
+               queue_wait_ms, total_ms
+        FROM extractions
+        WHERE user_id = ? AND photo_id IN ({placeholders})
+        """,
+        (user_id, *image_ids),
+    ).fetchall()
 
     extraction_by_photo = {row["photo_id"]: dict(row) for row in extractions}
     sightings_by_photo: dict[str, list[dict[str, Any]]] = {}
@@ -1236,8 +1250,12 @@ def get_photos_extraction_status(user_id: str, image_ids: list[str]) -> list[dic
                 "gps_latitude": photo.get("gps_latitude"),
                 "gps_longitude": photo.get("gps_longitude"),
                 "captured_at": photo.get("captured_at"),
+                "store_location_id": photo.get("store_location_id"),
             },
         }
+        store_location_id = photo.get("store_location_id")
+        if isinstance(store_location_id, str) and store_location_id:
+            payload["store_location_id"] = store_location_id
         if photo.get("extraction_error"):
             payload["extraction_error"] = photo["extraction_error"]
         timing = extraction_timing_payload(extraction_by_photo.get(image_id, {}))
@@ -1253,11 +1271,11 @@ def build_product_row(user_id: str, sighting_id: str) -> dict[str, Any] | None:
 
 
 def count_sightings_for_user(user_id: str) -> int:
-    with _connect() as conn:
-        row = conn.execute(
-            "SELECT COUNT(*) AS count FROM product_sightings WHERE user_id = ?",
-            (user_id,),
-        ).fetchone()
+    conn = get_conn()
+    row = conn.execute(
+        "SELECT COUNT(*) AS count FROM product_sightings WHERE user_id = ?",
+        (user_id,),
+    ).fetchone()
     return int(row["count"]) if row else 0
 
 

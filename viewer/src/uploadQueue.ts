@@ -1,4 +1,5 @@
 import type { DuplicateAction } from "./api";
+import type { PreparePhase } from "./prepareUpload";
 
 export type UploadSource = "shelf" | "receipt";
 
@@ -19,6 +20,7 @@ export interface UploadQueueItem {
   source: UploadSource;
   file: File;
   uploadFile?: File;
+  preparePhase?: PreparePhase;
   productCount?: number;
   imageId?: string;
   error?: string;
