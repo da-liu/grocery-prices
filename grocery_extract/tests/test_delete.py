@@ -40,9 +40,9 @@ def _write_photo(user_dir: Path, user_id: str, image_id: str) -> tuple[str, str]
     batch_dir = user_dir / "photos" / "2026_06_30"
     jpg_dir = batch_dir / "jpg"
     jpg_dir.mkdir(parents=True, exist_ok=True)
-    (batch_dir / f"{image_id}.HEIC").write_bytes(b"heic")
+    (batch_dir / f"{image_id}.webp").write_bytes(b"webp")
     (jpg_dir / f"{image_id}.jpg").write_bytes(b"jpg")
-    original = f"users/{user_id}/photos/2026_06_30/{image_id}.HEIC"
+    original = f"users/{user_id}/photos/2026_06_30/{image_id}.webp"
     jpeg = f"users/{user_id}/photos/2026_06_30/jpg/{image_id}.jpg"
     return original, jpeg
 
@@ -59,7 +59,7 @@ def _seed_products(
         photo_id=image_id,
         photo_type="shelf",
         original_blob_key=original,
-        jpeg_blob_key=jpeg,
+        photo_blob_key=jpeg,
         content_hash=None,
         gps_latitude=None,
         gps_longitude=None,
@@ -84,7 +84,7 @@ def test_delete_last_product_removes_photo_files(user_env):
 
     assert delete_product(user_id, sighting_ids[0])
 
-    assert not (user_dir / "photos" / "2026_06_30" / "IMG_0001.HEIC").exists()
+    assert not (user_dir / "photos" / "2026_06_30" / "IMG_0001.webp").exists()
     assert not (user_dir / "photos" / "2026_06_30" / "jpg" / "IMG_0001.jpg").exists()
 
 

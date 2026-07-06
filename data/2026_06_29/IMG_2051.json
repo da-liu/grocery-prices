@@ -1,0 +1,54 @@
+{
+  "image_path": "data/2026_06_29/jpg/IMG_2051.jpg",
+  "meta": {
+    "image_id": "IMG_2051",
+    "source_file": "data/2026_06_29/IMG_2051.HEIC",
+    "gps_latitude": 43.6533888888889,
+    "gps_longitude": -79.3941944444444,
+    "captured_at": "2026-06-29T16:09:36",
+    "date_folder": "2026_06_29"
+  },
+  "products": [
+    {
+      "product_name": "TG Frozen Shrimp Peeled & Deveined (31-40)",
+      "product_name_zh": "蝦中之皇速凍蝦仁(31-40)",
+      "brand": "Thai Gold",
+      "price": 8.99,
+      "unit": "box",
+      "regular_price": 11.99,
+      "is_special": true,
+      "promo": "WAS 11.99",
+      "barcode": "00006139124056",
+      "size": "380g",
+      "category": "frozen-seafood"
+    },
+    {
+      "product_name": "AP Headless Shrimp 8/12",
+      "product_name_zh": "泰國無頭白蝦 8/12",
+      "brand": "Thai Gold",
+      "price": 10.99,
+      "unit": "box",
+      "barcode": "00006139124039",
+      "size": "380g",
+      "category": "frozen-seafood"
+    },
+    {
+      "product_name": "AP Headless Shrimp 71/90",
+      "product_name_zh": "蝦中之皇速凍蝦",
+      "brand": "Thai Gold",
+      "price": 8.99,
+      "unit": "box",
+      "size": "380g",
+      "category": "frozen-seafood"
+    }
+  ],
+  "raw_response": "{\n  \"products\": [\n    {\n      \"product_name\": \"TG Frozen Shrimp Peeled & Deveined (31-40)\",\n      \"product_name_zh\": \"蝦中之皇速凍蝦仁(31-40)\",\n      \"brand\": \"Thai Gold\",\n      \"price\": 8.99,\n      \"unit\": \"box\",\n      \"unit_price\": null,\n      \"unit_price_per_100g\": null,\n      \"regular_price\": 11.99,\n      \"is_special\": true,\n      \"promo\": \"WAS 11.99\",\n      \"barcode\": \"00006139124056\",\n      \"size\": \"380g\",\n      \"net_weight\": null,\n      \"net_weight_lb\": null,\n      \"packed_on\": null,\n      \"category\": \"frozen-seafood\",\n      \"notes\": null\n    },\n    {\n      \"product_name\": \"AP Headless Shrimp 8/12\",\n      \"product_name_zh\": \"泰國無頭白蝦 8/12\",\n      \"brand\": \"Thai Gold\",\n      \"price\": 10.99,\n      \"unit\": \"box\",\n      \"unit_price\": null,\n      \"unit_price_per_100g\": null,\n      \"regular_price\": null,\n      \"is_special\": false,\n      \"promo\": null,\n      \"barcode\": \"00006139124039\",\n      \"size\": \"380g\",\n      \"net_weight\": null,\n      \"net_weight_lb\": null,\n      \"packed_on\": null,\n      \"category\": \"frozen-seafood\",\n      \"notes\": null\n    },\n    {\n      \"product_name\": \"AP Headless Shrimp 71/90\",\n      \"product_name_zh\": \"蝦中之皇速凍蝦\",\n      \"brand\": \"Thai Gold\",\n      \"price\": 8.99,\n      \"unit\": \"box\",\n      \"unit_price\": null,\n      \"unit_price_per_100g\": null,\n      \"regular_price\": null,\n      \"is_special\": false,\n      \"promo\": null,\n      \"barcode\": null,\n      \"size\": \"380g\",\n      \"net_weight\": null,\n      \"net_weight_lb\": null,\n      \"packed_on\": null,\n      \"category\": \"frozen-seafood\",\n      \"notes\": null\n    }\n  ]\n}",
+  "extractor": "gemini_direct",
+  "timing": {
+    "prep_ms": 115,
+    "llm_ms": 2905,
+    "duration_ms": 3020,
+    "model": "gemini-3.1-flash-lite",
+    "classify_ms": null
+  }
+}

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { ApiError, describeRequestError, isAuthError } from "./api";
+import { ApiError, buildUploadForm, describeRequestError, isAuthError } from "./api";
 
 describe("isAuthError", () => {
   it("returns true only for 401 ApiError", () => {
@@ -26,5 +26,40 @@ describe("describeRequestError", () => {
     expect(describeRequestError(new Error("Load failed"), "status", "https://api.example.com")).toBe(
       "Lost connection while checking upload progress at https://api.example.com. Your photo may still finish processing; refresh in a moment.",
     );
+  });
+});
+
+describe("buildUploadForm", () => {
+  it("includes optional client metadata aligned with uploaded files", () => {
+    const file = new File(["photo"], "IMG_0001.jpg", { type: "image/jpeg" });
+    const form = buildUploadForm(
+      [file],
+      "shelf",
+      undefined,
+      [
+        {
+          GPSLatitude: 43.65,
+          GPSLongitude: -79.38,
+          DateTimeOriginal: "2026:07:04 18:30:00",
+        },
+      ],
+    );
+
+    expect(form.get("source")).toBe("upload");
+    expect(form.get("exif_json")).toBe(
+      JSON.stringify([
+        {
+          GPSLatitude: 43.65,
+          GPSLongitude: -79.38,
+          DateTimeOriginal: "2026:07:04 18:30:00",
+        },
+      ]),
+    );
+  });
+
+  it("omits exif_json when no client metadata is present", () => {
+    const file = new File(["photo"], "photo.jpg", { type: "image/jpeg" });
+    const form = buildUploadForm([file], "shelf", undefined, [undefined]);
+    expect(form.get("exif_json")).toBeNull();
   });
 });

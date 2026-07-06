@@ -1,0 +1,128 @@
+{
+  "image_id": "IMG_2079",
+  "source_file": "data/receipts/IMG_2079.HEIC",
+  "photo_type": "receipt",
+  "meta": {
+    "image_id": "IMG_2079",
+    "source_file": "/Users/daliu/workspace/ep/grocery-prices/data/receipts/IMG_2079.HEIC",
+    "gps_latitude": 43.6425083333333,
+    "gps_longitude": -79.3824833333333,
+    "captured_at": "2026-07-04T12:22:46",
+    "date_folder": "2026_07_04"
+  },
+  "products": [
+    {
+      "product_name": "GOURMET TOM 681G",
+      "price": 8.99,
+      "size": "681g",
+      "net_weight": 0.681,
+      "category": "produce"
+    },
+    {
+      "product_name": "L/C CAPERS 212ML",
+      "brand": "Longo's",
+      "price": 2.99,
+      "size": "212ml",
+      "category": "condiments"
+    },
+    {
+      "product_name": "UNROASTED SUMATRA",
+      "price": 18.01,
+      "category": "beverages"
+    },
+    {
+      "product_name": "LH GRAY EGGS LRG WHT",
+      "brand": "Longo's",
+      "price": 3.99,
+      "regular_price": 5.99,
+      "is_special": true,
+      "promo": "SALE",
+      "category": "dairy-eggs"
+    },
+    {
+      "product_name": "LH GRAY EGGS LRG WHT",
+      "brand": "Longo's",
+      "price": 3.99,
+      "regular_price": 5.99,
+      "is_special": true,
+      "promo": "SALE",
+      "category": "dairy-eggs"
+    },
+    {
+      "product_name": "L/E CNTY BUTTER 454G",
+      "brand": "Longo's",
+      "price": 5.99,
+      "regular_price": 8.99,
+      "is_special": true,
+      "promo": "SALE",
+      "size": "454g",
+      "net_weight": 0.454,
+      "category": "dairy-eggs"
+    },
+    {
+      "product_name": "DUBRETON ORIGINAL BN",
+      "brand": "DuBreton",
+      "price": 10.99,
+      "category": "meat"
+    },
+    {
+      "product_name": "DUBRETON RWA EXTRA L",
+      "brand": "DuBreton",
+      "price": 5.99,
+      "regular_price": 8.99,
+      "is_special": true,
+      "promo": "SALE",
+      "category": "meat"
+    },
+    {
+      "product_name": "DUBRETON RWA EXTRA L",
+      "brand": "DuBreton",
+      "price": 5.99,
+      "regular_price": 8.99,
+      "is_special": true,
+      "promo": "SALE",
+      "category": "meat"
+    },
+    {
+      "product_name": "ATL SAL WHOLE",
+      "price": 11.91,
+      "category": "pantry"
+    },
+    {
+      "product_name": "UNICO ANCHOVIES FLAT",
+      "brand": "Unico",
+      "price": 2.99,
+      "category": "canned-goods"
+    },
+    {
+      "product_name": "HONEST LOT CABERNET",
+      "brand": "Honest Lot",
+      "price": 12.99,
+      "category": "beverages"
+    },
+    {
+      "product_name": "WINE BTL DEPOSITS .20",
+      "price": 0.2,
+      "category": "beverages"
+    },
+    {
+      "product_name": "HONEST LOT SAUVIGNON",
+      "brand": "Honest Lot",
+      "price": 12.99,
+      "category": "beverages"
+    },
+    {
+      "product_name": "WINE BTL DEPOSITS .20",
+      "price": 0.2,
+      "category": "beverages"
+    }
+  ],
+  "extractor": "cursor_sdk",
+  "timing": {
+    "prep_ms": 285,
+    "llm_ms": 68441,
+    "duration_ms": 68726,
+    "model": "auto"
+  },
+  "raw_response": "{\"products\":[{\"product_name\":\"GOURMET TOM 681G\",\"product_name_zh\":null,\"brand\":null,\"price\":8.99,\"unit\":null,\"unit_price\":null,\"unit_price_per_100g\":null,\"regular_price\":null,\"is_special\":false,\"promo\":null,\"barcode\":null,\"size\":\"681g\",\"net_weight\":0.681,\"net_weight_lb\":null,\"packed_on\":null,\"category\":\"produce\",\"notes\":null},{\"product_name\":\"L/C CAPERS 212ML\",\"product_name_zh\":null,\"brand\":\"Longo's\",\"price\":2.99,\"unit\":null,\"unit_price\":null,\"unit_price_per_100g\":null,\"regular_price\":null,\"is_special\":false,\"promo\":null,\"barcode\":null,\"size\":\"212ml\",\"net_weight\":null,\"net_weight_lb\":null,\"packed_on\":null,\"category\":\"condiments\",\"notes\":null},{\"product_name\":\"UNROASTED SUMATRA\",\"product_name_zh\":null,\"brand\":null,\"price\":18.01,\"unit\":null,\"unit_price\":null,\"unit_price_per_100g\":null,\"regular_price\":null,\"is_special\":false,\"promo\":null,\"barcode\":null,\"size\":null,\"net_weight\":null,\"net_weight_lb\":null,\"packed_on\":null,\"category\":\"beverages\",\"notes\":null},{\"product_name\":\"LH GRAY EGGS LRG WHT\",\"product_name_zh\":null,\"brand\":\"Longo's\",\"price\":3.99,\"unit\":null,\"unit_price\":null,\"unit_price_per_100g\":null,\"regular_price\":5.99,\"is_special\":true,\"promo\":\"SALE\",\"barcode\":null,\"size\":null,\"net_weight\":null,\"net_weight_lb\":null,\"packed_on\":null,\"category\":\"dairy-eggs\",\"notes\":null},{\"product_name\":\"LH GRAY EGGS LRG WHT\",\"product_name_zh\":null,\"brand\":\"Longo's\",\"price\":3.99,\"unit\":null,\"unit_price\":null,\"unit_price_per_100g\":null,\"regular_price\":5.99,\"is_special\":true,\"promo\":\"SALE\",\"barcode\":null,\"size\":null,\"net_weight\":null,\"net_weight_lb\":null,\"packed_on\":null,\"category\":\"dairy-eggs\",\"notes\":null},{\"product_name\":\"L/E CNTY BUTTER 454G\",\"product_name_zh\":null,\"brand\":\"Longo's\",\"price\":5.99,\"unit\":null,\"unit_price\":null,\"unit_price_per_100g\":null,\"regular_price\":8.99,\"is_special\":true,\"promo\":\"SALE\",\"barcode\":null,\"size\":\"454g\",\"net_weight\":0.454,\"net_weight_lb\":null,\"packed_on\":null,\"category\":\"dairy-eggs\",\"notes\":null},{\"product_name\":\"DUBRETON ORIGINAL BN\",\"product_name_zh\":null,\"brand\":\"DuBreton\",\"price\":10.99,\"unit\":null,\"unit_price\":null,\"unit_price_per_100g\":null,\"regular_price\":null,\"is_special\":false,\"promo\":null,\"barcode\":null,\"size\":null,\"net_weight\":null,\"net_weight_lb\":null,\"packed_on\":null,\"category\":\"meat\",\"notes\":null},{\"product_name\":\"DUBRETON RWA EXTRA L\",\"product_name_zh\":null,\"brand\":\"DuBreton\",\"price\":5.99,\"unit\":null,\"unit_price\":null,\"unit_price_per_100g\":null,\"regular_price\":8.99,\"is_special\":true,\"promo\":\"SALE\",\"barcode\":null,\"size\":null,\"net_weight\":null,\"net_weight_lb\":null,\"packed_on\":null,\"category\":\"meat\",\"notes\":null},{\"product_name\":\"DUBRETON RWA EXTRA L\",\"product_name_zh\":null,\"brand\":\"DuBreton\",\"price\":5.99,\"unit\":null,\"unit_price\":null,\"unit_price_per_100g\":null,\"regular_price\":8.99,\"is_special\":true,\"promo\":\"SALE\",\"barcode\":null,\"size\":null,\"net_weight\":null,\"net_weight_lb\":null,\"packed_on\":null,\"category\":\"meat\",\"notes\":null},{\"product_name\":\"ATL SAL WHOLE\",\"product_name_zh\":null,\"brand\":null,\"price\":11.91,\"unit\":null,\"unit_price\":null,\"unit_price_per_100g\":null,\"regular_price\":null,\"is_special\":false,\"promo\":null,\"barcode\":null,\"size\":null,\"net_weight\":null,\"net_weight_lb\":null,\"packed_on\":null,\"category\":\"pantry\",\"notes\":null},{\"product_name\":\"UNICO ANCHOVIES FLAT\",\"product_name_zh\":null,\"brand\":\"Unico\",\"price\":2.99,\"unit\":null,\"unit_price\":null,\"unit_price_per_100g\":null,\"regular_price\":null,\"is_special\":false,\"promo\":null,\"barcode\":null,\"size\":null,\"net_weight\":null,\"net_weight_lb\":null,\"packed_on\":null,\"category\":\"canned-goods\",\"notes\":null},{\"product_name\":\"HONEST LOT CABERNET\",\"product_name_zh\":null,\"brand\":\"Honest Lot\",\"price\":12.99,\"unit\":null,\"unit_price\":null,\"unit_price_per_100g\":null,\"regular_price\":null,\"is_special\":false,\"promo\":null,\"barcode\":null,\"size\":null,\"net_weight\":null,\"net_weight_lb\":null,\"packed_on\":null,\"category\":\"beverages\",\"notes\":null},{\"product_name\":\"WINE BTL DEPOSITS .20\",\"product_name_zh\":null,\"brand\":null,\"price\":0.2,\"unit\":null,\"unit_price\":null,\"unit_price_per_100g\":null,\"regular_price\":null,\"is_special\":false,\"promo\":null,\"barcode\":null,\"size\":null,\"net_weight\":null,\"net_weight_lb\":null,\"packed_on\":null,\"category\":\"beverages\",\"notes\":null},{\"product_name\":\"HONEST LOT SAUVIGNON\",\"product_name_zh\":null,\"brand\":\"Honest Lot\",\"price\":12.99,\"unit\":null,\"unit_price\":null,\"unit_price_per_100g\":null,\"regular_price\":null,\"is_special\":false,\"promo\":null,\"barcode\":null,\"size\":null,\"net_weight\":null,\"net_weight_lb\":null,\"packed_on\":null,\"category\":\"beverages\",\"notes\":null},{\"product_name\":\"WINE BTL DEPOSITS .20\",\"product_name_zh\":null,\"brand\":null,\"price\":0.2,\"unit\":null,\"unit_price\":null,\"unit_price_per_100g\":null,\"regular_price\":null,\"is_special\":false,\"promo\":null,\"barcode\":null,\"size\":null,\"net_weight\":null,\"net_weight_lb\":null,\"packed_on\":null,\"category\":\"beverages\",\"notes\":null}]}"
+}

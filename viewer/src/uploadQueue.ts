@@ -1,11 +1,11 @@
-import type { DuplicateAction } from "./api";
-import type { PreparePhase } from "./prepareUpload";
+import type { ClientExifPayload, DuplicateAction } from "./api";
 
 export type UploadSource = "shelf" | "receipt";
 
 export type UploadQueueStatus =
-  | "preparing"
   | "queued"
+  | "compressing"
+  | "uploading"
   | "processing"
   | "awaiting_duplicate"
   | "done"
@@ -20,7 +20,8 @@ export interface UploadQueueItem {
   source: UploadSource;
   file: File;
   uploadFile?: File;
-  preparePhase?: PreparePhase;
+  clientExif?: ClientExifPayload;
+  uploadProgress?: number;
   productCount?: number;
   imageId?: string;
   error?: string;
@@ -55,14 +56,19 @@ export interface PendingDuplicate {
 export const UPLOAD_CONCURRENCY = 4;
 export const MAX_BULK_BATCH = 8;
 
+function thumbnailUrlForFile(file: File): string {
+  return URL.createObjectURL(file);
+}
+
 export function createQueueItem(file: File, source: UploadSource): UploadQueueItem {
   return {
     id: crypto.randomUUID(),
     label: file.name || "Photo",
-    thumbnailUrl: "",
-    status: "preparing",
+    thumbnailUrl: thumbnailUrlForFile(file),
+    status: "queued",
     source,
     file,
+    uploadFile: file,
   };
 }
 

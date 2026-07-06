@@ -13,7 +13,6 @@ from grocery_extract.cursor_extractor import (
     current_extract_backend,
     default_extract_model,
 )
-from grocery_extract.image_prep import LLM_MAX_DIM, llm_scale_percent, prepare_image_for_llm
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -39,27 +38,17 @@ def classify_photo_type(
     if not image_path.exists():
         raise CursorExtractError(f"Image not found: {image_path}")
 
-    llm_path = prepare_image_for_llm(
-        image_path,
-        scale_pct=llm_scale_percent(),
-        max_dim=LLM_MAX_DIM,
-    )
-    cleanup_llm_path = llm_path != image_path
     start = time.perf_counter()
-    try:
-        if backend == "gemini_direct":
-            raw = _run_gemini_direct(llm_path, prompt=CLASSIFY_PROMPT, api_key=api_key, model=model)
-        else:
-            raw = _run_cursor_sdk(
-                llm_path,
-                prompt=CLASSIFY_PROMPT,
-                api_key=api_key,
-                model=model,
-                cwd=ROOT,
-            )
-    finally:
-        if cleanup_llm_path:
-            llm_path.unlink(missing_ok=True)
+    if backend == "gemini_direct":
+        raw = _run_gemini_direct(image_path, prompt=CLASSIFY_PROMPT, api_key=api_key, model=model)
+    else:
+        raw = _run_cursor_sdk(
+            image_path,
+            prompt=CLASSIFY_PROMPT,
+            api_key=api_key,
+            model=model,
+            cwd=ROOT,
+        )
 
     classify_ms = int((time.perf_counter() - start) * 1000)
     photo_type = _parse_classification(raw)

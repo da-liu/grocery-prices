@@ -86,24 +86,6 @@ def _find_blob_keys(user_id: str, image_id: str, date_folder: str | None) -> tup
     return None, None
 
 
-def _max_image_num(user_id: str) -> int:
-    max_num = 0
-    for photos_root in _photos_roots(user_id):
-        if not photos_root.exists():
-            continue
-        for path in photos_root.rglob("IMG_*.*"):
-            stem = path.stem
-            if stem.startswith("IMG_") and stem[4:].isdigit():
-                max_num = max(max_num, int(stem[4:]))
-    extractions = user_extractions_dir(user_id)
-    if extractions.exists():
-        for path in extractions.glob("IMG_*.json"):
-            stem = path.stem
-            if stem[4:].isdigit():
-                max_num = max(max_num, int(stem[4:]))
-    return max_num
-
-
 def migrate_user(user_id: str, *, dry_run: bool) -> dict[str, int]:
     stats = {"photos": 0, "extractions": 0, "sightings": 0}
     extractions_dir = user_extractions_dir(user_id)
@@ -123,8 +105,8 @@ def migrate_user(user_id: str, *, dry_run: bool) -> dict[str, int]:
             raw_dt = meta.get("DateTimeOriginal")
             captured_at = captured_at_from_exif(raw_dt)
             date_folder = date_folder_from_exif(raw_dt)
-            original_key, jpeg_key = _find_blob_keys(user_id, image_id, date_folder)
-            if jpeg_key is None:
+            original_key, photo_key = _find_blob_keys(user_id, image_id, date_folder)
+            if photo_key is None:
                 print(f"  skip {image_id}: jpeg blob not found")
                 continue
 
@@ -144,7 +126,7 @@ def migrate_user(user_id: str, *, dry_run: bool) -> dict[str, int]:
             conn.execute(
                 """
                 INSERT OR REPLACE INTO photos (
-                    id, user_id, type, original_blob_key, jpeg_blob_key, content_hash,
+                    id, user_id, type, original_blob_key, photo_blob_key, content_hash,
                     gps_latitude, gps_longitude, captured_at, store_location_id,
                     created_at, updated_at
                 ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
@@ -154,7 +136,7 @@ def migrate_user(user_id: str, *, dry_run: bool) -> dict[str, int]:
                     user_id,
                     photo_type,
                     original_key,
-                    jpeg_key,
+                    photo_key,
                     meta.get("ContentHash"),
                     meta.get("GPSLatitude"),
                     meta.get("GPSLongitude"),
@@ -212,16 +194,6 @@ def migrate_user(user_id: str, *, dry_run: bool) -> dict[str, int]:
             stats["photos"] += 1
             stats["extractions"] += 1
             conn.commit()
-
-        if not dry_run:
-            next_num = _max_image_num(user_id) + 1
-            conn.execute(
-                """
-                INSERT INTO user_image_seq (user_id, next_num) VALUES (?, ?)
-                ON CONFLICT(user_id) DO UPDATE SET next_num = excluded.next_num
-                """,
-                (user_id, next_num),
-            )
 
     return stats
 

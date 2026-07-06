@@ -6,23 +6,20 @@ function Spinner() {
   return <span className="upload-spinner" aria-hidden="true" />;
 }
 
-function preparingLabel(item: UploadQueueItem): string {
-  switch (item.preparePhase) {
-    case "ready":
-      return "Ready";
-    default:
-      return "Preparing…";
-  }
-}
-
 function statusLabel(item: UploadQueueItem): string {
   switch (item.status) {
-    case "preparing":
-      return preparingLabel(item);
     case "queued":
       return "Waiting…";
+    case "compressing":
+      return "Compressing…";
+    case "uploading": {
+      const percent = item.uploadProgress ?? 0;
+      return percent >= 100 ? "Uploaded" : `Uploading… ${percent}%`;
+    }
     case "processing":
-      return item.detectedReceipt ? "Detected receipt · reading prices…" : "Reading prices…";
+      return item.detectedReceipt
+        ? "Uploaded · reading receipt prices…"
+        : "Uploaded · reading prices…";
     case "awaiting_duplicate":
       return "Duplicate detected";
     case "done":
@@ -64,6 +61,8 @@ function useUploadStatusDisplay() {
   const [expanded, setExpanded] = useState(false);
   const itemCountRef = useRef(items.length);
 
+  const compressing = items.some((item) => item.status === "compressing");
+  const uploading = items.some((item) => item.status === "uploading");
   const processing = items.some((item) => item.status === "processing");
   const hasPanel = items.length > 0;
 
@@ -87,13 +86,21 @@ function useUploadStatusDisplay() {
     }
   }, [activeCount, items, clearFinished]);
 
-  const pillLabel = processing
+  const pillLabel = compressing
     ? queuedCount > 0
-      ? `Reading prices · ${queuedCount + 1} in queue`
-      : "Reading prices from your photo…"
-    : queuedCount > 0
-      ? `${queuedCount} photo${queuedCount === 1 ? "" : "s"} queued`
-      : "Processing photos…";
+      ? `Compressing · ${queuedCount + 1} in queue`
+      : "Compressing photo…"
+    : uploading
+      ? queuedCount > 0
+        ? `Uploading · ${queuedCount + 1} in queue`
+        : "Uploading photo…"
+      : processing
+      ? queuedCount > 0
+        ? `Reading prices · ${queuedCount + 1} in queue`
+        : "Reading prices from your photo…"
+      : queuedCount > 0
+        ? `${queuedCount} photo${queuedCount === 1 ? "" : "s"} queued`
+        : "Processing photos…";
 
   return {
     items,
@@ -148,9 +155,25 @@ export function UploadStatusPanel() {
                 <div className="upload-status-copy">
                   <strong>{item.label}</strong>
                   <span>{statusLabel(item)}</span>
+                  {item.status === "uploading" && (
+                    <div
+                      className="upload-status-progress"
+                      role="progressbar"
+                      aria-valuenow={item.uploadProgress ?? 0}
+                      aria-valuemin={0}
+                      aria-valuemax={100}
+                      aria-label="Upload progress"
+                    >
+                      <div
+                        className="upload-status-progress-bar"
+                        style={{ width: `${item.uploadProgress ?? 0}%` }}
+                      />
+                    </div>
+                  )}
                 </div>
-                {(item.status === "preparing" ||
-                  item.status === "queued" ||
+                {(item.status === "queued" ||
+                  item.status === "compressing" ||
+                  item.status === "uploading" ||
                   item.status === "processing") && <Spinner />}
               </li>
             ))}

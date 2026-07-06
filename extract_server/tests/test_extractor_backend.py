@@ -9,34 +9,8 @@ from grocery_extract.cursor_extractor import (
     current_extractor_name,
     extract_products_from_image,
 )
-from grocery_extract.image_prep import prepare_image_for_llm
 from grocery_extract.pipeline import extract_from_upload
 from grocery_extract.schema import ExtractedProduct
-
-
-def test_prepare_image_for_llm_uses_scale_percent(tmp_path: Path, monkeypatch):
-    source = tmp_path / "source.jpg"
-    source.write_bytes(b"source")
-    captured: dict[str, object] = {}
-
-    def fake_resize(src: Path, scale_pct: float, dest: Path):
-        captured["src"] = src
-        captured["scale_pct"] = scale_pct
-        captured["dest"] = dest
-        dest.write_bytes(b"scaled")
-        return 100, 75, len(b"scaled")
-
-    monkeypatch.setattr("grocery_extract.image_prep.resize_to_scale_percent", fake_resize)
-
-    out_path = prepare_image_for_llm(source, scale_pct=25)
-    try:
-        assert out_path != source
-        assert out_path.suffix == ".jpg"
-        assert captured["src"] == source.resolve()
-        assert captured["scale_pct"] == 25
-        assert out_path.read_bytes() == b"scaled"
-    finally:
-        out_path.unlink(missing_ok=True)
 
 
 def test_default_extract_model_uses_backend_defaults(monkeypatch):
@@ -49,16 +23,10 @@ def test_default_extract_model_uses_backend_defaults(monkeypatch):
 def test_extract_products_from_image_posts_to_gemini_direct(tmp_path: Path, monkeypatch):
     source = tmp_path / "source.jpg"
     source.write_bytes(b"source-image")
-    prepared = tmp_path / "prepared.jpg"
-    prepared.write_bytes(b"prepared-image")
 
     monkeypatch.setenv("GROCERY_EXTRACT_BACKEND", "gemini_direct")
     monkeypatch.setenv("GOOGLE_API_KEY", "google-key")
     monkeypatch.delenv("GEMINI_API_KEY", raising=False)
-    monkeypatch.setattr(
-        "grocery_extract.cursor_extractor.prepare_image_for_llm",
-        lambda *_args, **_kwargs: prepared,
-    )
 
     captured: dict[str, object] = {}
 
@@ -113,7 +81,7 @@ def test_extract_products_from_image_posts_to_gemini_direct(tmp_path: Path, monk
     payload = captured["payload"]
     assert payload["generationConfig"]["responseMimeType"] == "application/json"
     encoded = payload["contents"][0]["parts"][1]["inline_data"]["data"]
-    assert base64.b64decode(encoded) == b"prepared-image"
+    assert base64.b64decode(encoded) == b"source-image"
 
 
 def test_extract_from_upload_uses_backend_extractor_label(tmp_path: Path, monkeypatch):

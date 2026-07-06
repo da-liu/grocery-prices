@@ -50,9 +50,7 @@ def run_direct_benchmark(image_path: Path, timer: StepTimer) -> dict:
 
     from extract_server.users_db import init_db, register_user
     from grocery_extract.duplicate import file_content_hash
-    from grocery_extract.exif import extract_exif
     from grocery_extract.extract_worker import ExtractionJob
-    from grocery_extract.image_prep import downscale_image_for_llm
     from grocery_extract.ingest import (
         _persist_image,
         _today_folder,
@@ -93,8 +91,8 @@ def run_direct_benchmark(image_path: Path, timer: StepTimer) -> dict:
         with timer.measure("4. db_duplicate_lookup"):
             duplicate_of = find_photo_by_content_hash(user_id, content_hash)
 
-        with timer.measure("5. exiftool_extract_exif"):
-            exif = extract_exif(upload_path) if upload_path.exists() else {}
+        with timer.measure("5. client_metadata"):
+            exif: dict = {}
 
         raw_dt = exif.get("DateTimeOriginal")
         date_folder = date_folder_from_exif(raw_dt) or _today_folder()
@@ -102,7 +100,7 @@ def run_direct_benchmark(image_path: Path, timer: StepTimer) -> dict:
         image_id = "IMG_9999"
 
         with timer.measure("6. persist_image_to_disk"):
-            original_key, jpeg_key, _suffix = _persist_image(
+            original_key, photo_key, _suffix = _persist_image(
                 upload_path, image_id, date_folder, user_id
             )
 
@@ -124,7 +122,7 @@ def run_direct_benchmark(image_path: Path, timer: StepTimer) -> dict:
                 photo_id=image_id,
                 photo_type="shelf",
                 original_blob_key=original_key,
-                jpeg_blob_key=jpeg_key,
+                photo_blob_key=photo_key,
                 content_hash=content_hash,
                 gps_latitude=lat,
                 gps_longitude=lon,
@@ -140,44 +138,38 @@ def run_direct_benchmark(image_path: Path, timer: StepTimer) -> dict:
         with timer.measure("10. db_set_status_processing"):
             set_extraction_status(user_id, image_id, "processing")
 
-        with timer.measure("11. downscale_for_llm"):
-            llm_path = downscale_image_for_llm(jpg_path)
-            cleanup = llm_path != jpg_path
+        with timer.measure("11. llm_extract"):
+            llm_path = jpg_path
 
-        try:
-            with timer.measure("12. cursor_sdk_agent_prompt (LLM)"):
-                products, raw = extract_products_from_image(jpg_path, prompt_variant="shelf")
+        with timer.measure("12. cursor_sdk_agent_prompt (LLM)"):
+            products, raw = extract_products_from_image(jpg_path, prompt_variant="shelf")
 
-            with timer.measure("13. parse_products_json"):
-                _ = parse_products_json(raw)
+        with timer.measure("13. parse_products_json"):
+            _ = parse_products_json(raw)
 
-            product_dicts = [product.to_product_dict() for product in products]
+        product_dicts = [product.to_product_dict() for product in products]
 
-            with timer.measure("14. db_finalize_photo_extraction"):
-                product_count = finalize_photo_extraction(
-                    user_id,
-                    image_id,
-                    extractor="cursor_sdk",
-                    raw_response=raw,
-                    products=product_dicts,
-                )
+        with timer.measure("14. db_finalize_photo_extraction"):
+            product_count = finalize_photo_extraction(
+                user_id,
+                image_id,
+                extractor="cursor_sdk",
+                raw_response=raw,
+                products=product_dicts,
+            )
 
-            with timer.measure("15. db_list_products_for_matching"):
-                existing_products = list_products_for_matching(user_id)
+        with timer.measure("15. db_list_products_for_matching"):
+            existing_products = list_products_for_matching(user_id)
 
-            with timer.measure("16. overlap_detection"):
-                location = {"store": "Unknown store", "latitude": lat, "longitude": lon}
-                new_rows = products_to_match_rows(
-                    product_dicts,
-                    image_id=image_id,
-                    location=location,
-                    captured_at=captured_at,
-                )
-                overlaps = overlapping_product_keys(new_rows, existing_products)
-
-        finally:
-            if cleanup:
-                llm_path.unlink(missing_ok=True)
+        with timer.measure("16. overlap_detection"):
+            location = {"store": "Unknown store", "latitude": lat, "longitude": lon}
+            new_rows = products_to_match_rows(
+                product_dicts,
+                image_id=image_id,
+                location=location,
+                captured_at=captured_at,
+            )
+            overlaps = overlapping_product_keys(new_rows, existing_products)
 
         return {
             "image_id": image_id,

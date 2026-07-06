@@ -1,0 +1,35 @@
+{
+  "image_path": "data/2026_06_29/jpg/IMG_2054.jpg",
+  "meta": {
+    "image_id": "IMG_2054",
+    "source_file": "data/2026_06_29/IMG_2054.HEIC",
+    "gps_latitude": 43.6423638888889,
+    "gps_longitude": -79.3812166666667,
+    "captured_at": "2026-06-29T16:34:34",
+    "date_folder": "2026_06_29"
+  },
+  "products": [
+    {
+      "product_name": "Rose Brand Thai Hom Mali Rice",
+      "product_name_zh": "玫瑰花牌泰國香米",
+      "brand": "Rose Brand",
+      "price": 25.99,
+      "unit": "bag",
+      "barcode": "7615020017",
+      "size": "8 kg",
+      "net_weight": 8.0,
+      "net_weight_lb": 17.64,
+      "category": "rice",
+      "notes": "Jasmine white scented rice"
+    }
+  ],
+  "raw_response": "{\n  \"products\": [\n    {\n      \"product_name\": \"Rose Brand Thai Hom Mali Rice\",\n      \"product_name_zh\": \"玫瑰花牌泰國香米\",\n      \"brand\": \"Rose Brand\",\n      \"price\": 25.99,\n      \"unit\": \"bag\",\n      \"unit_price\": null,\n      \"unit_price_per_100g\": null,\n      \"regular_price\": null,\n      \"is_special\": false,\n      \"promo\": null,\n      \"barcode\": \"7615020017\",\n      \"size\": \"8 kg\",\n      \"net_weight\": 8,\n      \"net_weight_lb\": 17.64,\n      \"packed_on\": null,\n      \"category\": \"rice\",\n      \"notes\": \"Jasmine white scented rice\"\n    }\n  ]\n}",
+  "extractor": "gemini_direct",
+  "timing": {
+    "prep_ms": 121,
+    "llm_ms": 1726,
+    "duration_ms": 1847,
+    "model": "gemini-3.1-flash-lite",
+    "classify_ms": null
+  }
+}

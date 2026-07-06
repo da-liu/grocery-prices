@@ -1,0 +1,51 @@
+{
+  "image_id": "IMG_2083",
+  "source_file": "data/receipts/IMG_2083.HEIC",
+  "photo_type": "receipt",
+  "meta": {
+    "image_id": "IMG_2083",
+    "source_file": "/Users/daliu/workspace/ep/grocery-prices/data/receipts/IMG_2083.HEIC",
+    "gps_latitude": 43.6425472222222,
+    "gps_longitude": -79.3824611111111,
+    "captured_at": "2026-07-04T12:23:38",
+    "date_folder": "2026_07_04"
+  },
+  "products": [
+    {
+      "product_name": "Pearl River Bridge Dark S (珠江橋牌老抽王)",
+      "product_name_zh": "珠江橋牌老抽王",
+      "brand": "Pearl River Bridge",
+      "price": 7.59,
+      "category": "condiments"
+    },
+    {
+      "product_name": "Laoganma Chili Sauce (老干媽香辣脆)",
+      "product_name_zh": "老干媽香辣脆",
+      "brand": "Laoganma",
+      "price": 3.29,
+      "category": "condiments"
+    },
+    {
+      "product_name": "Chinkiang Vinegar (恒順鎮江香醋)",
+      "product_name_zh": "恒順鎮江香醋",
+      "brand": "Chinkiang",
+      "price": 2.59,
+      "category": "condiments"
+    },
+    {
+      "product_name": "Vitasoy Tofu(Silken) (維他山水嫩豆腐)",
+      "product_name_zh": "維他山水嫩豆腐",
+      "brand": "Vitasoy",
+      "price": 2.39,
+      "category": "tofu"
+    }
+  ],
+  "extractor": "cursor_sdk",
+  "timing": {
+    "prep_ms": 88,
+    "llm_ms": 29807,
+    "duration_ms": 29895,
+    "model": "auto"
+  },
+  "raw_response": "{\"products\":[{\"product_name\":\"Pearl River Bridge Dark S (珠江橋牌老抽王)\",\"product_name_zh\":\"珠江橋牌老抽王\",\"brand\":\"Pearl River Bridge\",\"price\":7.59,\"unit\":null,\"unit_price\":null,\"unit_price_per_100g\":null,\"regular_price\":null,\"is_special\":false,\"promo\":null,\"barcode\":null,\"size\":null,\"net_weight\":null,\"net_weight_lb\":null,\"packed_on\":null,\"category\":\"condiments\",\"notes\":null},{\"product_name\":\"Laoganma Chili Sauce (老干媽香辣脆)\",\"product_name_zh\":\"老干媽香辣脆\",\"brand\":\"Laoganma\",\"price\":3.29,\"unit\":null,\"unit_price\":null,\"unit_price_per_100g\":null,\"regular_price\":null,\"is_special\":false,\"promo\":null,\"barcode\":null,\"size\":null,\"net_weight\":null,\"net_weight_lb\":null,\"packed_on\":null,\"category\":\"condiments\",\"notes\":null},{\"product_name\":\"Chinkiang Vinegar (恒順鎮江香醋)\",\"product_name_zh\":\"恒順鎮江香醋\",\"brand\":\"Chinkiang\",\"price\":2.59,\"unit\":null,\"unit_price\":null,\"unit_price_per_100g\":null,\"regular_price\":null,\"is_special\":false,\"promo\":null,\"barcode\":null,\"size\":null,\"net_weight\":null,\"net_weight_lb\":null,\"packed_on\":null,\"category\":\"condiments\",\"notes\":null},{\"product_name\":\"Vitasoy Tofu(Silken) (維他山水嫩豆腐)\",\"product_name_zh\":\"維他山水嫩豆腐\",\"brand\":\"Vitasoy\",\"price\":2.39,\"unit\":null,\"unit_price\":null,\"unit_price_per_100g\":null,\"regular_price\":null,\"is_special\":false,\"promo\":null,\"barcode\":null,\"size\":null,\"net_weight\":null,\"net_weight_lb\":null,\"packed_on\":null,\"category\":\"tofu\",\"notes\":null}]}"
+}

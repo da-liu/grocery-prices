@@ -19,19 +19,21 @@ def test_accept_upload_returns_pending_without_extraction(tmp_path: Path, monkey
 
     init_db()
     user = register_user("async-user", "password12345")
-    upload = tmp_path / "photo.jpg"
-    upload.write_bytes(b"jpeg-bytes")
+    upload = tmp_path / "photo.webp"
+    upload.write_bytes(b"RIFF....WEBP")
 
-    monkeypatch.setattr("grocery_extract.ingest.extract_exif", lambda *_args: {})
     monkeypatch.setattr(
         "grocery_extract.user_stores_db.list_user_stores_as_dicts",
         lambda *_args: [],
     )
     monkeypatch.setattr("grocery_extract.ingest.image_needs_store_label", lambda *_args: False)
 
-    started = time.perf_counter()
-    result = accept_upload(upload, user_id=user.id, source="upload")
-    accept_ms = (time.perf_counter() - started) * 1000
+    with patch("grocery_extract.ingest.classify_photo_type") as classify:
+        classify.return_value.photo_type = "shelf"
+        classify.return_value.classify_ms = 1
+        started = time.perf_counter()
+        result = accept_upload(upload, user_id=user.id, source="upload")
+        accept_ms = (time.perf_counter() - started) * 1000
 
     assert result["extraction_status"] == "pending"
     assert accept_ms < 5000
@@ -51,17 +53,19 @@ def test_run_extraction_completes_photo(tmp_path: Path, monkeypatch):
 
     init_db()
     user = register_user("extract-user", "password12345")
-    upload = tmp_path / "photo.jpg"
-    upload.write_bytes(b"jpeg-bytes")
+    upload = tmp_path / "photo.webp"
+    upload.write_bytes(b"RIFF....WEBP")
 
-    monkeypatch.setattr("grocery_extract.ingest.extract_exif", lambda *_args: {})
     monkeypatch.setattr(
         "grocery_extract.user_stores_db.list_user_stores_as_dicts",
         lambda *_args: [],
     )
     monkeypatch.setattr("grocery_extract.ingest.image_needs_store_label", lambda *_args: False)
 
-    accepted = accept_upload(upload, user_id=user.id, source="upload")
+    with patch("grocery_extract.ingest.classify_photo_type") as classify:
+        classify.return_value.photo_type = "shelf"
+        classify.return_value.classify_ms = 1
+        accepted = accept_upload(upload, user_id=user.id, source="upload")
     job = ExtractionJob(
         user_id=user.id,
         image_id=accepted["image_id"],

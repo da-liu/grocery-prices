@@ -1,0 +1,56 @@
+{
+  "image_path": "data/2026_06_29/jpg/IMG_2053.jpg",
+  "meta": {
+    "image_id": "IMG_2053",
+    "source_file": "data/2026_06_29/IMG_2053.HEIC",
+    "gps_latitude": 43.6423638888889,
+    "gps_longitude": -79.3812166666667,
+    "captured_at": "2026-06-29T16:34:31",
+    "date_folder": "2026_06_29"
+  },
+  "products": [
+    {
+      "product_name": "T&T Brown Rice Vermicelli",
+      "brand": "T&T",
+      "price": 3.99,
+      "unit": "bag",
+      "unit_price": 0.9975,
+      "unit_price_per_100g": 0.9975,
+      "size": "400g",
+      "net_weight": 0.4,
+      "category": "noodles"
+    },
+    {
+      "product_name": "Rose Brand Vermicelli",
+      "brand": "Rose Brand",
+      "price": 3.49,
+      "unit": "bag",
+      "unit_price": 0.775,
+      "unit_price_per_100g": 0.775,
+      "size": "454g",
+      "net_weight": 0.454,
+      "category": "noodles"
+    },
+    {
+      "product_name": "Pacific Star Thai Jasmine Rice",
+      "product_name_zh": "泰國香米",
+      "brand": "Pacific Star",
+      "price": 27.99,
+      "unit": "bag",
+      "unit_price": 0.35,
+      "unit_price_per_100g": 0.35,
+      "size": "8kg",
+      "net_weight": 8.0,
+      "category": "rice"
+    }
+  ],
+  "raw_response": "{\n  \"products\": [\n    {\n      \"product_name\": \"T&T Brown Rice Vermicelli\",\n      \"product_name_zh\": null,\n      \"brand\": \"T&T\",\n      \"price\": 3.99,\n      \"unit\": \"bag\",\n      \"unit_price\": 0.9975,\n      \"unit_price_per_100g\": 0.9975,\n      \"regular_price\": null,\n      \"is_special\": false,\n      \"promo\": null,\n      \"barcode\": null,\n      \"size\": \"400g\",\n      \"net_weight\": 0.4,\n      \"net_weight_lb\": null,\n      \"packed_on\": null,\n      \"category\": \"noodles\",\n      \"notes\": null\n    },\n    {\n      \"product_name\": \"Rose Brand Vermicelli\",\n      \"product_name_zh\": null,\n      \"brand\": \"Rose Brand\",\n      \"price\": 3.49,\n      \"unit\": \"bag\",\n      \"unit_price\": 0.775,\n      \"unit_price_per_100g\": 0.775,\n      \"regular_price\": null,\n      \"is_special\": false,\n      \"promo\": null,\n      \"barcode\": null,\n      \"size\": \"454g\",\n      \"net_weight\": 0.454,\n      \"net_weight_lb\": null,\n      \"packed_on\": null,\n      \"category\": \"noodles\",\n      \"notes\": null\n    },\n    {\n      \"product_name\": \"Pacific Star Thai Jasmine Rice\",\n      \"product_name_zh\": \"泰國香米\",\n      \"brand\": \"Pacific Star\",\n      \"price\": 27.99,\n      \"unit\": \"bag\",\n      \"unit_price\": 0.35,\n      \"unit_price_per_100g\": 0.35,\n      \"regular_price\": null,\n      \"is_special\": false,\n      \"promo\": null,\n      \"barcode\": null,\n      \"size\": \"8kg\",\n      \"net_weight\": 8.0,\n      \"net_weight_lb\": null,\n      \"packed_on\": null,\n      \"category\": \"rice\",\n      \"notes\": null\n    }\n  ]\n}",
+  "extractor": "gemini_direct",
+  "timing": {
+    "prep_ms": 130,
+    "llm_ms": 2636,
+    "duration_ms": 2766,
+    "model": "gemini-3.1-flash-lite",
+    "classify_ms": null
+  }
+}

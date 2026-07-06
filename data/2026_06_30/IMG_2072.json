@@ -1,0 +1,66 @@
+{
+  "image_path": "data/2026_06_30/jpg/IMG_2072.jpg",
+  "meta": {
+    "image_id": "IMG_2072",
+    "source_file": "/Users/daliu/workspace/ep/grocery-prices/data/2026_06_30/IMG_2072.HEIC",
+    "gps_latitude": 43.6423861111111,
+    "gps_longitude": -79.3812333333333,
+    "captured_at": "2026-06-30T19:52:48",
+    "date_folder": "2026_06_30"
+  },
+  "products": [
+    {
+      "product_name": "Pork Loin Centre Chops Boneless",
+      "brand": "Longo's",
+      "price": 2.61,
+      "unit": "EA",
+      "unit_price": 6.59,
+      "is_special": true,
+      "promo": "LOW PRICE ALERT",
+      "barcode": "203211002614",
+      "size": "0.396 kg",
+      "net_weight": 0.396,
+      "net_weight_lb": 0.873,
+      "category": "meat",
+      "notes": "Local Ontario Corn-Fed Pork, No Added Hormones. Best before 2024/Jul/04. Unit price shown as $6.59/kg."
+    },
+    {
+      "product_name": "Pork Loin Centre Chops Boneless",
+      "brand": "Longo's",
+      "price": 2.21,
+      "unit": "EA",
+      "unit_price": 6.59,
+      "is_special": true,
+      "promo": "LOW PRICE ALERT",
+      "barcode": "203211002218",
+      "size": "0.336 kg",
+      "net_weight": 0.336,
+      "net_weight_lb": 0.741,
+      "category": "meat",
+      "notes": "Local Ontario Corn-Fed Pork, No Added Hormones. Best before 2024/Jul/04. Unit price shown as $6.59/kg."
+    },
+    {
+      "product_name": "Value Pack Boneless Pork Loin Fast Fry Chops",
+      "brand": "Fresh Ontario",
+      "price": 3.49,
+      "unit": "lb",
+      "unit_price": 3.49,
+      "regular_price": 5.99,
+      "is_special": true,
+      "promo": "LOW PRICE ALERT - SAVE $2.50 Per/LB",
+      "barcode": "2045400000",
+      "packed_on": "7/1/2024",
+      "category": "meat",
+      "notes": "Shelf tag shows $7.69/kg metric equivalent. Ontario Pork, raised by Ontario farmers, natural, no added hormones."
+    }
+  ],
+  "raw_response": "{\n  \"products\": [\n    {\n      \"product_name\": \"Pork Loin Centre Chops Boneless\",\n      \"product_name_zh\": null,\n      \"brand\": \"Longo's\",\n      \"price\": 2.61,\n      \"unit\": \"EA\",\n      \"unit_price\": 6.59,\n      \"unit_price_per_100g\": null,\n      \"regular_price\": null,\n      \"is_special\": true,\n      \"promo\": \"LOW PRICE ALERT\",\n      \"barcode\": \"203211002614\",\n      \"size\": \"0.396 kg\",\n      \"net_weight\": 0.396,\n      \"net_weight_lb\": 0.873,\n      \"packed_on\": null,\n      \"category\": \"meat\",\n      \"notes\": \"Local Ontario Corn-Fed Pork, No Added Hormones. Best before 2024/Jul/04. Unit price shown as $6.59/kg.\"\n    },\n    {\n      \"product_name\": \"Pork Loin Centre Chops Boneless\",\n      \"product_name_zh\": null,\n      \"brand\": \"Longo's\",\n      \"price\": 2.21,\n      \"unit\": \"EA\",\n      \"unit_price\": 6.59,\n      \"unit_price_per_100g\": null,\n      \"regular_price\": null,\n      \"is_special\": true,\n      \"promo\": \"LOW PRICE ALERT\",\n      \"barcode\": \"203211002218\",\n      \"size\": \"0.336 kg\",\n      \"net_weight\": 0.336,\n      \"net_weight_lb\": 0.741,\n      \"packed_on\": null,\n      \"category\": \"meat\",\n      \"notes\": \"Local Ontario Corn-Fed Pork, No Added Hormones. Best before 2024/Jul/04. Unit price shown as $6.59/kg.\"\n    },\n    {\n      \"product_name\": \"Value Pack Boneless Pork Loin Fast Fry Chops\",\n      \"product_name_zh\": null,\n      \"brand\": \"Fresh Ontario\",\n      \"price\": 3.49,\n      \"unit\": \"lb\",\n      \"unit_price\": 3.49,\n      \"unit_price_per_100g\": null,\n      \"regular_price\": 5.99,\n      \"is_special\": true,\n      \"promo\": \"LOW PRICE ALERT - SAVE $2.50 Per/LB\",\n      \"barcode\": \"2045400000\",\n      \"size\": null,\n      \"net_weight\": null,\n      \"net_weight_lb\": null,\n      \"packed_on\": \"7/1/2024\",\n      \"category\": \"meat\",\n      \"notes\": \"Shelf tag shows $7.69/kg metric equivalent. Ontario Pork, raised by Ontario farmers, natural, no added hormones.\"\n    }\n  ]\n}",
+  "extractor": "cursor_sdk",
+  "timing": {
+    "prep_ms": 101,
+    "llm_ms": 33226,
+    "duration_ms": 33327,
+    "model": "auto",
+    "classify_ms": null
+  }
+}

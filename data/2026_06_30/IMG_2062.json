@@ -1,0 +1,62 @@
+{
+  "image_path": "data/2026_06_30/jpg/IMG_2062.jpg",
+  "meta": {
+    "image_id": "IMG_2062",
+    "source_file": "/Users/daliu/workspace/ep/grocery-prices/data/2026_06_30/IMG_2062.HEIC",
+    "gps_latitude": 43.6396916666667,
+    "gps_longitude": -79.3803638888889,
+    "captured_at": "2026-06-30T19:35:57",
+    "date_folder": "2026_06_30"
+  },
+  "products": [
+    {
+      "product_name": "Prime Rib Oven Roast",
+      "brand": "Canada AAA Beef",
+      "price": 23.99,
+      "unit": "lb",
+      "unit_price": 23.99,
+      "category": "meat",
+      "notes": "Cut from Canada AAA beef. Deeply marbled, aged minimum 14 days, expertly trimmed. 100% Canadian beef."
+    },
+    {
+      "product_name": "Rib Eye Grilling Steak",
+      "brand": "Canada AAA Beef",
+      "price": 29.99,
+      "unit": "lb",
+      "unit_price": 29.99,
+      "is_special": true,
+      "promo": "SPECIAL",
+      "category": "meat",
+      "notes": "Cut from Canada AAA Beef. Secondary price shown as 66.12/kg."
+    },
+    {
+      "product_name": "Striploin Grilling Steak",
+      "brand": "Canada AAA Beef",
+      "price": 26.99,
+      "unit": "lb",
+      "unit_price": 26.99,
+      "category": "meat",
+      "notes": "Cut from Canada AAA beef. Deeply marbled, aged minimum 14 days, expertly trimmed. 100% Canadian beef."
+    },
+    {
+      "product_name": "Sirloin Tip Oven Roast",
+      "brand": "Canada AAA Beef",
+      "price": 10.99,
+      "unit": "lb",
+      "unit_price": 10.99,
+      "is_special": true,
+      "promo": "SPECIAL",
+      "category": "meat",
+      "notes": "Cut from Canada AAA Beef. Secondary price shown as 24.23/kg."
+    }
+  ],
+  "raw_response": "{\"products\":[{\"product_name\":\"Prime Rib Oven Roast\",\"product_name_zh\":null,\"brand\":\"Canada AAA Beef\",\"price\":23.99,\"unit\":\"lb\",\"unit_price\":23.99,\"unit_price_per_100g\":null,\"regular_price\":null,\"is_special\":false,\"promo\":null,\"barcode\":null,\"size\":null,\"net_weight\":null,\"net_weight_lb\":null,\"packed_on\":null,\"category\":\"meat\",\"notes\":\"Cut from Canada AAA beef. Deeply marbled, aged minimum 14 days, expertly trimmed. 100% Canadian beef.\"},{\"product_name\":\"Rib Eye Grilling Steak\",\"product_name_zh\":null,\"brand\":\"Canada AAA Beef\",\"price\":29.99,\"unit\":\"lb\",\"unit_price\":29.99,\"unit_price_per_100g\":null,\"regular_price\":null,\"is_special\":true,\"promo\":\"SPECIAL\",\"barcode\":null,\"size\":null,\"net_weight\":null,\"net_weight_lb\":null,\"packed_on\":null,\"category\":\"meat\",\"notes\":\"Cut from Canada AAA Beef. Secondary price shown as 66.12/kg.\"},{\"product_name\":\"Striploin Grilling Steak\",\"product_name_zh\":null,\"brand\":\"Canada AAA Beef\",\"price\":26.99,\"unit\":\"lb\",\"unit_price\":26.99,\"unit_price_per_100g\":null,\"regular_price\":null,\"is_special\":false,\"promo\":null,\"barcode\":null,\"size\":null,\"net_weight\":null,\"net_weight_lb\":null,\"packed_on\":null,\"category\":\"meat\",\"notes\":\"Cut from Canada AAA beef. Deeply marbled, aged minimum 14 days, expertly trimmed. 100% Canadian beef.\"},{\"product_name\":\"Sirloin Tip Oven Roast\",\"product_name_zh\":null,\"brand\":\"Canada AAA Beef\",\"price\":10.99,\"unit\":\"lb\",\"unit_price\":10.99,\"unit_price_per_100g\":null,\"regular_price\":null,\"is_special\":true,\"promo\":\"SPECIAL\",\"barcode\":null,\"size\":null,\"net_weight\":null,\"net_weight_lb\":null,\"packed_on\":null,\"category\":\"meat\",\"notes\":\"Cut from Canada AAA Beef. Secondary price shown as 24.23/kg.\"}]}",
+  "extractor": "cursor_sdk",
+  "timing": {
+    "prep_ms": 102,
+    "llm_ms": 27683,
+    "duration_ms": 27785,
+    "model": "auto",
+    "classify_ms": null
+  }
+}

@@ -10,12 +10,12 @@ import {
 import {
   completeOnboarding,
   fetchPhotoStatuses,
-  uploadPhotos,
+  uploadPhotosWithProgress,
   type DuplicateAction,
   type UploadResult,
 } from "./api";
 import { DuplicatePhotoModal } from "./DuplicatePhotoModal";
-import { prepareUploadFile } from "./prepareUpload";
+import { prepareUploadFile } from "./prepareUploadFile";
 import {
   createQueueItem,
   MAX_BULK_BATCH,
@@ -279,10 +279,15 @@ export function UploadQueueProvider({
           });
           return;
         }
-        const retried = await uploadPhotos(
+        updateItem(item.id, { status: "uploading", uploadProgress: 0 });
+        const retried = await uploadPhotosWithProgress(
           [item.uploadFile ?? item.file],
           item.source,
+          (percent) => {
+            updateItem(item.id, { status: "uploading", uploadProgress: percent });
+          },
           action,
+          item.clientExif ? [item.clientExif] : undefined,
         );
         const retriedResult = retried.results[0];
         if (!retriedResult) {
@@ -298,6 +303,7 @@ export function UploadQueueProvider({
       ) {
         updateItem(item.id, {
           status: "processing",
+          uploadProgress: undefined,
           imageId: result.image_id,
           detectedReceipt: result.detected_receipt,
         });
@@ -312,15 +318,45 @@ export function UploadQueueProvider({
 
   const processBatch = useCallback(
     async (batch: UploadQueueItem[]) => {
+      const prepared: { file: File; clientExif?: UploadQueueItem["clientExif"] }[] = [];
       for (const item of batch) {
-        updateItem(item.id, { status: "processing" });
+        updateItem(item.id, { status: "compressing" });
+        try {
+          const result = await prepareUploadFile(item.file);
+          prepared.push({ file: result.file, clientExif: result.clientExif });
+          updateItem(item.id, {
+            uploadFile: result.file,
+            clientExif: result.clientExif,
+          });
+        } catch (err) {
+          const message = queueItemErrorMessage(err);
+          for (const failed of batch) {
+            updateItem(failed.id, { status: "failed", error: message });
+          }
+          return;
+        }
       }
 
+      const setBatchProgress = (percent: number) => {
+        for (const item of batch) {
+          updateItem(item.id, { status: "uploading", uploadProgress: percent });
+        }
+      };
+
+      setBatchProgress(0);
+
       try {
-        const bulk = await uploadPhotos(
-          batch.map((item) => item.uploadFile ?? item.file),
+        const bulk = await uploadPhotosWithProgress(
+          prepared.map((entry) => entry.file),
           batch[0].source,
+          setBatchProgress,
+          undefined,
+          prepared.map((entry) => entry.clientExif),
         );
+
+        for (const item of batch) {
+          updateItem(item.id, { uploadProgress: 100 });
+        }
 
         const backgroundTasks: Promise<void>[] = [];
         for (let index = 0; index < batch.length; index += 1) {
@@ -400,26 +436,8 @@ export function UploadQueueProvider({
       if (!files.length) return;
       const added = files.map((file) => createQueueItem(file, source));
       setItems((prev) => [...prev, ...added]);
-
-      for (const item of added) {
-        void prepareUploadFile(item.file, (phase) => {
-          updateItem(item.id, { preparePhase: phase });
-        })
-          .then(({ uploadFile, thumbnailUrl }) => {
-            updateItem(item.id, {
-              uploadFile,
-              thumbnailUrl,
-              preparePhase: undefined,
-              status: "queued",
-            });
-          })
-          .catch((err) => {
-            const message = err instanceof Error ? err.message : "Upload prep failed";
-            updateItem(item.id, { status: "failed", error: message, preparePhase: undefined });
-          });
-      }
     },
-    [updateItem],
+    [],
   );
 
   const dismissToast = useCallback(() => setToast(null), []);
@@ -455,8 +473,9 @@ export function UploadQueueProvider({
       }
       return prev.filter(
         (item) =>
-          item.status === "preparing" ||
           item.status === "queued" ||
+          item.status === "compressing" ||
+          item.status === "uploading" ||
           item.status === "processing" ||
           item.status === "awaiting_duplicate",
       );
@@ -473,8 +492,9 @@ export function UploadQueueProvider({
 
   const activeCount = items.filter(
     (item) =>
-      item.status === "preparing" ||
       item.status === "queued" ||
+      item.status === "compressing" ||
+      item.status === "uploading" ||
       item.status === "processing" ||
       item.status === "awaiting_duplicate",
   ).length;

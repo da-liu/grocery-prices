@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import re
 import sqlite3
 import uuid
 from datetime import datetime, timezone
@@ -16,6 +17,7 @@ from grocery_extract.user_paths import resolve_blob_path
 
 TORONTO = ZoneInfo("America/Toronto")
 EMPTY_SIGHTING_NS = uuid.UUID("6ba7b810-9dad-11d1-80b4-00c04fd430c8")
+PHOTO_ID_RE = re.compile(r"^(?:[a-f0-9]{32}|IMG_\d+)$")
 
 SIGHTING_COLUMNS = frozenset({"product_name", "brand", "price"})
 
@@ -32,18 +34,12 @@ def init_catalog_tables() -> None:
     conn = get_conn()
     conn.executescript(
         """
-        CREATE TABLE IF NOT EXISTS user_image_seq (
-            user_id TEXT PRIMARY KEY,
-            next_num INTEGER NOT NULL DEFAULT 1,
-            FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
-        );
-
         CREATE TABLE IF NOT EXISTS photos (
             id TEXT NOT NULL,
             user_id TEXT NOT NULL,
             type TEXT NOT NULL CHECK (type IN ('shelf', 'receipt')),
             original_blob_key TEXT,
-            jpeg_blob_key TEXT NOT NULL,
+            photo_blob_key TEXT NOT NULL,
             content_hash TEXT,
             gps_latitude REAL,
             gps_longitude REAL,
@@ -99,6 +95,7 @@ def init_catalog_tables() -> None:
             ON product_sightings(user_id, photo_id);
         """
     )
+    conn.execute("DROP TABLE IF EXISTS user_image_seq")
     photo_columns = {row[1] for row in conn.execute("PRAGMA table_info(photos)")}
     if "extraction_status" not in photo_columns:
         conn.execute(
@@ -185,12 +182,25 @@ def blob_keys(
     date_folder: str,
     image_id: str,
     *,
-    original_suffix: str,
+    original_suffix: str = ".webp",
 ) -> tuple[str, str]:
-    base = f"users/{user_id}/photos/{date_folder}"
-    original = f"{base}/{image_id}{original_suffix}"
-    jpeg = f"{base}/jpg/{image_id}.jpg"
-    return original, jpeg
+    _ = original_suffix
+    key = f"users/{user_id}/photos/{date_folder}/{image_id}.webp"
+    return key, key
+
+
+def is_valid_photo_id(photo_id: str) -> bool:
+    return bool(PHOTO_ID_RE.match(photo_id))
+
+
+def new_photo_id() -> str:
+    return uuid.uuid4().hex
+
+
+def new_photo_ids(count: int) -> list[str]:
+    if count <= 0:
+        return []
+    return [new_photo_id() for _ in range(count)]
 
 
 def empty_sighting_id(user_id: str, photo_id: str) -> str:
@@ -225,73 +235,6 @@ def _merge_sighting_row(row: Any) -> dict[str, Any]:
     }
 
 
-def _photo_num(photo_id: str) -> int | None:
-    if not photo_id.startswith("IMG_") or not photo_id[4:].isdigit():
-        return None
-    return int(photo_id[4:])
-
-
-def _bump_image_seq(conn, user_id: str, photo_id: str) -> None:
-    num = _photo_num(photo_id)
-    if num is None:
-        return
-    next_num = num + 1
-    row = conn.execute(
-        "SELECT next_num FROM user_image_seq WHERE user_id = ?",
-        (user_id,),
-    ).fetchone()
-    if row is None:
-        conn.execute(
-            "INSERT INTO user_image_seq (user_id, next_num) VALUES (?, ?)",
-            (user_id, next_num),
-        )
-    elif next_num > row["next_num"]:
-        conn.execute(
-            "UPDATE user_image_seq SET next_num = ? WHERE user_id = ?",
-            (next_num, user_id),
-        )
-
-
-def allocate_image_ids(user_id: str, count: int) -> list[str]:
-    if count <= 0:
-        return []
-    conn = get_conn()
-    conn.execute("BEGIN IMMEDIATE")
-    row = conn.execute(
-        "SELECT next_num FROM user_image_seq WHERE user_id = ?",
-        (user_id,),
-    ).fetchone()
-    if row is None:
-        start = 1
-        conn.execute(
-            "INSERT INTO user_image_seq (user_id, next_num) VALUES (?, ?)",
-            (user_id, start + count),
-        )
-    else:
-        start = row["next_num"]
-        conn.execute(
-            "UPDATE user_image_seq SET next_num = ? WHERE user_id = ?",
-            (start + count, user_id),
-        )
-    conn.commit()
-    return [f"IMG_{start + index:04d}" for index in range(count)]
-
-
-def next_image_id(user_id: str) -> str:
-    return allocate_image_ids(user_id, 1)[0]
-
-
-def max_image_num(user_id: str) -> int:
-    conn = get_conn()
-    row = conn.execute(
-        "SELECT next_num FROM user_image_seq WHERE user_id = ?",
-        (user_id,),
-    ).fetchone()
-    if row is None:
-        return 0
-    return row["next_num"] - 1
-
-
 def find_photo_by_content_hash(user_id: str, content_hash: str) -> str | None:
     conn = get_conn()
     row = conn.execute(
@@ -308,7 +251,7 @@ def get_photo(user_id: str, photo_id: str) -> dict[str, Any] | None:
     conn = get_conn()
     row = conn.execute(
         """
-        SELECT id, user_id, type, original_blob_key, jpeg_blob_key, content_hash,
+        SELECT id, user_id, type, original_blob_key, photo_blob_key, content_hash,
                gps_latitude, gps_longitude, captured_at, store_location_id,
                created_at, updated_at, extraction_status, extraction_error,
                extraction_started_at
@@ -320,11 +263,11 @@ def get_photo(user_id: str, photo_id: str) -> dict[str, Any] | None:
     return dict(row) if row else None
 
 
-def get_photo_jpeg_path(user_id: str, photo_id: str) -> Path | None:
+def get_photo_blob_path(user_id: str, photo_id: str) -> Path | None:
     photo = get_photo(user_id, photo_id)
     if photo is None:
         return None
-    path = resolve_blob_path(photo["jpeg_blob_key"])
+    path = resolve_blob_path(photo["photo_blob_key"])
     return path if path.exists() else None
 
 
@@ -407,7 +350,7 @@ def save_photo_pending(
     photo_id: str,
     photo_type: str,
     original_blob_key: str | None,
-    jpeg_blob_key: str,
+    photo_blob_key: str,
     content_hash: str | None,
     gps_latitude: float | None,
     gps_longitude: float | None,
@@ -420,7 +363,7 @@ def save_photo_pending(
     conn.execute(
         """
         INSERT INTO photos (
-            id, user_id, type, original_blob_key, jpeg_blob_key, content_hash,
+            id, user_id, type, original_blob_key, photo_blob_key, content_hash,
             gps_latitude, gps_longitude, captured_at, store_location_id,
             created_at, updated_at, extraction_status, extraction_error
         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending', NULL)
@@ -430,7 +373,7 @@ def save_photo_pending(
             user_id,
             photo_type,
             original_blob_key,
-            jpeg_blob_key,
+            photo_blob_key,
             content_hash,
             gps_latitude,
             gps_longitude,
@@ -440,7 +383,6 @@ def save_photo_pending(
             now,
         ),
     )
-    _bump_image_seq(conn, user_id, photo_id)
     conn.commit()
 
 
@@ -583,7 +525,7 @@ def save_photo_ingest(
     photo_id: str,
     photo_type: str,
     original_blob_key: str | None,
-    jpeg_blob_key: str,
+    photo_blob_key: str,
     content_hash: str | None,
     gps_latitude: float | None,
     gps_longitude: float | None,
@@ -604,7 +546,7 @@ def save_photo_ingest(
     conn.execute(
         """
         INSERT INTO photos (
-            id, user_id, type, original_blob_key, jpeg_blob_key, content_hash,
+            id, user_id, type, original_blob_key, photo_blob_key, content_hash,
             gps_latitude, gps_longitude, captured_at, store_location_id,
             created_at, updated_at, extraction_status, extraction_error
         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'done', NULL)
@@ -614,7 +556,7 @@ def save_photo_ingest(
             user_id,
             photo_type,
             original_blob_key,
-            jpeg_blob_key,
+            photo_blob_key,
             content_hash,
             gps_latitude,
             gps_longitude,
@@ -677,7 +619,6 @@ def save_photo_ingest(
                 now,
             ),
         )
-    _bump_image_seq(conn, user_id, photo_id)
     conn.commit()
     return len(products)
 
@@ -909,7 +850,7 @@ def delete_photo(user_id: str, photo_id: str) -> bool:
 
 
 def _delete_photo_files(photo: dict[str, Any]) -> None:
-    for key in ("original_blob_key", "jpeg_blob_key"):
+    for key in ("original_blob_key", "photo_blob_key"):
         blob_key = photo.get(key)
         if not blob_key:
             continue
@@ -1021,26 +962,28 @@ def prune_orphan_photo_files(user_id: str) -> int:
     db_ids = set()
     conn = get_conn()
     rows = conn.execute(
-        "SELECT id, jpeg_blob_key FROM photos WHERE user_id = ?",
+        "SELECT id, photo_blob_key FROM photos WHERE user_id = ?",
         (user_id,),
     ).fetchall()
     db_ids = {row["id"] for row in rows}
-    db_jpegs = {row["jpeg_blob_key"] for row in rows}
+    db_photo_blobs = {row["photo_blob_key"] for row in rows}
 
     photos_root = user_root(user_id) / "photos"
     if not photos_root.exists():
         return 0
 
     removed = 0
-    for path in photos_root.rglob("IMG_*.*"):
-        if path.suffix.lower() == ".jpg" and path.parent.name == "jpg":
+    for path in photos_root.rglob("*"):
+        if not path.is_file():
+            continue
+        if path.suffix.lower() == ".webp" and path.parent.name != "jpg":
             image_id = path.stem
-        elif path.name.startswith("IMG_"):
+        elif path.suffix.lower() in {".jpg", ".jpeg"} and path.parent.name == "jpg":
             image_id = path.stem
         else:
             continue
         rel = path.relative_to(DATA_DIR).as_posix()
-        if image_id not in db_ids and rel not in db_jpegs:
+        if image_id not in db_ids and rel not in db_photo_blobs:
             path.unlink(missing_ok=True)
             removed += 1
     return removed
@@ -1059,7 +1002,7 @@ def list_product_rows(
 
     photos = db.execute(
         """
-        SELECT id, type, jpeg_blob_key, gps_latitude, gps_longitude,
+        SELECT id, type, photo_blob_key, gps_latitude, gps_longitude,
                captured_at, store_location_id
         FROM photos
         WHERE user_id = ? AND extraction_status = 'done'

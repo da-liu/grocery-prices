@@ -1,0 +1,54 @@
+{
+  "image_path": "data/2026_06_29/jpg/IMG_2027.jpg",
+  "meta": {
+    "image_id": "IMG_2027",
+    "source_file": "data/2026_06_29/IMG_2027.HEIC",
+    "gps_latitude": 43.6534916666667,
+    "gps_longitude": -79.3982083333333,
+    "captured_at": "2026-06-29T15:51:08",
+    "date_folder": "2026_06_29"
+  },
+  "products": [
+    {
+      "product_name": "Pearl River Bridge Golden Label Superior Light Soy Sauce",
+      "product_name_zh": "珠江橋牌金標生抽",
+      "brand": "Pearl River Bridge",
+      "price": 3.99,
+      "unit": "EA",
+      "unit_price": 3.99,
+      "barcode": "72233761834",
+      "size": "500ml",
+      "category": "condiments"
+    },
+    {
+      "product_name": "Pearl River Bridge Superior Dark Soy Sauce",
+      "product_name_zh": "珠江橋牌老抽王",
+      "brand": "Pearl River Bridge",
+      "price": 3.99,
+      "unit": "EA",
+      "unit_price": 3.99,
+      "barcode": "72233761732",
+      "size": "500ml",
+      "category": "condiments"
+    },
+    {
+      "product_name": "Pearl River Bridge Mushroom Flavoured Dark Soy Sauce",
+      "product_name_zh": "珠江橋牌草菇老抽",
+      "brand": "Pearl River Bridge",
+      "price": 3.99,
+      "unit": "EA",
+      "unit_price": 3.99,
+      "size": "500ml",
+      "category": "condiments"
+    }
+  ],
+  "raw_response": "{\n  \"products\": [\n    {\n      \"product_name\": \"Pearl River Bridge Golden Label Superior Light Soy Sauce\",\n      \"product_name_zh\": \"珠江橋牌金標生抽\",\n      \"brand\": \"Pearl River Bridge\",\n      \"price\": 3.99,\n      \"unit\": \"EA\",\n      \"unit_price\": 3.99,\n      \"unit_price_per_100g\": null,\n      \"regular_price\": null,\n      \"is_special\": false,\n      \"promo\": null,\n      \"barcode\": \"72233761834\",\n      \"size\": \"500ml\",\n      \"net_weight\": null,\n      \"net_weight_lb\": null,\n      \"packed_on\": null,\n      \"category\": \"condiments\",\n      \"notes\": null\n    },\n    {\n      \"product_name\": \"Pearl River Bridge Superior Dark Soy Sauce\",\n      \"product_name_zh\": \"珠江橋牌老抽王\",\n      \"brand\": \"Pearl River Bridge\",\n      \"price\": 3.99,\n      \"unit\": \"EA\",\n      \"unit_price\": 3.99,\n      \"unit_price_per_100g\": null,\n      \"regular_price\": null,\n      \"is_special\": false,\n      \"promo\": null,\n      \"barcode\": \"72233761732\",\n      \"size\": \"500ml\",\n      \"net_weight\": null,\n      \"net_weight_lb\": null,\n      \"packed_on\": null,\n      \"category\": \"condiments\",\n      \"notes\": null\n    },\n    {\n      \"product_name\": \"Pearl River Bridge Mushroom Flavoured Dark Soy Sauce\",\n      \"product_name_zh\": \"珠江橋牌草菇老抽\",\n      \"brand\": \"Pearl River Bridge\",\n      \"price\": 3.99,\n      \"unit\": \"EA\",\n      \"unit_price\": 3.99,\n      \"unit_price_per_100g\": null,\n      \"regular_price\": null,\n      \"is_special\": false,\n      \"promo\": null,\n      \"barcode\": null,\n      \"size\": \"500ml\",\n      \"net_weight\": null,\n      \"net_weight_lb\": null,\n      \"packed_on\": null,\n      \"category\": \"condiments\",\n      \"notes\": null\n    }\n  ]\n}",
+  "extractor": "gemini_direct",
+  "timing": {
+    "prep_ms": 105,
+    "llm_ms": 2631,
+    "duration_ms": 2736,
+    "model": "gemini-3.1-flash-lite",
+    "classify_ms": null
+  }
+}

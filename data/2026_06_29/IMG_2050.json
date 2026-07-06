@@ -1,0 +1,32 @@
+{
+  "image_path": "data/2026_06_29/jpg/IMG_2050.jpg",
+  "meta": {
+    "image_id": "IMG_2050",
+    "source_file": "data/2026_06_29/IMG_2050.HEIC",
+    "gps_latitude": 43.6537166666667,
+    "gps_longitude": -79.39425,
+    "captured_at": "2026-06-29T16:07:57",
+    "date_folder": "2026_06_29"
+  },
+  "products": [
+    {
+      "product_name": "LGM Hot Sauce w/ Black Beans",
+      "product_name_zh": "老干媽風味豆豉",
+      "brand": "Lao Gan Ma",
+      "price": 7.99,
+      "unit": "bottle",
+      "barcode": "00692180470152",
+      "size": "740g",
+      "category": "condiments"
+    }
+  ],
+  "raw_response": "{\n  \"products\": [\n    {\n      \"product_name\": \"LGM Hot Sauce w/ Black Beans\",\n      \"product_name_zh\": \"老干媽風味豆豉\",\n      \"brand\": \"Lao Gan Ma\",\n      \"price\": 7.99,\n      \"unit\": \"bottle\",\n      \"unit_price\": null,\n      \"unit_price_per_100g\": null,\n      \"regular_price\": null,\n      \"is_special\": false,\n      \"promo\": null,\n      \"barcode\": \"00692180470152\",\n      \"size\": \"740g\",\n      \"net_weight\": null,\n      \"net_weight_lb\": null,\n      \"packed_on\": null,\n      \"category\": \"condiments\",\n      \"notes\": null\n    }\n  ]\n}",
+  "extractor": "gemini_direct",
+  "timing": {
+    "prep_ms": 114,
+    "llm_ms": 1855,
+    "duration_ms": 1969,
+    "model": "gemini-3.1-flash-lite",
+    "classify_ms": null
+  }
+}

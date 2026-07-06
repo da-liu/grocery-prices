@@ -1,0 +1,97 @@
+{
+  "image_path": "data/2026_06_30/jpg/IMG_2069.jpg",
+  "meta": {
+    "image_id": "IMG_2069",
+    "source_file": "/Users/daliu/workspace/ep/grocery-prices/data/2026_06_30/IMG_2069.HEIC",
+    "gps_latitude": 43.6423611111111,
+    "gps_longitude": -79.3812166666667,
+    "captured_at": "2026-06-30T19:49:30",
+    "date_folder": "2026_06_30"
+  },
+  "products": [
+    {
+      "product_name": "ItalPasta Spaghetti",
+      "brand": "ItalPasta",
+      "price": 2.49,
+      "unit": "EA",
+      "unit_price": 2.49,
+      "unit_price_per_100g": 0.277,
+      "regular_price": 3.49,
+      "is_special": true,
+      "promo": "SAVE $1.00",
+      "barcode": "0000000101000027",
+      "size": "900g",
+      "net_weight": 0.9,
+      "net_weight_lb": 1.98,
+      "category": "pasta"
+    },
+    {
+      "product_name": "ItalPasta Spaghettini",
+      "brand": "ItalPasta",
+      "price": 2.49,
+      "unit": "EA",
+      "unit_price": 2.49,
+      "unit_price_per_100g": 0.277,
+      "regular_price": 3.49,
+      "is_special": true,
+      "promo": "SAVE $1.00",
+      "barcode": "0000000101000028",
+      "size": "900g",
+      "net_weight": 0.9,
+      "net_weight_lb": 1.98,
+      "category": "pasta"
+    },
+    {
+      "product_name": "ItalPasta Linguine",
+      "brand": "ItalPasta",
+      "price": 2.49,
+      "unit": "EA",
+      "unit_price": 2.49,
+      "regular_price": 3.49,
+      "is_special": true,
+      "promo": "SAVE $1.00",
+      "size": "900g",
+      "net_weight": 0.9,
+      "net_weight_lb": 1.98,
+      "category": "pasta"
+    },
+    {
+      "product_name": "ItalPasta Capellini",
+      "brand": "ItalPasta",
+      "price": 2.49,
+      "unit": "EA",
+      "unit_price": 2.49,
+      "regular_price": 3.49,
+      "is_special": true,
+      "promo": "SAVE $1.00",
+      "size": "900g",
+      "net_weight": 0.9,
+      "net_weight_lb": 1.98,
+      "category": "pasta"
+    },
+    {
+      "product_name": "ItalPasta Small Shells",
+      "brand": "ItalPasta",
+      "price": 2.49,
+      "unit": "EA",
+      "unit_price": 2.49,
+      "regular_price": 3.49,
+      "is_special": true,
+      "promo": "SAVE $1.00",
+      "size": "900g",
+      "net_weight": 0.9,
+      "net_weight_lb": 1.98,
+      "category": "pasta",
+      "notes": "Shelf tag reads Small Shells; placed in front of Large Shells and Fusilli packages"
+    }
+  ],
+  "raw_response": "{\n  \"products\": [\n    {\n      \"product_name\": \"ItalPasta Spaghetti\",\n      \"product_name_zh\": null,\n      \"brand\": \"ItalPasta\",\n      \"price\": 2.49,\n      \"unit\": \"EA\",\n      \"unit_price\": 2.49,\n      \"unit_price_per_100g\": 0.277,\n      \"regular_price\": 3.49,\n      \"is_special\": true,\n      \"promo\": \"SAVE $1.00\",\n      \"barcode\": \"0000000101000027\",\n      \"size\": \"900g\",\n      \"net_weight\": 0.9,\n      \"net_weight_lb\": 1.98,\n      \"packed_on\": null,\n      \"category\": \"pasta\",\n      \"notes\": null\n    },\n    {\n      \"product_name\": \"ItalPasta Spaghettini\",\n      \"product_name_zh\": null,\n      \"brand\": \"ItalPasta\",\n      \"price\": 2.49,\n      \"unit\": \"EA\",\n      \"unit_price\": 2.49,\n      \"unit_price_per_100g\": 0.277,\n      \"regular_price\": 3.49,\n      \"is_special\": true,\n      \"promo\": \"SAVE $1.00\",\n      \"barcode\": \"0000000101000028\",\n      \"size\": \"900g\",\n      \"net_weight\": 0.9,\n      \"net_weight_lb\": 1.98,\n      \"packed_on\": null,\n      \"category\": \"pasta\",\n      \"notes\": null\n    },\n    {\n      \"product_name\": \"ItalPasta Linguine\",\n      \"product_name_zh\": null,\n      \"brand\": \"ItalPasta\",\n      \"price\": 2.49,\n      \"unit\": \"EA\",\n      \"unit_price\": 2.49,\n      \"unit_price_per_100g\": null,\n      \"regular_price\": 3.49,\n      \"is_special\": true,\n      \"promo\": \"SAVE $1.00\",\n      \"barcode\": null,\n      \"size\": \"900g\",\n      \"net_weight\": 0.9,\n      \"net_weight_lb\": 1.98,\n      \"packed_on\": null,\n      \"category\": \"pasta\",\n      \"notes\": null\n    },\n    {\n      \"product_name\": \"ItalPasta Capellini\",\n      \"product_name_zh\": null,\n      \"brand\": \"ItalPasta\",\n      \"price\": 2.49,\n      \"unit\": \"EA\",\n      \"unit_price\": 2.49,\n      \"unit_price_per_100g\": null,\n      \"regular_price\": 3.49,\n      \"is_special\": true,\n      \"promo\": \"SAVE $1.00\",\n      \"barcode\": null,\n      \"size\": \"900g\",\n      \"net_weight\": 0.9,\n      \"net_weight_lb\": 1.98,\n      \"packed_on\": null,\n      \"category\": \"pasta\",\n      \"notes\": null\n    },\n    {\n      \"product_name\": \"ItalPasta Small Shells\",\n      \"product_name_zh\": null,\n      \"brand\": \"ItalPasta\",\n      \"price\": 2.49,\n      \"unit\": \"EA\",\n      \"unit_price\": 2.49,\n      \"unit_price_per_100g\": null,\n      \"regular_price\": 3.49,\n      \"is_special\": true,\n      \"promo\": \"SAVE $1.00\",\n      \"barcode\": null,\n      \"size\": \"900g\",\n      \"net_weight\": 0.9,\n      \"net_weight_lb\": 1.98,\n      \"packed_on\": null,\n      \"category\": \"pasta\",\n      \"notes\": \"Shelf tag reads Small Shells; placed in front of Large Shells and Fusilli packages\"\n    }\n  ]\n}",
+  "extractor": "cursor_sdk",
+  "timing": {
+    "prep_ms": 121,
+    "llm_ms": 35366,
+    "duration_ms": 35487,
+    "model": "auto",
+    "classify_ms": null
+  }
+}

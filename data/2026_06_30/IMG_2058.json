@@ -1,0 +1,32 @@
+{
+  "image_path": "data/2026_06_30/jpg/IMG_2058.jpg",
+  "meta": {
+    "image_id": "IMG_2058",
+    "source_file": "/Users/daliu/workspace/ep/grocery-prices/data/2026_06_30/IMG_2058.HEIC",
+    "gps_latitude": 43.6391305555556,
+    "gps_longitude": -79.380225,
+    "captured_at": "2026-06-30T19:29:26",
+    "date_folder": "2026_06_30"
+  },
+  "products": [
+    {
+      "product_name": "Montreal-Style Smoked Meat",
+      "brand": "Schinkel's Legacy",
+      "price": 4.99,
+      "unit": "100g",
+      "unit_price": 4.99,
+      "unit_price_per_100g": 4.99,
+      "category": "deli",
+      "notes": "Deli counter shelf tag; price shown per 100 g"
+    }
+  ],
+  "raw_response": "{\n  \"products\": [\n    {\n      \"product_name\": \"Montreal-Style Smoked Meat\",\n      \"product_name_zh\": null,\n      \"brand\": \"Schinkel's Legacy\",\n      \"price\": 4.99,\n      \"unit\": \"100g\",\n      \"unit_price\": 4.99,\n      \"unit_price_per_100g\": 4.99,\n      \"regular_price\": null,\n      \"is_special\": false,\n      \"promo\": null,\n      \"barcode\": null,\n      \"size\": null,\n      \"net_weight\": null,\n      \"net_weight_lb\": null,\n      \"packed_on\": null,\n      \"category\": \"deli\",\n      \"notes\": \"Deli counter shelf tag; price shown per 100 g\"\n    }\n  ]\n}",
+  "extractor": "cursor_sdk",
+  "timing": {
+    "prep_ms": 105,
+    "llm_ms": 16329,
+    "duration_ms": 16434,
+    "model": "auto",
+    "classify_ms": null
+  }
+}

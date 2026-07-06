@@ -1,0 +1,40 @@
+{
+  "image_path": "data/2026_06_29/jpg/IMG_2045.jpg",
+  "meta": {
+    "image_id": "IMG_2045",
+    "source_file": "data/2026_06_29/IMG_2045.HEIC",
+    "gps_latitude": 43.6536722222222,
+    "gps_longitude": -79.3943861111111,
+    "captured_at": "2026-06-29T16:06:12",
+    "date_folder": "2026_06_29"
+  },
+  "products": [
+    {
+      "product_name": "Mini Potatoes (Green Tape)",
+      "product_name_zh": "袋裝手指薯仔(綠繩)",
+      "price": 2.99,
+      "unit": "lb",
+      "unit_price": 2.99,
+      "barcode": "0000000004350",
+      "category": "produce"
+    },
+    {
+      "product_name": "ShangHai Bok Choy",
+      "product_name_zh": "上海白",
+      "price": 1.99,
+      "unit": "lb",
+      "unit_price": 1.99,
+      "barcode": "0000000004196",
+      "category": "produce"
+    }
+  ],
+  "raw_response": "{\n  \"products\": [\n    {\n      \"product_name\": \"Mini Potatoes (Green Tape)\",\n      \"product_name_zh\": \"袋裝手指薯仔(綠繩)\",\n      \"brand\": null,\n      \"price\": 2.99,\n      \"unit\": \"lb\",\n      \"unit_price\": 2.99,\n      \"unit_price_per_100g\": null,\n      \"regular_price\": null,\n      \"is_special\": false,\n      \"promo\": null,\n      \"barcode\": \"0000000004350\",\n      \"size\": null,\n      \"net_weight\": null,\n      \"net_weight_lb\": null,\n      \"packed_on\": null,\n      \"category\": \"produce\",\n      \"notes\": null\n    },\n    {\n      \"product_name\": \"ShangHai Bok Choy\",\n      \"product_name_zh\": \"上海白\",\n      \"brand\": null,\n      \"price\": 1.99,\n      \"unit\": \"lb\",\n      \"unit_price\": 1.99,\n      \"unit_price_per_100g\": null,\n      \"regular_price\": null,\n      \"is_special\": false,\n      \"promo\": null,\n      \"barcode\": \"0000000004196\",\n      \"size\": null,\n      \"net_weight\": null,\n      \"net_weight_lb\": null,\n      \"packed_on\": null,\n      \"category\": \"produce\",\n      \"notes\": null\n    }\n  ]\n}",
+  "extractor": "gemini_direct",
+  "timing": {
+    "prep_ms": 110,
+    "llm_ms": 2225,
+    "duration_ms": 2335,
+    "model": "gemini-3.1-flash-lite",
+    "classify_ms": null
+  }
+}

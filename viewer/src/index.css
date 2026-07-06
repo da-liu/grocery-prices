@@ -147,5 +147,15 @@ body {
 }
 
 #root {
-  min-height: 100vh;
+  min-height: 100dvh;
+}
+
+html:has(.panel.empty-state) {
+  overflow: hidden;
+  overscroll-behavior: none;
+}
+
+html:has(.panel.empty-state) body {
+  overflow: hidden;
+  overscroll-behavior: none;
 }

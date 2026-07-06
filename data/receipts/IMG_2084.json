@@ -1,0 +1,42 @@
+{
+  "image_id": "IMG_2084",
+  "source_file": "data/receipts/IMG_2084.HEIC",
+  "photo_type": "receipt",
+  "meta": {
+    "image_id": "IMG_2084",
+    "source_file": "/Users/daliu/workspace/ep/grocery-prices/data/receipts/IMG_2084.HEIC",
+    "gps_latitude": 43.6425472222222,
+    "gps_longitude": -79.3824611111111,
+    "captured_at": "2026-07-04T12:23:51",
+    "date_folder": "2026_07_04"
+  },
+  "products": [
+    {
+      "product_name": "Goat Meat (羊肩)",
+      "product_name_zh": "羊肩",
+      "price": 14.05,
+      "category": "meat"
+    },
+    {
+      "product_name": "CAULIFLOWER (椰菜花)",
+      "product_name_zh": "椰菜花",
+      "price": 4.76,
+      "category": "produce"
+    },
+    {
+      "product_name": "LGM Hot Pepper Sauce (老干媽香辣脆油辣椒)",
+      "product_name_zh": "老干媽香辣脆油辣椒",
+      "brand": "LGM",
+      "price": 7.99,
+      "category": "condiments"
+    }
+  ],
+  "extractor": "cursor_sdk",
+  "timing": {
+    "prep_ms": 90,
+    "llm_ms": 27324,
+    "duration_ms": 27414,
+    "model": "auto"
+  },
+  "raw_response": "{\"products\":[{\"product_name\":\"Goat Meat (羊肩)\",\"product_name_zh\":\"羊肩\",\"brand\":null,\"price\":14.05,\"unit\":null,\"unit_price\":null,\"unit_price_per_100g\":null,\"regular_price\":null,\"is_special\":false,\"promo\":null,\"barcode\":null,\"size\":null,\"net_weight\":null,\"net_weight_lb\":null,\"packed_on\":null,\"category\":\"meat\",\"notes\":null},{\"product_name\":\"CAULIFLOWER (椰菜花)\",\"product_name_zh\":\"椰菜花\",\"brand\":null,\"price\":4.76,\"unit\":null,\"unit_price\":null,\"unit_price_per_100g\":null,\"regular_price\":null,\"is_special\":false,\"promo\":null,\"barcode\":null,\"size\":null,\"net_weight\":null,\"net_weight_lb\":null,\"packed_on\":null,\"category\":\"produce\",\"notes\":null},{\"product_name\":\"LGM Hot Pepper Sauce (老干媽香辣脆油辣椒)\",\"product_name_zh\":\"老干媽香辣脆油辣椒\",\"brand\":\"LGM\",\"price\":7.99,\"unit\":null,\"unit_price\":null,\"unit_price_per_100g\":null,\"regular_price\":null,\"is_special\":false,\"promo\":null,\"barcode\":null,\"size\":null,\"net_weight\":null,\"net_weight_lb\":null,\"packed_on\":null,\"category\":\"condiments\",\"notes\":null}]}"
+}

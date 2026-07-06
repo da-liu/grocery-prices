@@ -21,7 +21,9 @@ import {
   countActiveChips,
   type BrowseQueryState,
 } from "./browseQuery";
-import { ComparePage } from "./ComparePage";
+import { ComparePage, hasComparableProducts } from "./ComparePage";
+import { CompressPage } from "./CompressPage";
+import { MetadataPage } from "./MetadataPage";
 import { OnboardingGuide } from "./OnboardingGuide";
 import { SettingsPage } from "./SettingsPage";
 import { AuthLoadingScreen } from "./AuthLoadingScreen";
@@ -35,11 +37,14 @@ import type { Product } from "./types";
 import type { ManualProductInput, ProductUpdateInput } from "./api";
 import "./App.css";
 
-type Page = "browse" | "compare" | "settings";
+type Page = "browse" | "compare" | "settings" | "metadata" | "compress";
 
 function pageFromHash(): Page {
   const hash = window.location.hash.replace(/^#\/?/, "");
-  if (hash === "compare" || hash === "settings") return hash;
+  if (hash === "compare" || hash === "settings" || hash === "metadata" || hash === "compress") {
+    return hash;
+  }
+  if (hash === "exif") return "metadata";
   return "browse";
 }
 
@@ -218,6 +223,8 @@ function AppShell() {
     }
     return counts;
   }, [products]);
+
+  const compareAvailable = useMemo(() => hasComparableProducts(products), [products]);
 
   const browseStats = useMemo(() => {
     const priced = browseDisplayed.filter((p) => p.price != null);
@@ -405,6 +412,7 @@ function AppShell() {
         highlightProductId={highlightProductId}
         highlightPhotoGroupId={highlightPhotoGroupId}
         photoGroupSizes={photoGroupSizes}
+        compareAvailable={compareAvailable}
       />
     </UploadQueueProvider>
   );
@@ -459,6 +467,7 @@ function AuthenticatedApp({
   highlightProductId,
   highlightPhotoGroupId,
   photoGroupSizes,
+  compareAvailable,
 }: {
   page: Page;
   navigate: (next: Page) => void;
@@ -514,6 +523,7 @@ function AuthenticatedApp({
   highlightProductId: string | null;
   highlightPhotoGroupId: string | null;
   photoGroupSizes: Map<string, number>;
+  compareAvailable: boolean;
 }) {
   const { enqueueFiles, pendingLabel, requestLabel, dismissLabel, completeLabel } =
     useUploadQueueActions();
@@ -554,6 +564,7 @@ function AuthenticatedApp({
           activeChipCount={activeChipCount}
           onToggleSortFilter={() => setSortFilterOpen(!sortFilterOpen)}
           browseStats={products.length > 0 ? browseStats : undefined}
+          showCompareNav={compareAvailable}
           onShowOnboarding={() => setShowOnboarding(true)}
         />
         <UploadStatusPanel />
@@ -635,6 +646,8 @@ function AuthenticatedApp({
         />
       )}
       {page === "settings" && <SettingsPage />}
+      {page === "metadata" && <MetadataPage />}
+      {page === "compress" && <CompressPage />}
       {page === "compare" && (products.length > 0 || !productsLoading) && (
         <ComparePage
           products={products}

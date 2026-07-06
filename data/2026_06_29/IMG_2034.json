@@ -1,0 +1,76 @@
+{
+  "image_path": "data/2026_06_29/jpg/IMG_2034.jpg",
+  "meta": {
+    "image_id": "IMG_2034",
+    "source_file": "data/2026_06_29/IMG_2034.HEIC",
+    "gps_latitude": 43.6536861111111,
+    "gps_longitude": -79.3974611111111,
+    "captured_at": "2026-06-29T15:56:01",
+    "date_folder": "2026_06_29"
+  },
+  "products": [
+    {
+      "product_name": "Sunrise Almond Tofu Dessert",
+      "product_name_zh": "日昇原味豆腐皇",
+      "brand": "Sunrise",
+      "price": 1.99,
+      "unit": "EA",
+      "barcode": "063604000000",
+      "size": "300g",
+      "category": "tofu"
+    },
+    {
+      "product_name": "Sunrise Peach Mango Tofu Dessert",
+      "product_name_zh": "日昇香蕉豆腐皇",
+      "brand": "Sunrise",
+      "price": 1.99,
+      "unit": "EA",
+      "barcode": "063604000000",
+      "size": "300g",
+      "category": "tofu"
+    },
+    {
+      "product_name": "Whipped Cream",
+      "product_name_zh": "奶油",
+      "price": 7.99,
+      "unit": "EA",
+      "category": "dairy-eggs"
+    },
+    {
+      "product_name": "Beancurd Rolls",
+      "product_name_zh": "響鈴卷",
+      "price": 4.99,
+      "unit": "EA",
+      "barcode": "693048121284",
+      "size": "150g",
+      "category": "tofu"
+    },
+    {
+      "product_name": "Lactantia Lactose Free 2% Milk",
+      "product_name_zh": "牛奶2%",
+      "brand": "Lactantia",
+      "price": 10.99,
+      "unit": "EA",
+      "size": "4L",
+      "category": "dairy-eggs"
+    },
+    {
+      "product_name": "Sealtest 3.25% Homogenized Milk",
+      "product_name_zh": "全脂鮮奶",
+      "brand": "Sealtest",
+      "price": 8.59,
+      "unit": "EA",
+      "size": "4L",
+      "category": "dairy-eggs"
+    }
+  ],
+  "raw_response": "{\n  \"products\": [\n    {\n      \"product_name\": \"Sunrise Almond Tofu Dessert\",\n      \"product_name_zh\": \"日昇原味豆腐皇\",\n      \"brand\": \"Sunrise\",\n      \"price\": 1.99,\n      \"unit\": \"EA\",\n      \"unit_price\": null,\n      \"unit_price_per_100g\": null,\n      \"regular_price\": null,\n      \"is_special\": false,\n      \"promo\": null,\n      \"barcode\": \"063604000000\",\n      \"size\": \"300g\",\n      \"net_weight\": null,\n      \"net_weight_lb\": null,\n      \"packed_on\": null,\n      \"category\": \"tofu\",\n      \"notes\": null\n    },\n    {\n      \"product_name\": \"Sunrise Peach Mango Tofu Dessert\",\n      \"product_name_zh\": \"日昇香蕉豆腐皇\",\n      \"brand\": \"Sunrise\",\n      \"price\": 1.99,\n      \"unit\": \"EA\",\n      \"unit_price\": null,\n      \"unit_price_per_100g\": null,\n      \"regular_price\": null,\n      \"is_special\": false,\n      \"promo\": null,\n      \"barcode\": \"063604000000\",\n      \"size\": \"300g\",\n      \"net_weight\": null,\n      \"net_weight_lb\": null,\n      \"packed_on\": null,\n      \"category\": \"tofu\",\n      \"notes\": null\n    },\n    {\n      \"product_name\": \"Whipped Cream\",\n      \"product_name_zh\": \"奶油\",\n      \"brand\": null,\n      \"price\": 7.99,\n      \"unit\": \"EA\",\n      \"unit_price\": null,\n      \"unit_price_per_100g\": null,\n      \"regular_price\": null,\n      \"is_special\": false,\n      \"promo\": null,\n      \"barcode\": null,\n      \"size\": null,\n      \"net_weight\": null,\n      \"net_weight_lb\": null,\n      \"packed_on\": null,\n      \"category\": \"dairy-eggs\",\n      \"notes\": null\n    },\n    {\n      \"product_name\": \"Beancurd Rolls\",\n      \"product_name_zh\": \"響鈴卷\",\n      \"brand\": null,\n      \"price\": 4.99,\n      \"unit\": \"EA\",\n      \"unit_price\": null,\n      \"unit_price_per_100g\": null,\n      \"regular_price\": null,\n      \"is_special\": false,\n      \"promo\": null,\n      \"barcode\": \"693048121284\",\n      \"size\": \"150g\",\n      \"net_weight\": null,\n      \"net_weight_lb\": null,\n      \"packed_on\": null,\n      \"category\": \"tofu\",\n      \"notes\": null\n    },\n    {\n      \"product_name\": \"Lactantia Lactose Free 2% Milk\",\n      \"product_name_zh\": \"牛奶2%\",\n      \"brand\": \"Lactantia\",\n      \"price\": 10.99,\n      \"unit\": \"EA\",\n      \"unit_price\": null,\n      \"unit_price_per_100g\": null,\n      \"regular_price\": null,\n      \"is_special\": false,\n      \"promo\": null,\n      \"barcode\": null,\n      \"size\": \"4L\",\n      \"net_weight\": null,\n      \"net_weight_lb\": null,\n      \"packed_on\": null,\n      \"category\": \"dairy-eggs\",\n      \"notes\": null\n    },\n    {\n      \"product_name\": \"Sealtest 3.25% Homogenized Milk\",\n      \"product_name_zh\": \"全脂鮮奶\",\n      \"brand\": \"Sealtest\",\n      \"price\": 8.59,\n      \"unit\": \"EA\",\n      \"unit_price\": null,\n      \"unit_price_per_100g\": null,\n      \"regular_price\": null,\n      \"is_special\": false,\n      \"promo\": null,\n      \"barcode\": null,\n      \"size\": \"4L\",\n      \"net_weight\": null,\n      \"net_weight_lb\": null,\n      \"packed_on\": null,\n      \"category\": \"dairy-eggs\",\n      \"notes\": null\n    }\n  ]\n}",
+  "extractor": "gemini_direct",
+  "timing": {
+    "prep_ms": 125,
+    "llm_ms": 4302,
+    "duration_ms": 4427,
+    "model": "gemini-3.1-flash-lite",
+    "classify_ms": null
+  }
+}

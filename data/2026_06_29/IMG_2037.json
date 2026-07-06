@@ -1,0 +1,70 @@
+{
+  "image_path": "data/2026_06_29/jpg/IMG_2037.jpg",
+  "meta": {
+    "image_id": "IMG_2037",
+    "source_file": "data/2026_06_29/IMG_2037.HEIC",
+    "gps_latitude": 43.6536527777778,
+    "gps_longitude": -79.3974916666667,
+    "captured_at": "2026-06-29T15:56:22",
+    "date_folder": "2026_06_29"
+  },
+  "products": [
+    {
+      "product_name": "To Fu Superior Fried Bean Curd",
+      "product_name_zh": "奇珍豆乾",
+      "brand": "To Fu",
+      "price": 3.79,
+      "unit": "EA",
+      "category": "tofu"
+    },
+    {
+      "product_name": "To Fu Superior Seasoned Dry Bean Curd",
+      "product_name_zh": "奇珍豆乾",
+      "brand": "To Fu",
+      "price": 3.59,
+      "unit": "EA",
+      "size": "250g",
+      "net_weight": 0.25,
+      "category": "tofu"
+    },
+    {
+      "product_name": "Black Soy Beverage (Unsweet)",
+      "product_name_zh": "水煮無糖豆漿",
+      "price": 3.59,
+      "unit": "EA",
+      "category": "beverages"
+    },
+    {
+      "product_name": "Sweetened Soy Beverage",
+      "product_name_zh": "甜豆漿",
+      "price": 2.99,
+      "unit": "EA",
+      "category": "beverages"
+    },
+    {
+      "product_name": "To Fu Superior Unsweetened Soya Drink",
+      "product_name_zh": "奇珍無糖豆漿",
+      "brand": "To Fu",
+      "price": 3.29,
+      "unit": "EA",
+      "category": "beverages"
+    },
+    {
+      "product_name": "To Fu Superior Sweetened Soya Drink",
+      "product_name_zh": "奇珍有糖豆漿",
+      "brand": "To Fu",
+      "price": 3.29,
+      "unit": "EA",
+      "category": "beverages"
+    }
+  ],
+  "raw_response": "{\n  \"products\": [\n    {\n      \"product_name\": \"To Fu Superior Fried Bean Curd\",\n      \"product_name_zh\": \"奇珍豆乾\",\n      \"brand\": \"To Fu\",\n      \"price\": 3.79,\n      \"unit\": \"EA\",\n      \"unit_price\": null,\n      \"unit_price_per_100g\": null,\n      \"regular_price\": null,\n      \"is_special\": false,\n      \"promo\": null,\n      \"barcode\": null,\n      \"size\": null,\n      \"net_weight\": null,\n      \"net_weight_lb\": null,\n      \"packed_on\": null,\n      \"category\": \"tofu\",\n      \"notes\": null\n    },\n    {\n      \"product_name\": \"To Fu Superior Seasoned Dry Bean Curd\",\n      \"product_name_zh\": \"奇珍豆乾\",\n      \"brand\": \"To Fu\",\n      \"price\": 3.59,\n      \"unit\": \"EA\",\n      \"unit_price\": null,\n      \"unit_price_per_100g\": null,\n      \"regular_price\": null,\n      \"is_special\": false,\n      \"promo\": null,\n      \"barcode\": null,\n      \"size\": \"250g\",\n      \"net_weight\": 0.25,\n      \"net_weight_lb\": null,\n      \"packed_on\": null,\n      \"category\": \"tofu\",\n      \"notes\": null\n    },\n    {\n      \"product_name\": \"Black Soy Beverage (Unsweet)\",\n      \"product_name_zh\": \"水煮無糖豆漿\",\n      \"brand\": null,\n      \"price\": 3.59,\n      \"unit\": \"EA\",\n      \"unit_price\": null,\n      \"unit_price_per_100g\": null,\n      \"regular_price\": null,\n      \"is_special\": false,\n      \"promo\": null,\n      \"barcode\": null,\n      \"size\": null,\n      \"net_weight\": null,\n      \"net_weight_lb\": null,\n      \"packed_on\": null,\n      \"category\": \"beverages\",\n      \"notes\": null\n    },\n    {\n      \"product_name\": \"Sweetened Soy Beverage\",\n      \"product_name_zh\": \"甜豆漿\",\n      \"brand\": null,\n      \"price\": 2.99,\n      \"unit\": \"EA\",\n      \"unit_price\": null,\n      \"unit_price_per_100g\": null,\n      \"regular_price\": null,\n      \"is_special\": false,\n      \"promo\": null,\n      \"barcode\": null,\n      \"size\": null,\n      \"net_weight\": null,\n      \"net_weight_lb\": null,\n      \"packed_on\": null,\n      \"category\": \"beverages\",\n      \"notes\": null\n    },\n    {\n      \"product_name\": \"To Fu Superior Unsweetened Soya Drink\",\n      \"product_name_zh\": \"奇珍無糖豆漿\",\n      \"brand\": \"To Fu\",\n      \"price\": 3.29,\n      \"unit\": \"EA\",\n      \"unit_price\": null,\n      \"unit_price_per_100g\": null,\n      \"regular_price\": null,\n      \"is_special\": false,\n      \"promo\": null,\n      \"barcode\": null,\n      \"size\": null,\n      \"net_weight\": null,\n      \"net_weight_lb\": null,\n      \"packed_on\": null,\n      \"category\": \"beverages\",\n      \"notes\": null\n    },\n    {\n      \"product_name\": \"To Fu Superior Sweetened Soya Drink\",\n      \"product_name_zh\": \"奇珍有糖豆漿\",\n      \"brand\": \"To Fu\",\n      \"price\": 3.29,\n      \"unit\": \"EA\",\n      \"unit_price\": null,\n      \"unit_price_per_100g\": null,\n      \"regular_price\": null,\n      \"is_special\": false,\n      \"promo\": null,\n      \"barcode\": null,\n      \"size\": null,\n      \"net_weight\": null,\n      \"net_weight_lb\": null,\n      \"packed_on\": null,\n      \"category\": \"beverages\",\n      \"notes\": null\n    }\n  ]\n}",
+  "extractor": "gemini_direct",
+  "timing": {
+    "prep_ms": 108,
+    "llm_ms": 3699,
+    "duration_ms": 3807,
+    "model": "gemini-3.1-flash-lite",
+    "classify_ms": null
+  }
+}

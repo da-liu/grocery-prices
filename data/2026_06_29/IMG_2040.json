@@ -1,0 +1,56 @@
+{
+  "image_path": "data/2026_06_29/jpg/IMG_2040.jpg",
+  "meta": {
+    "image_id": "IMG_2040",
+    "source_file": "data/2026_06_29/IMG_2040.HEIC",
+    "gps_latitude": 43.6535138888889,
+    "gps_longitude": -79.3979111111111,
+    "captured_at": "2026-06-29T15:58:12",
+    "date_folder": "2026_06_29"
+  },
+  "products": [
+    {
+      "product_name": "Golden Phoenix Jasmine Rice",
+      "product_name_zh": "金鳳香米",
+      "brand": "Golden Phoenix",
+      "price": 19.99,
+      "unit": "EA",
+      "regular_price": 23.99,
+      "is_special": true,
+      "promo": "SPECIAL 特价",
+      "barcode": "1069",
+      "category": "rice"
+    },
+    {
+      "product_name": "Rose Brand Jasmine Rice",
+      "product_name_zh": "玫瑰花茉莉香米",
+      "brand": "Rose Brand",
+      "price": 23.99,
+      "unit": "EA",
+      "barcode": "1330",
+      "size": "8KG",
+      "net_weight": 8.0,
+      "category": "rice"
+    },
+    {
+      "product_name": "Rose Brand Sweet Rice",
+      "product_name_zh": "玫瑰牌糯米",
+      "brand": "Rose Brand",
+      "price": 26.99,
+      "unit": "EA",
+      "barcode": "1329",
+      "size": "18LB",
+      "net_weight_lb": 18.0,
+      "category": "rice"
+    }
+  ],
+  "raw_response": "{\n  \"products\": [\n    {\n      \"product_name\": \"Golden Phoenix Jasmine Rice\",\n      \"product_name_zh\": \"金鳳香米\",\n      \"brand\": \"Golden Phoenix\",\n      \"price\": 19.99,\n      \"unit\": \"EA\",\n      \"unit_price\": null,\n      \"unit_price_per_100g\": null,\n      \"regular_price\": 23.99,\n      \"is_special\": true,\n      \"promo\": \"SPECIAL 特价\",\n      \"barcode\": \"1069\",\n      \"size\": null,\n      \"net_weight\": null,\n      \"net_weight_lb\": null,\n      \"packed_on\": null,\n      \"category\": \"rice\",\n      \"notes\": null\n    },\n    {\n      \"product_name\": \"Rose Brand Jasmine Rice\",\n      \"product_name_zh\": \"玫瑰花茉莉香米\",\n      \"brand\": \"Rose Brand\",\n      \"price\": 23.99,\n      \"unit\": \"EA\",\n      \"unit_price\": null,\n      \"unit_price_per_100g\": null,\n      \"regular_price\": null,\n      \"is_special\": false,\n      \"promo\": null,\n      \"barcode\": \"1330\",\n      \"size\": \"8KG\",\n      \"net_weight\": 8,\n      \"net_weight_lb\": null,\n      \"packed_on\": null,\n      \"category\": \"rice\",\n      \"notes\": null\n    },\n    {\n      \"product_name\": \"Rose Brand Sweet Rice\",\n      \"product_name_zh\": \"玫瑰牌糯米\",\n      \"brand\": \"Rose Brand\",\n      \"price\": 26.99,\n      \"unit\": \"EA\",\n      \"unit_price\": null,\n      \"unit_price_per_100g\": null,\n      \"regular_price\": null,\n      \"is_special\": false,\n      \"promo\": null,\n      \"barcode\": \"1329\",\n      \"size\": \"18LB\",\n      \"net_weight\": null,\n      \"net_weight_lb\": 18,\n      \"packed_on\": null,\n      \"category\": \"rice\",\n      \"notes\": null\n    }\n  ]\n}",
+  "extractor": "gemini_direct",
+  "timing": {
+    "prep_ms": 119,
+    "llm_ms": 2416,
+    "duration_ms": 2535,
+    "model": "gemini-3.1-flash-lite",
+    "classify_ms": null
+  }
+}

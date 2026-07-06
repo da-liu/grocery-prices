@@ -1,0 +1,72 @@
+{
+  "image_path": "data/2026_06_29/jpg/IMG_2030.jpg",
+  "meta": {
+    "image_id": "IMG_2030",
+    "source_file": "data/2026_06_29/IMG_2030.HEIC",
+    "gps_latitude": 43.6535388888889,
+    "gps_longitude": -79.3979555555556,
+    "captured_at": "2026-06-29T15:55:43",
+    "date_folder": "2026_06_29"
+  },
+  "products": [
+    {
+      "product_name": "Hazelnut & Oat Unsweetened",
+      "product_name_zh": "榛果燕麦牛奶",
+      "price": 5.99,
+      "unit": "EA",
+      "category": "beverages"
+    },
+    {
+      "product_name": "Lactantia Organic Milk 3.8%",
+      "product_name_zh": "有机牛奶 3.8%",
+      "brand": "Lactantia",
+      "price": 5.99,
+      "unit": "EA",
+      "size": "2L",
+      "category": "dairy-eggs"
+    },
+    {
+      "product_name": "Natrel Ultrafiltered Milk 3.25%",
+      "product_name_zh": "牛奶 3.25%",
+      "brand": "Natrel",
+      "price": 6.99,
+      "unit": "EA",
+      "category": "dairy-eggs"
+    },
+    {
+      "product_name": "Natrel Free 2% Milk",
+      "product_name_zh": "天然2%牛奶",
+      "brand": "Natrel",
+      "price": 6.99,
+      "unit": "EA",
+      "category": "dairy-eggs"
+    },
+    {
+      "product_name": "Gray Ridge Extra Large Brown Eggs",
+      "brand": "Gray Ridge",
+      "price": 4.59,
+      "unit": "EA",
+      "size": "12 eggs",
+      "category": "dairy-eggs",
+      "notes": "Shelf tag labeled as 大白雞蛋 (12) but corresponds to brown eggs"
+    },
+    {
+      "product_name": "Gray Ridge Extra Large White Eggs",
+      "product_name_zh": "大白雞蛋",
+      "brand": "Gray Ridge",
+      "price": 4.39,
+      "unit": "EA",
+      "size": "12 eggs",
+      "category": "dairy-eggs"
+    }
+  ],
+  "raw_response": "{\n  \"products\": [\n    {\n      \"product_name\": \"Hazelnut & Oat Unsweetened\",\n      \"product_name_zh\": \"榛果燕麦牛奶\",\n      \"brand\": null,\n      \"price\": 5.99,\n      \"unit\": \"EA\",\n      \"unit_price\": null,\n      \"unit_price_per_100g\": null,\n      \"regular_price\": null,\n      \"is_special\": false,\n      \"promo\": null,\n      \"barcode\": null,\n      \"size\": null,\n      \"net_weight\": null,\n      \"net_weight_lb\": null,\n      \"packed_on\": null,\n      \"category\": \"beverages\",\n      \"notes\": null\n    },\n    {\n      \"product_name\": \"Lactantia Organic Milk 3.8%\",\n      \"product_name_zh\": \"有机牛奶 3.8%\",\n      \"brand\": \"Lactantia\",\n      \"price\": 5.99,\n      \"unit\": \"EA\",\n      \"unit_price\": null,\n      \"unit_price_per_100g\": null,\n      \"regular_price\": null,\n      \"is_special\": false,\n      \"promo\": null,\n      \"barcode\": null,\n      \"size\": \"2L\",\n      \"net_weight\": null,\n      \"net_weight_lb\": null,\n      \"packed_on\": null,\n      \"category\": \"dairy-eggs\",\n      \"notes\": null\n    },\n    {\n      \"product_name\": \"Natrel Ultrafiltered Milk 3.25%\",\n      \"product_name_zh\": \"牛奶 3.25%\",\n      \"brand\": \"Natrel\",\n      \"price\": 6.99,\n      \"unit\": \"EA\",\n      \"unit_price\": null,\n      \"unit_price_per_100g\": null,\n      \"regular_price\": null,\n      \"is_special\": false,\n      \"promo\": null,\n      \"barcode\": null,\n      \"size\": null,\n      \"net_weight\": null,\n      \"net_weight_lb\": null,\n      \"packed_on\": null,\n      \"category\": \"dairy-eggs\",\n      \"notes\": null\n    },\n    {\n      \"product_name\": \"Natrel Free 2% Milk\",\n      \"product_name_zh\": \"天然2%牛奶\",\n      \"brand\": \"Natrel\",\n      \"price\": 6.99,\n      \"unit\": \"EA\",\n      \"unit_price\": null,\n      \"unit_price_per_100g\": null,\n      \"regular_price\": null,\n      \"is_special\": false,\n      \"promo\": null,\n      \"barcode\": null,\n      \"size\": null,\n      \"net_weight\": null,\n      \"net_weight_lb\": null,\n      \"packed_on\": null,\n      \"category\": \"dairy-eggs\",\n      \"notes\": null\n    },\n    {\n      \"product_name\": \"Gray Ridge Extra Large Brown Eggs\",\n      \"product_name_zh\": null,\n      \"brand\": \"Gray Ridge\",\n      \"price\": 4.59,\n      \"unit\": \"EA\",\n      \"unit_price\": null,\n      \"unit_price_per_100g\": null,\n      \"regular_price\": null,\n      \"is_special\": false,\n      \"promo\": null,\n      \"barcode\": null,\n      \"size\": \"12 eggs\",\n      \"net_weight\": null,\n      \"net_weight_lb\": null,\n      \"packed_on\": null,\n      \"category\": \"dairy-eggs\",\n      \"notes\": \"Shelf tag labeled as 大白雞蛋 (12) but corresponds to brown eggs\"\n    },\n    {\n      \"product_name\": \"Gray Ridge Extra Large White Eggs\",\n      \"product_name_zh\": \"大白雞蛋\",\n      \"brand\": \"Gray Ridge\",\n      \"price\": 4.39,\n      \"unit\": \"EA\",\n      \"unit_price\": null,\n      \"unit_price_per_100g\": null,\n      \"regular_price\": null,\n      \"is_special\": false,\n      \"promo\": null,\n      \"barcode\": null,\n      \"size\": \"12 eggs\",\n      \"net_weight\": null,\n      \"net_weight_lb\": null,\n      \"packed_on\": null,\n      \"category\": \"dairy-eggs\",\n      \"notes\": null\n    }\n  ]\n}",
+  "extractor": "gemini_direct",
+  "timing": {
+    "prep_ms": 168,
+    "llm_ms": 3855,
+    "duration_ms": 4023,
+    "model": "gemini-3.1-flash-lite",
+    "classify_ms": null
+  }
+}

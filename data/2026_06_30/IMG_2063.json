@@ -1,0 +1,37 @@
+{
+  "image_path": "data/2026_06_30/jpg/IMG_2063.jpg",
+  "meta": {
+    "image_id": "IMG_2063",
+    "source_file": "/Users/daliu/workspace/ep/grocery-prices/data/2026_06_30/IMG_2063.HEIC",
+    "gps_latitude": 43.6423944444444,
+    "gps_longitude": -79.381225,
+    "captured_at": "2026-06-30T19:44:41",
+    "date_folder": "2026_06_30"
+  },
+  "products": [
+    {
+      "product_name": "Kellogg's Mini-Wheats Original Cereal",
+      "brand": "Kellogg's",
+      "price": 5.99,
+      "unit": "EA",
+      "unit_price_per_100g": 0.92,
+      "regular_price": 8.49,
+      "is_special": true,
+      "promo": "ADVERTISED SPECIAL; FREE SOCCER BALL with purchase of 2 specially marked boxes",
+      "barcode": "06410011502",
+      "size": "650 g",
+      "net_weight": 0.65,
+      "category": "cereal",
+      "notes": "Family Size; Save $2.50"
+    }
+  ],
+  "raw_response": "{\n  \"products\": [\n    {\n      \"product_name\": \"Kellogg's Mini-Wheats Original Cereal\",\n      \"product_name_zh\": null,\n      \"brand\": \"Kellogg's\",\n      \"price\": 5.99,\n      \"unit\": \"EA\",\n      \"unit_price\": null,\n      \"unit_price_per_100g\": 0.92,\n      \"regular_price\": 8.49,\n      \"is_special\": true,\n      \"promo\": \"ADVERTISED SPECIAL; FREE SOCCER BALL with purchase of 2 specially marked boxes\",\n      \"barcode\": \"06410011502\",\n      \"size\": \"650 g\",\n      \"net_weight\": 0.65,\n      \"net_weight_lb\": null,\n      \"packed_on\": null,\n      \"category\": \"cereal\",\n      \"notes\": \"Family Size; Save $2.50\"\n    }\n  ]\n}",
+  "extractor": "cursor_sdk",
+  "timing": {
+    "prep_ms": 111,
+    "llm_ms": 26061,
+    "duration_ms": 26172,
+    "model": "auto",
+    "classify_ms": null
+  }
+}

@@ -86,10 +86,9 @@ def test_run_extraction_failure_logs(tmp_path, monkeypatch, caplog):
 
     init_db()
     user = register_user(f"log_{uuid.uuid4().hex[:8]}", "password12345")
-    upload = tmp_path / "photo.jpg"
-    upload.write_bytes(b"jpeg-bytes")
+    upload = tmp_path / "photo.webp"
+    upload.write_bytes(b"RIFF....WEBP")
 
-    monkeypatch.setattr("grocery_extract.ingest.extract_exif", lambda *_args: {})
     monkeypatch.setattr("grocery_extract.user_stores_db.list_user_stores_as_dicts", lambda *_args: [])
     monkeypatch.setattr("grocery_extract.ingest.image_needs_store_label", lambda *_args: False)
     monkeypatch.setattr(

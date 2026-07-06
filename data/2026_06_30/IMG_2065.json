@@ -1,0 +1,70 @@
+{
+  "image_path": "data/2026_06_30/jpg/IMG_2065.jpg",
+  "meta": {
+    "image_id": "IMG_2065",
+    "source_file": "/Users/daliu/workspace/ep/grocery-prices/data/2026_06_30/IMG_2065.HEIC",
+    "gps_latitude": 43.6424027777778,
+    "gps_longitude": -79.3811944444444,
+    "captured_at": "2026-06-30T19:46:05",
+    "date_folder": "2026_06_30"
+  },
+  "products": [
+    {
+      "product_name": "Lay's XXL All Dressed Chips",
+      "brand": "Lay's",
+      "price": 3.49,
+      "unit": "EA",
+      "unit_price": 3.49,
+      "unit_price_per_100g": 1.36,
+      "regular_price": 4.49,
+      "is_special": true,
+      "promo": "2 for $6.00 SAVE $2.98 ON 2",
+      "barcode": "15061431",
+      "size": "220G",
+      "net_weight": 0.22,
+      "category": "snacks",
+      "notes": "Shelf tag on top shelf"
+    },
+    {
+      "product_name": "Lay's XXL Wavy Salt & Vinegar Chips",
+      "brand": "Lay's",
+      "price": 3.49,
+      "unit": "EA",
+      "unit_price": 3.49,
+      "unit_price_per_100g": 1.36,
+      "regular_price": 4.49,
+      "is_special": true,
+      "promo": "2 for $6.00 SAVE $2.98 ON 2",
+      "barcode": "15061431",
+      "size": "220G",
+      "net_weight": 0.22,
+      "category": "snacks",
+      "notes": "Shelf tag on top shelf"
+    },
+    {
+      "product_name": "Lay's Cheese & Onion Chips",
+      "brand": "Lay's",
+      "price": 3.49,
+      "unit": "EA",
+      "unit_price": 3.49,
+      "unit_price_per_100g": 1.36,
+      "regular_price": 4.49,
+      "is_special": true,
+      "promo": "2 for $6.00 SAVE $2.98 ON 2",
+      "barcode": "15061431",
+      "size": "220G",
+      "net_weight": 0.22,
+      "category": "snacks",
+      "notes": "Shelf tag below Cheese & Onion bags; tag shows FRIDAY 109"
+    }
+  ],
+  "raw_response": "{\"products\":[{\"product_name\":\"Lay's XXL All Dressed Chips\",\"product_name_zh\":null,\"brand\":\"Lay's\",\"price\":3.49,\"unit\":\"EA\",\"unit_price\":3.49,\"unit_price_per_100g\":1.36,\"regular_price\":4.49,\"is_special\":true,\"promo\":\"2 for $6.00 SAVE $2.98 ON 2\",\"barcode\":\"15061431\",\"size\":\"220G\",\"net_weight\":0.22,\"net_weight_lb\":null,\"packed_on\":null,\"category\":\"snacks\",\"notes\":\"Shelf tag on top shelf\"},{\"product_name\":\"Lay's XXL Wavy Salt & Vinegar Chips\",\"product_name_zh\":null,\"brand\":\"Lay's\",\"price\":3.49,\"unit\":\"EA\",\"unit_price\":3.49,\"unit_price_per_100g\":1.36,\"regular_price\":4.49,\"is_special\":true,\"promo\":\"2 for $6.00 SAVE $2.98 ON 2\",\"barcode\":\"15061431\",\"size\":\"220G\",\"net_weight\":0.22,\"net_weight_lb\":null,\"packed_on\":null,\"category\":\"snacks\",\"notes\":\"Shelf tag on top shelf\"},{\"product_name\":\"Lay's Cheese & Onion Chips\",\"product_name_zh\":null,\"brand\":\"Lay's\",\"price\":3.49,\"unit\":\"EA\",\"unit_price\":3.49,\"unit_price_per_100g\":1.36,\"regular_price\":4.49,\"is_special\":true,\"promo\":\"2 for $6.00 SAVE $2.98 ON 2\",\"barcode\":\"15061431\",\"size\":\"220G\",\"net_weight\":0.22,\"net_weight_lb\":null,\"packed_on\":null,\"category\":\"snacks\",\"notes\":\"Shelf tag below Cheese & Onion bags; tag shows FRIDAY 109\"}]}",
+  "extractor": "cursor_sdk",
+  "timing": {
+    "prep_ms": 112,
+    "llm_ms": 32726,
+    "duration_ms": 32838,
+    "model": "auto",
+    "classify_ms": null
+  }
+}

@@ -8,9 +8,7 @@ from typing import Any
 from grocery_extract.cursor_extractor import current_extractor_name, extract_products_from_image
 from grocery_extract.exif import (
     captured_at_from_exif,
-    convert_heic_to_jpg,
     date_folder_from_exif,
-    extract_exif,
 )
 from grocery_extract.schema import ExtractionResult, ExtractedProduct, ExtractionTiming, ImageMeta
 
@@ -19,14 +17,12 @@ ROOT = Path(__file__).resolve().parents[1]
 
 def _resolve_jpg_path(upload_path: Path, work_dir: Path) -> Path:
     suffix = upload_path.suffix.lower()
-    if suffix in {".jpg", ".jpeg", ".png", ".webp"}:
+    if suffix in {".heic", ".heif"}:
+        raise ValueError(f"Unsupported image type: {suffix}")
+    if suffix in {".jpg", ".jpeg", ".webp"}:
         dest = work_dir / upload_path.name
         shutil.copy2(upload_path, dest)
         return dest
-    if suffix == ".heic":
-        jpg_path = work_dir / f"{upload_path.stem}.jpg"
-        convert_heic_to_jpg(upload_path, jpg_path)
-        return jpg_path
     raise ValueError(f"Unsupported image type: {suffix}")
 
 
@@ -54,22 +50,18 @@ def extract_from_upload(
     exif: dict[str, Any] | None = None,
     skip_normalize: bool = False,
 ) -> ExtractionResult:
-    """Full pipeline: normalize image, read EXIF, and extract products via the configured backend."""
+    """Full pipeline: normalize image and extract products via the configured backend."""
     stem = image_id or upload_path.stem
     suffix = upload_path.suffix.lower()
 
-    if skip_normalize and suffix in {".jpg", ".jpeg"}:
+    if skip_normalize and suffix in {".jpg", ".jpeg", ".webp"}:
         jpg_path = upload_path
-        meta_exif = exif if exif is not None else (extract_exif(jpg_path) if jpg_path.exists() else {})
+        meta_exif = exif or {}
     else:
         with tempfile.TemporaryDirectory(prefix="grocery-extract-") as tmp:
             work_dir = Path(tmp)
             jpg_path = _resolve_jpg_path(upload_path, work_dir)
-            meta_exif = exif if exif is not None else (
-                extract_exif(upload_path if suffix == ".heic" else jpg_path)
-                if upload_path.exists()
-                else {}
-            )
+            meta_exif = exif or {}
             raw_dt = meta_exif.get("DateTimeOriginal")
             date_folder = date_folder_from_exif(raw_dt)
             meta = ImageMeta(

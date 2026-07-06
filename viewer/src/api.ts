@@ -176,6 +176,12 @@ export interface ExtractedProductRow {
 
 export type DuplicateAction = "skip" | "replace" | "new";
 
+export type ClientExifPayload = {
+  GPSLatitude?: number;
+  GPSLongitude?: number;
+  DateTimeOriginal?: string;
+};
+
 export type ExtractionStatus = "pending" | "processing" | "done" | "failed";
 
 export interface ExtractionTiming {
@@ -250,34 +256,91 @@ export type ManualProductInput = {
   notes?: string;
 };
 
-async function postUpload(
-  url: string,
-  form: FormData,
+export function buildUploadForm(
+  files: File[],
+  source: "shelf" | "receipt",
   duplicateAction?: DuplicateAction,
-): Promise<Response> {
+  clientExifs?: (ClientExifPayload | undefined)[],
+): FormData {
+  const form = new FormData();
+  for (const file of files) {
+    form.append("files", file);
+  }
+  form.append("source", source === "receipt" ? "receipt" : "upload");
   if (duplicateAction) {
     form.append("duplicate_action", duplicateAction);
   }
-  try {
-    return await authFetch(url, { method: "POST", body: form });
-  } catch (err) {
-    throw new Error(describeRequestError(err, "upload"));
+  if (clientExifs?.length) {
+    const payloads = clientExifs.map((entry) => entry ?? null);
+    if (payloads.some((entry) => entry != null && Object.keys(entry).length > 0)) {
+      form.append("exif_json", JSON.stringify(payloads));
+    }
   }
+  return form;
+}
+
+async function parseXhrError(xhr: XMLHttpRequest): Promise<string> {
+  try {
+    const body = JSON.parse(xhr.responseText);
+    if (typeof body.detail === "string") return body.detail;
+    return JSON.stringify(body.detail ?? body);
+  } catch {
+    return xhr.statusText || `Request failed (${xhr.status})`;
+  }
+}
+
+export function uploadPhotosWithProgress(
+  files: File[],
+  source: "shelf" | "receipt",
+  onProgress: (percent: number) => void,
+  duplicateAction?: DuplicateAction,
+  clientExifs?: (ClientExifPayload | undefined)[],
+): Promise<{ results: UploadResult[] }> {
+  return new Promise((resolve, reject) => {
+    const xhr = new XMLHttpRequest();
+    xhr.open("POST", `${API_BASE}/api/photos/bulk`);
+    const headers = authHeaders();
+    for (const [key, value] of Object.entries(headers)) {
+      xhr.setRequestHeader(key, value);
+    }
+
+    xhr.upload.addEventListener("progress", (event) => {
+      if (event.lengthComputable && event.total > 0) {
+        onProgress(Math.min(100, Math.round((event.loaded / event.total) * 100)));
+      }
+    });
+
+    xhr.addEventListener("load", () => {
+      if (xhr.status >= 200 && xhr.status < 300) {
+        try {
+          resolve(JSON.parse(xhr.responseText));
+        } catch {
+          reject(new Error("Invalid upload response"));
+        }
+        return;
+      }
+      void parseXhrError(xhr).then((message) => reject(new Error(message)));
+    });
+
+    xhr.addEventListener("error", () => {
+      reject(new Error(describeRequestError(new Error("Failed to fetch"), "upload")));
+    });
+
+    xhr.addEventListener("abort", () => {
+      reject(new Error("Upload cancelled"));
+    });
+
+    xhr.send(buildUploadForm(files, source, duplicateAction, clientExifs));
+  });
 }
 
 export async function uploadPhotos(
   files: File[],
   source: "shelf" | "receipt",
   duplicateAction?: DuplicateAction,
+  clientExifs?: (ClientExifPayload | undefined)[],
 ): Promise<{ results: UploadResult[] }> {
-  const form = new FormData();
-  for (const file of files) {
-    form.append("files", file);
-  }
-  form.append("source", source === "receipt" ? "receipt" : "upload");
-  const resp = await postUpload(`${API_BASE}/api/photos/bulk`, form, duplicateAction);
-  if (!resp.ok) throw new Error(await parseError(resp));
-  return resp.json();
+  return uploadPhotosWithProgress(files, source, () => {}, duplicateAction, clientExifs);
 }
 
 export async function fetchPhotoStatuses(imageIds: string[]): Promise<{ results: UploadResult[] }> {

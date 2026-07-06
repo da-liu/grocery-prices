@@ -12,7 +12,6 @@ import httpx
 from cursor_sdk import Agent, AgentOptions, CursorAgentError, LocalAgentOptions, SDKImage, UserMessage
 
 from grocery_extract.errors import ConfigError, CursorExtractError, ExtractionError
-from grocery_extract.image_prep import LLM_MAX_DIM, llm_scale_percent, prepare_image_for_llm
 from grocery_extract.parse_response import parse_products_json
 from grocery_extract.prompt import build_prompt, build_receipt_prompt
 from grocery_extract.schema import ExtractedProduct
@@ -112,7 +111,13 @@ def _run_gemini_direct(
     model: str,
 ) -> str:
     image_bytes = image_path.read_bytes()
-    mime = "image/jpeg" if image_path.suffix.lower() in {".jpg", ".jpeg"} else "image/png"
+    suffix = image_path.suffix.lower()
+    if suffix in {".jpg", ".jpeg"}:
+        mime = "image/jpeg"
+    elif suffix == ".webp":
+        mime = "image/webp"
+    else:
+        mime = "image/png"
     payload = {
         "contents": [
             {
@@ -168,28 +173,20 @@ def extract_products_from_image(
     if not image_path.exists():
         raise ExtractionError(f"Image not found: {image_path}")
 
+    _ = llm_max_dim, llm_scale_pct
+
     prep_start = time.perf_counter()
-    llm_path = prepare_image_for_llm(
-        image_path,
-        scale_pct=llm_scale_pct if llm_scale_pct is not None else (None if llm_max_dim is not None else llm_scale_percent()),
-        max_dim=llm_max_dim if llm_max_dim is not None else LLM_MAX_DIM,
-    )
     prep_ms = int((time.perf_counter() - prep_start) * 1000)
-    cleanup_llm_path = llm_path != image_path
 
     cwd = cwd or ROOT
     prompt = build_receipt_prompt() if prompt_variant == "receipt" else build_prompt()
 
-    try:
-        llm_start = time.perf_counter()
-        if backend == GEMINI_DIRECT_BACKEND:
-            raw = _run_gemini_direct(llm_path, prompt=prompt, api_key=api_key, model=model)
-        else:
-            raw = _run_cursor_sdk(llm_path, prompt=prompt, api_key=api_key, model=model, cwd=cwd)
-        llm_ms = int((time.perf_counter() - llm_start) * 1000)
-    finally:
-        if cleanup_llm_path:
-            llm_path.unlink(missing_ok=True)
+    llm_start = time.perf_counter()
+    if backend == GEMINI_DIRECT_BACKEND:
+        raw = _run_gemini_direct(image_path, prompt=prompt, api_key=api_key, model=model)
+    else:
+        raw = _run_cursor_sdk(image_path, prompt=prompt, api_key=api_key, model=model, cwd=cwd)
+    llm_ms = int((time.perf_counter() - llm_start) * 1000)
 
     products = parse_products_json(raw)
     logger.info(

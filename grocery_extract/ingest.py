@@ -3,7 +3,6 @@ from __future__ import annotations
 import logging
 import os
 import shutil
-import subprocess
 import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime
@@ -12,7 +11,6 @@ from typing import Any
 from zoneinfo import ZoneInfo
 
 from grocery_extract.catalog_db import (
-    allocate_image_ids,
     blob_keys,
     compute_extraction_timing_metrics,
     finalize_photo_extraction,
@@ -20,7 +18,8 @@ from grocery_extract.catalog_db import (
     get_photo,
     get_photos_extraction_status,
     list_products_for_matching,
-    next_image_id,
+    new_photo_id,
+    new_photo_ids,
     photo_type_from_ingest_source,
     save_photo_pending,
     set_extraction_status,
@@ -29,11 +28,8 @@ from grocery_extract.delete import delete_photo
 from grocery_extract.duplicate import file_content_hash
 from grocery_extract.exif import (
     captured_at_from_exif,
-    convert_heic_to_jpg,
     date_folder_from_exif,
-    extract_exif,
     normalize_client_exif,
-    tool_path,
 )
 from grocery_extract.extract_worker import ExtractionJob, enqueue_extraction, record_extraction_failure
 from grocery_extract.request_context import get_request_id
@@ -42,7 +38,7 @@ from grocery_extract.photo_classifier import classify_photo_type
 from grocery_extract.photo_stores import image_needs_store_label
 from grocery_extract.product_matching import overlapping_product_keys, products_to_match_rows
 from grocery_extract.stores import store_from_gps
-from grocery_extract.user_paths import user_photos_dir, user_root
+from grocery_extract.user_paths import resolve_blob_path, user_photos_dir, user_root
 
 TORONTO = ZoneInfo("America/Toronto")
 DEFAULT_UPLOAD_WORKERS = int(os.environ.get("GROCERY_UPLOAD_WORKERS", "4"))
@@ -60,34 +56,18 @@ def _persist_image(
     user_id: str,
 ) -> tuple[str | None, str, str]:
     batch_dir = user_photos_dir(user_id, date_folder)
-    jpg_dir = batch_dir / "jpg"
     batch_dir.mkdir(parents=True, exist_ok=True)
-    jpg_dir.mkdir(parents=True, exist_ok=True)
 
     suffix = upload_path.suffix.lower()
-    jpg_path = jpg_dir / f"{image_id}.jpg"
+    if suffix in {".heic", ".heif"}:
+        raise ValueError(f"Unsupported image type: {suffix}")
+    if suffix != ".webp":
+        raise ValueError(f"Only WebP uploads are supported, got: {suffix or '(none)'}")
 
-    if suffix == ".heic":
-        dest = batch_dir / f"{image_id}.HEIC"
-        shutil.copy2(upload_path, dest)
-        convert_heic_to_jpg(dest, jpg_path)
-        original_key, jpeg_key = blob_keys(user_id, date_folder, image_id, original_suffix=".HEIC")
-        return original_key, jpeg_key, suffix
-
-    if suffix in {".jpg", ".jpeg"}:
-        shutil.copy2(upload_path, jpg_path)
-        original_key, jpeg_key = blob_keys(user_id, date_folder, image_id, original_suffix=suffix)
-        return jpeg_key, jpeg_key, suffix
-
-    dest = batch_dir / f"{image_id}{suffix or '.jpg'}"
+    dest = batch_dir / f"{image_id}.webp"
     shutil.copy2(upload_path, dest)
-    subprocess.run(
-        [tool_path("sips"), "-s", "format", "jpeg", str(dest), "--out", str(jpg_path)],
-        check=True,
-        capture_output=True,
-    )
-    original_key, jpeg_key = blob_keys(user_id, date_folder, image_id, original_suffix=suffix or ".jpg")
-    return original_key, jpeg_key, suffix
+    original_key, photo_key = blob_keys(user_id, date_folder, image_id)
+    return photo_key, photo_key, ".webp"
 
 
 def _duplicate_response(
@@ -170,24 +150,22 @@ def accept_upload(
             delete_photo(user_id, duplicate_of)
             image_id = duplicate_of
 
-    image_id = image_id or next_image_id(user_id)
+    image_id = image_id or new_photo_id()
     photo_type = photo_type_from_ingest_source(source)
     detected_receipt = False
     classify_ms: int | None = None
 
-    exif = normalize_client_exif(client_exif) or (
-        extract_exif(upload_path) if upload_path.exists() else {}
-    )
+    exif = normalize_client_exif(client_exif) or {}
     raw_dt = exif.get("DateTimeOriginal")
     date_folder = date_folder_from_exif(raw_dt) or _today_folder()
     captured_at = captured_at_from_exif(raw_dt)
 
-    original_key, jpeg_key, _suffix = _persist_image(upload_path, image_id, date_folder, user_id)
+    original_key, photo_key, _suffix = _persist_image(upload_path, image_id, date_folder, user_id)
 
     if source == "upload":
-        jpg_path = user_photos_dir(user_id, date_folder) / "jpg" / f"{image_id}.jpg"
+        image_path = resolve_blob_path(photo_key)
         try:
-            classification = classify_photo_type(jpg_path)
+            classification = classify_photo_type(image_path)
             classify_ms = classification.classify_ms
             if classification.photo_type == "receipt":
                 photo_type = "receipt"
@@ -219,7 +197,7 @@ def accept_upload(
         photo_id=image_id,
         photo_type=photo_type,
         original_blob_key=original_key,
-        jpeg_blob_key=jpeg_key,
+        photo_blob_key=photo_key,
         content_hash=content_hash,
         gps_latitude=lat,
         gps_longitude=lon,
@@ -279,11 +257,15 @@ def run_extraction(job: ExtractionJob) -> dict:
     )
     set_extraction_status(job.user_id, job.image_id, "processing")
 
-    jpg_path = user_photos_dir(job.user_id, job.date_folder) / "jpg" / f"{job.image_id}.jpg"
+    from grocery_extract.catalog_db import get_photo_blob_path
+
+    image_path = get_photo_blob_path(job.user_id, job.image_id)
+    if image_path is None:
+        raise FileNotFoundError(f"Stored image not found for {job.image_id}")
     try:
         extraction_start = time.perf_counter()
         result = extract_from_upload(
-            jpg_path,
+            image_path,
             image_id=job.image_id,
             api_key=job.api_key,
             prompt_variant="receipt" if job.photo_type == "receipt" else "shelf",
@@ -435,7 +417,7 @@ def accept_upload_batch(
     client_exifs: list[dict | None] | None = None,
     request_id: str | None = None,
 ) -> list[dict]:
-    image_ids = allocate_image_ids(user_id, len(upload_paths))
+    image_ids = new_photo_ids(len(upload_paths))
     workers = max(1, min(max_workers or DEFAULT_UPLOAD_WORKERS, len(upload_paths)))
 
     from grocery_extract.user_stores_db import list_user_stores_as_dicts

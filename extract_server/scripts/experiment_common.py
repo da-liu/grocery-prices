@@ -20,7 +20,7 @@ def load_ground_truth() -> dict[str, list[dict]]:
 
 
 def find_jpg(image_id: str) -> Path | None:
-    """Locate a shelf photo for an image id (jpg subfolder or batch HEIC/JPEG)."""
+    """Locate a shelf photo for an image id (jpg subfolder or batch JPEG)."""
     data_dir = ROOT / "data"
     candidates: list[Path] = []
     for batch_dir in sorted(data_dir.glob("20*")):
@@ -28,8 +28,6 @@ def find_jpg(image_id: str) -> Path | None:
             [
                 batch_dir / "jpg" / f"{image_id}.jpg",
                 batch_dir / f"{image_id}.jpg",
-                batch_dir / f"{image_id}.HEIC",
-                batch_dir / f"{image_id}.heic",
             ]
         )
     test_dir = data_dir / "test-data"
@@ -37,8 +35,6 @@ def find_jpg(image_id: str) -> Path | None:
         candidates.extend(
             [
                 test_dir / f"{image_id}.jpg",
-                test_dir / f"{image_id}.HEIC",
-                test_dir / f"{image_id}.heic",
             ]
         )
     for path in candidates:
@@ -48,11 +44,12 @@ def find_jpg(image_id: str) -> Path | None:
 
 
 def scaled_image_path(source: Path, scale_pct: int, out_dir: Path, image_id: str) -> Path:
-    from grocery_extract.image_prep import resize_to_scale_percent
+    import shutil
 
     dest = out_dir / image_id / f"scale_{scale_pct:03d}.jpg"
     if not dest.exists():
-        resize_to_scale_percent(source, scale_pct, dest)
+        dest.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copy2(source, dest)
     return dest
 
 

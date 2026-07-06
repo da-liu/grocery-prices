@@ -1,0 +1,50 @@
+{
+  "image_path": "data/2026_06_29/jpg/IMG_2038.jpg",
+  "meta": {
+    "image_id": "IMG_2038",
+    "source_file": "data/2026_06_29/IMG_2038.HEIC",
+    "gps_latitude": 43.6535138888889,
+    "gps_longitude": -79.3981166666667,
+    "captured_at": "2026-06-29T15:56:39",
+    "date_folder": "2026_06_29"
+  },
+  "products": [
+    {
+      "product_name": "Dried Shiitake Mushroom",
+      "product_name_zh": "花菇",
+      "price": 9.99,
+      "unit": "EA",
+      "regular_price": 10.99,
+      "is_special": true,
+      "promo": "Special",
+      "category": "dried-goods"
+    },
+    {
+      "product_name": "Shine Farm dried shiitake mushroom",
+      "product_name_zh": "軒農 椎茸光麵菇",
+      "brand": "Shine Farm",
+      "price": 8.99,
+      "unit": "EA",
+      "is_special": true,
+      "promo": "特价",
+      "category": "dried-goods"
+    },
+    {
+      "product_name": "Premium Dried Shiitake Mushrooms",
+      "product_name_zh": "古早味精選冬菇",
+      "brand": "Heritage Delicinova",
+      "price": 13.99,
+      "unit": "EA",
+      "category": "dried-goods"
+    }
+  ],
+  "raw_response": "{\n  \"products\": [\n    {\n      \"product_name\": \"Dried Shiitake Mushroom\",\n      \"product_name_zh\": \"花菇\",\n      \"brand\": null,\n      \"price\": 9.99,\n      \"unit\": \"EA\",\n      \"unit_price\": null,\n      \"unit_price_per_100g\": null,\n      \"regular_price\": 10.99,\n      \"is_special\": true,\n      \"promo\": \"Special\",\n      \"barcode\": null,\n      \"size\": null,\n      \"net_weight\": null,\n      \"net_weight_lb\": null,\n      \"packed_on\": null,\n      \"category\": \"dried-goods\",\n      \"notes\": null\n    },\n    {\n      \"product_name\": \"Shine Farm dried shiitake mushroom\",\n      \"product_name_zh\": \"軒農 椎茸光麵菇\",\n      \"brand\": \"Shine Farm\",\n      \"price\": 8.99,\n      \"unit\": \"EA\",\n      \"unit_price\": null,\n      \"unit_price_per_100g\": null,\n      \"regular_price\": null,\n      \"is_special\": true,\n      \"promo\": \"特价\",\n      \"barcode\": null,\n      \"size\": null,\n      \"net_weight\": null,\n      \"net_weight_lb\": null,\n      \"packed_on\": null,\n      \"category\": \"dried-goods\",\n      \"notes\": null\n    },\n    {\n      \"product_name\": \"Premium Dried Shiitake Mushrooms\",\n      \"product_name_zh\": \"古早味精選冬菇\",\n      \"brand\": \"Heritage Delicinova\",\n      \"price\": 13.99,\n      \"unit\": \"EA\",\n      \"unit_price\": null,\n      \"unit_price_per_100g\": null,\n      \"regular_price\": null,\n      \"is_special\": false,\n      \"promo\": null,\n      \"barcode\": null,\n      \"size\": null,\n      \"net_weight\": null,\n      \"net_weight_lb\": null,\n      \"packed_on\": null,\n      \"category\": \"dried-goods\",\n      \"notes\": null\n    }\n  ]\n}",
+  "extractor": "gemini_direct",
+  "timing": {
+    "prep_ms": 112,
+    "llm_ms": 2610,
+    "duration_ms": 2722,
+    "model": "gemini-3.1-flash-lite",
+    "classify_ms": null
+  }
+}

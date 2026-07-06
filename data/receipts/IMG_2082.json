@@ -1,0 +1,51 @@
+{
+  "image_id": "IMG_2082",
+  "source_file": "data/receipts/IMG_2082.HEIC",
+  "photo_type": "receipt",
+  "meta": {
+    "image_id": "IMG_2082",
+    "source_file": "/Users/daliu/workspace/ep/grocery-prices/data/receipts/IMG_2082.HEIC",
+    "gps_latitude": 43.6425083333333,
+    "gps_longitude": -79.3824833333333,
+    "captured_at": "2026-07-04T12:23:29",
+    "date_folder": "2026_07_04"
+  },
+  "products": [
+    {
+      "product_name": "LH GRAY EGGS LRG WHT",
+      "price": 3.99,
+      "is_special": true,
+      "promo": "SALE",
+      "category": "dairy-eggs"
+    },
+    {
+      "product_name": "SCH ML THK CUT BACON",
+      "brand": "Schneiders",
+      "price": 6.99,
+      "is_special": true,
+      "promo": "SALE",
+      "category": "meat"
+    },
+    {
+      "product_name": "SCH ML THK CUT BACON",
+      "brand": "Schneiders",
+      "price": 6.99,
+      "is_special": true,
+      "promo": "SALE",
+      "category": "meat"
+    },
+    {
+      "product_name": "GUANCIALE",
+      "price": 12.6,
+      "category": "deli"
+    }
+  ],
+  "extractor": "cursor_sdk",
+  "timing": {
+    "prep_ms": 86,
+    "llm_ms": 28753,
+    "duration_ms": 28839,
+    "model": "auto"
+  },
+  "raw_response": "{\"products\":[{\"product_name\":\"LH GRAY EGGS LRG WHT\",\"product_name_zh\":null,\"brand\":null,\"price\":3.99,\"unit\":null,\"unit_price\":null,\"unit_price_per_100g\":null,\"regular_price\":null,\"is_special\":true,\"promo\":\"SALE\",\"barcode\":null,\"size\":null,\"net_weight\":null,\"net_weight_lb\":null,\"packed_on\":null,\"category\":\"dairy-eggs\",\"notes\":null},{\"product_name\":\"SCH ML THK CUT BACON\",\"product_name_zh\":null,\"brand\":\"Schneiders\",\"price\":6.99,\"unit\":null,\"unit_price\":null,\"unit_price_per_100g\":null,\"regular_price\":null,\"is_special\":true,\"promo\":\"SALE\",\"barcode\":null,\"size\":null,\"net_weight\":null,\"net_weight_lb\":null,\"packed_on\":null,\"category\":\"meat\",\"notes\":null},{\"product_name\":\"SCH ML THK CUT BACON\",\"product_name_zh\":null,\"brand\":\"Schneiders\",\"price\":6.99,\"unit\":null,\"unit_price\":null,\"unit_price_per_100g\":null,\"regular_price\":null,\"is_special\":true,\"promo\":\"SALE\",\"barcode\":null,\"size\":null,\"net_weight\":null,\"net_weight_lb\":null,\"packed_on\":null,\"category\":\"meat\",\"notes\":null},{\"product_name\":\"GUANCIALE\",\"product_name_zh\":null,\"brand\":null,\"price\":12.60,\"unit\":null,\"unit_price\":null,\"unit_price_per_100g\":null,\"regular_price\":null,\"is_special\":false,\"promo\":null,\"barcode\":null,\"size\":null,\"net_weight\":null,\"net_weight_lb\":null,\"packed_on\":null,\"category\":\"deli\",\"notes\":null}]}"
+}

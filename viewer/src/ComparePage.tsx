@@ -59,6 +59,13 @@ function buildGroups(products: Product[]): ProductGroup[] {
     .sort((a, b) => a.label.localeCompare(b.label));
 }
 
+export function hasComparableProducts(products: Product[]): boolean {
+  return buildGroups(products).some((group) => {
+    const stores = new Set(group.entries.map((entry) => entry.location.store));
+    return group.entries.length > 1 || stores.size > 1;
+  });
+}
+
 export function ComparePage({
   products,
   query,

@@ -45,3 +45,28 @@ def test_bulk_upload_accepts_exif_json(client, monkeypatch):
             "DateTimeOriginal": "2026:07:04 18:30:00",
         }
     ]
+
+
+def test_bulk_upload_rejects_exif_json_length_mismatch(client, monkeypatch):
+    reg = client.post(
+        "/api/auth/register",
+        json={"username": "exif-length", "password": "password123"},
+    )
+    token = reg.json()["token"]
+    monkeypatch.setenv("CURSOR_API_KEY", "test-key")
+
+    resp = client.post(
+        "/api/photos/bulk",
+        headers={"Authorization": f"Bearer {token}"},
+        files=[
+            ("files", ("image-a.jpg", b"photo-a", "image/jpeg")),
+            ("files", ("image-b.jpg", b"photo-b", "image/jpeg")),
+        ],
+        data={
+            "source": "upload",
+            "exif_json": '[{"GPSLatitude":43.65,"GPSLongitude":-79.38,"DateTimeOriginal":"2026:07:04 18:30:00"}]',
+        },
+    )
+
+    assert resp.status_code == 400
+    assert "exif_json length" in resp.json()["detail"]

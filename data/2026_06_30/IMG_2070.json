@@ -1,0 +1,71 @@
+{
+  "image_path": "data/2026_06_30/jpg/IMG_2070.jpg",
+  "meta": {
+    "image_id": "IMG_2070",
+    "source_file": "/Users/daliu/workspace/ep/grocery-prices/data/2026_06_30/IMG_2070.HEIC",
+    "gps_latitude": 43.642375,
+    "gps_longitude": -79.3813027777778,
+    "captured_at": "2026-06-30T19:51:52",
+    "date_folder": "2026_06_30"
+  },
+  "products": [
+    {
+      "product_name": "Beatrice Skim Milk",
+      "brand": "Beatrice",
+      "price": 6.49,
+      "unit": "bag",
+      "barcode": "055300111027",
+      "size": "4L",
+      "category": "dairy-eggs",
+      "notes": "Shelf tag reads BEATRICE SKIM MILK 4LT; Canadian maple leaf on tag"
+    },
+    {
+      "product_name": "Beatrice 1% Milk",
+      "brand": "Beatrice",
+      "price": 6.49,
+      "unit": "bag",
+      "is_special": true,
+      "promo": "LOW PRICE LOCKDOWN",
+      "size": "4L",
+      "category": "dairy-eggs",
+      "notes": "Yellow central sign: BEATRICE MILK 1%, 2% or skim 4L bag"
+    },
+    {
+      "product_name": "Beatrice 2% Milk",
+      "brand": "Beatrice",
+      "price": 6.49,
+      "unit": "bag",
+      "barcode": "055300111010",
+      "size": "4L",
+      "category": "dairy-eggs",
+      "notes": "Shelf tag reads BEATRICE 2% MILK 4LT; Canadian maple leaf on tag"
+    },
+    {
+      "product_name": "Lactantia PurFiltre 1% Milk",
+      "brand": "Lactantia",
+      "price": 6.49,
+      "unit": "EA",
+      "size": "2L",
+      "category": "dairy-eggs",
+      "notes": "Shelf tag reads LACTANTIA PURFLTR 1% MILK 2LT"
+    },
+    {
+      "product_name": "Lactantia PurFiltre 2% Milk",
+      "brand": "Lactantia",
+      "price": 6.49,
+      "unit": "EA",
+      "size": "2L",
+      "category": "dairy-eggs",
+      "notes": "Shelf tag reads LACTANTIA PURFLTR 2% MILK 2LT"
+    }
+  ],
+  "raw_response": "{\"products\":[{\"product_name\":\"Beatrice Skim Milk\",\"product_name_zh\":null,\"brand\":\"Beatrice\",\"price\":6.49,\"unit\":\"bag\",\"unit_price\":null,\"unit_price_per_100g\":null,\"regular_price\":null,\"is_special\":false,\"promo\":null,\"barcode\":\"055300111027\",\"size\":\"4L\",\"net_weight\":null,\"net_weight_lb\":null,\"packed_on\":null,\"category\":\"dairy-eggs\",\"notes\":\"Shelf tag reads BEATRICE SKIM MILK 4LT; Canadian maple leaf on tag\"},{\"product_name\":\"Beatrice 1% Milk\",\"product_name_zh\":null,\"brand\":\"Beatrice\",\"price\":6.49,\"unit\":\"bag\",\"unit_price\":null,\"unit_price_per_100g\":null,\"regular_price\":null,\"is_special\":true,\"promo\":\"LOW PRICE LOCKDOWN\",\"barcode\":null,\"size\":\"4L\",\"net_weight\":null,\"net_weight_lb\":null,\"packed_on\":null,\"category\":\"dairy-eggs\",\"notes\":\"Yellow central sign: BEATRICE MILK 1%, 2% or skim 4L bag\"},{\"product_name\":\"Beatrice 2% Milk\",\"product_name_zh\":null,\"brand\":\"Beatrice\",\"price\":6.49,\"unit\":\"bag\",\"unit_price\":null,\"unit_price_per_100g\":null,\"regular_price\":null,\"is_special\":false,\"promo\":null,\"barcode\":\"055300111010\",\"size\":\"4L\",\"net_weight\":null,\"net_weight_lb\":null,\"packed_on\":null,\"category\":\"dairy-eggs\",\"notes\":\"Shelf tag reads BEATRICE 2% MILK 4LT; Canadian maple leaf on tag\"},{\"product_name\":\"Lactantia PurFiltre 1% Milk\",\"product_name_zh\":null,\"brand\":\"Lactantia\",\"price\":6.49,\"unit\":\"EA\",\"unit_price\":null,\"unit_price_per_100g\":null,\"regular_price\":null,\"is_special\":false,\"promo\":null,\"barcode\":null,\"size\":\"2L\",\"net_weight\":null,\"net_weight_lb\":null,\"packed_on\":null,\"category\":\"dairy-eggs\",\"notes\":\"Shelf tag reads LACTANTIA PURFLTR 1% MILK 2LT\"},{\"product_name\":\"Lactantia PurFiltre 2% Milk\",\"product_name_zh\":null,\"brand\":\"Lactantia\",\"price\":6.49,\"unit\":\"EA\",\"unit_price\":null,\"unit_price_per_100g\":null,\"regular_price\":null,\"is_special\":false,\"promo\":null,\"barcode\":null,\"size\":\"2L\",\"net_weight\":null,\"net_weight_lb\":null,\"packed_on\":null,\"category\":\"dairy-eggs\",\"notes\":\"Shelf tag reads LACTANTIA PURFLTR 2% MILK 2LT\"}]}",
+  "extractor": "cursor_sdk",
+  "timing": {
+    "prep_ms": 105,
+    "llm_ms": 24899,
+    "duration_ms": 25004,
+    "model": "auto",
+    "classify_ms": null
+  }
+}

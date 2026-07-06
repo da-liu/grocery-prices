@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, type RefObject } from "react";
 
-type Page = "browse" | "compare" | "settings";
+type Page = "browse" | "compare" | "settings" | "metadata" | "compress";
 
 interface BrowseStats {
   shown: number;
@@ -25,6 +25,7 @@ interface TopBarProps {
   activeChipCount?: number;
   onToggleSortFilter?: () => void;
   browseStats?: BrowseStats;
+  showCompareNav?: boolean;
   onShowOnboarding?: () => void;
 }
 
@@ -88,6 +89,7 @@ export function TopBar({
   activeChipCount = 0,
   onToggleSortFilter,
   browseStats,
+  showCompareNav = true,
   onShowOnboarding,
 }: TopBarProps) {
   const [menuOpen, setMenuOpen] = useState(false);
@@ -122,6 +124,10 @@ export function TopBar({
     <header className="top-bar">
       {page === "settings" ? (
         <p className="top-bar-title">Settings</p>
+      ) : page === "metadata" ? (
+        <p className="top-bar-title">Metadata</p>
+      ) : page === "compress" ? (
+        <p className="top-bar-title">Compress</p>
       ) : (
         <input
           type="search"
@@ -137,7 +143,7 @@ export function TopBar({
         <input
           ref={photoInputRef}
           type="file"
-          accept="image/*,.heic"
+          accept="image/*"
           multiple
           className="sr-only"
           onChange={(e) => {
@@ -208,14 +214,16 @@ export function TopBar({
               >
                 Browse
               </button>
-              <button
-                type="button"
-                role="menuitem"
-                className={page === "compare" ? "active" : undefined}
-                onClick={() => pickNav("compare")}
-              >
-                Compare
-              </button>
+              {showCompareNav && (
+                <button
+                  type="button"
+                  role="menuitem"
+                  className={page === "compare" ? "active" : undefined}
+                  onClick={() => pickNav("compare")}
+                >
+                  Compare
+                </button>
+              )}
               <button
                 type="button"
                 role="menuitem"
@@ -223,6 +231,22 @@ export function TopBar({
                 onClick={() => pickNav("settings")}
               >
                 Settings
+              </button>
+              <button
+                type="button"
+                role="menuitem"
+                className={page === "metadata" ? "active" : undefined}
+                onClick={() => pickNav("metadata")}
+              >
+                Metadata
+              </button>
+              <button
+                type="button"
+                role="menuitem"
+                className={page === "compress" ? "active" : undefined}
+                onClick={() => pickNav("compress")}
+              >
+                Compress
               </button>
 
               <p className="top-bar-dropdown-label">Help</p>

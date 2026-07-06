@@ -1,0 +1,57 @@
+{
+  "image_path": "data/2026_06_29/jpg/IMG_2035.jpg",
+  "meta": {
+    "image_id": "IMG_2035",
+    "source_file": "data/2026_06_29/IMG_2035.HEIC",
+    "gps_latitude": 43.6536555555556,
+    "gps_longitude": -79.3973916666667,
+    "captured_at": "2026-06-29T15:56:07",
+    "date_folder": "2026_06_29"
+  },
+  "products": [
+    {
+      "product_name": "Sunrise Medium Firm Tofu",
+      "product_name_zh": "日昇硬豆腐",
+      "brand": "Sunrise",
+      "price": 2.79,
+      "unit": "EA",
+      "size": "454g",
+      "category": "tofu"
+    },
+    {
+      "product_name": "Sunrise Firm Tofu",
+      "product_name_zh": "日昇硬豆腐",
+      "brand": "Sunrise",
+      "price": 2.79,
+      "unit": "EA",
+      "size": "500g",
+      "category": "tofu"
+    },
+    {
+      "product_name": "Sunrise Soft Tofu",
+      "product_name_zh": "西施豆腐",
+      "brand": "Sunrise",
+      "price": 3.29,
+      "unit": "EA",
+      "size": "530g",
+      "category": "tofu"
+    },
+    {
+      "product_name": "Sun Rise Extra Firm Tofu",
+      "product_name_zh": "日昇特硬豆腐",
+      "brand": "Sunrise",
+      "price": 3.79,
+      "unit": "EA",
+      "category": "tofu"
+    }
+  ],
+  "raw_response": "{\n  \"products\": [\n    {\n      \"product_name\": \"Sunrise Medium Firm Tofu\",\n      \"product_name_zh\": \"日昇硬豆腐\",\n      \"brand\": \"Sunrise\",\n      \"price\": 2.79,\n      \"unit\": \"EA\",\n      \"unit_price\": null,\n      \"unit_price_per_100g\": null,\n      \"regular_price\": null,\n      \"is_special\": false,\n      \"promo\": null,\n      \"barcode\": null,\n      \"size\": \"454g\",\n      \"net_weight\": null,\n      \"net_weight_lb\": null,\n      \"packed_on\": null,\n      \"category\": \"tofu\",\n      \"notes\": null\n    },\n    {\n      \"product_name\": \"Sunrise Firm Tofu\",\n      \"product_name_zh\": \"日昇硬豆腐\",\n      \"brand\": \"Sunrise\",\n      \"price\": 2.79,\n      \"unit\": \"EA\",\n      \"unit_price\": null,\n      \"unit_price_per_100g\": null,\n      \"regular_price\": null,\n      \"is_special\": false,\n      \"promo\": null,\n      \"barcode\": null,\n      \"size\": \"500g\",\n      \"net_weight\": null,\n      \"net_weight_lb\": null,\n      \"packed_on\": null,\n      \"category\": \"tofu\",\n      \"notes\": null\n    },\n    {\n      \"product_name\": \"Sunrise Soft Tofu\",\n      \"product_name_zh\": \"西施豆腐\",\n      \"brand\": \"Sunrise\",\n      \"price\": 3.29,\n      \"unit\": \"EA\",\n      \"unit_price\": null,\n      \"unit_price_per_100g\": null,\n      \"regular_price\": null,\n      \"is_special\": false,\n      \"promo\": null,\n      \"barcode\": null,\n      \"size\": \"530g\",\n      \"net_weight\": null,\n      \"net_weight_lb\": null,\n      \"packed_on\": null,\n      \"category\": \"tofu\",\n      \"notes\": null\n    },\n    {\n      \"product_name\": \"Sun Rise Extra Firm Tofu\",\n      \"product_name_zh\": \"日昇特硬豆腐\",\n      \"brand\": \"Sunrise\",\n      \"price\": 3.79,\n      \"unit\": \"EA\",\n      \"unit_price\": null,\n      \"unit_price_per_100g\": null,\n      \"regular_price\": null,\n      \"is_special\": false,\n      \"promo\": null,\n      \"barcode\": null,\n      \"size\": null,\n      \"net_weight\": null,\n      \"net_weight_lb\": null,\n      \"packed_on\": null,\n      \"category\": \"tofu\",\n      \"notes\": null\n    }\n  ]\n}",
+  "extractor": "gemini_direct",
+  "timing": {
+    "prep_ms": 115,
+    "llm_ms": 3052,
+    "duration_ms": 3167,
+    "model": "gemini-3.1-flash-lite",
+    "classify_ms": null
+  }
+}

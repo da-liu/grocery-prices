@@ -1,0 +1,47 @@
+{
+  "image_path": "data/2026_06_29/jpg/IMG_2039.jpg",
+  "meta": {
+    "image_id": "IMG_2039",
+    "source_file": "data/2026_06_29/IMG_2039.HEIC",
+    "gps_latitude": 43.6535638888889,
+    "gps_longitude": -79.3976888888889,
+    "captured_at": "2026-06-29T15:56:58",
+    "date_folder": "2026_06_29"
+  },
+  "products": [
+    {
+      "product_name": "Redpath Granulated Sugar",
+      "brand": "Redpath",
+      "price": 3.99,
+      "unit": "bag",
+      "size": "2 kg",
+      "category": "pantry",
+      "notes": "Price tag visible on shelf below"
+    },
+    {
+      "product_name": "Mr. Goudas Table Salt",
+      "brand": "Mr. Goudas",
+      "price": 2.99,
+      "unit": "box",
+      "category": "pantry",
+      "notes": "Price tag visible on shelf below"
+    },
+    {
+      "product_name": "Windsor Table Salt",
+      "brand": "Windsor",
+      "price": 3.99,
+      "unit": "box",
+      "category": "pantry",
+      "notes": "Price tag visible on shelf below"
+    }
+  ],
+  "raw_response": "{\n  \"products\": [\n    {\n      \"product_name\": \"Redpath Granulated Sugar\",\n      \"product_name_zh\": null,\n      \"brand\": \"Redpath\",\n      \"price\": 3.99,\n      \"unit\": \"bag\",\n      \"unit_price\": null,\n      \"unit_price_per_100g\": null,\n      \"regular_price\": null,\n      \"is_special\": false,\n      \"promo\": null,\n      \"barcode\": null,\n      \"size\": \"2 kg\",\n      \"net_weight\": null,\n      \"net_weight_lb\": null,\n      \"packed_on\": null,\n      \"category\": \"pantry\",\n      \"notes\": \"Price tag visible on shelf below\"\n    },\n    {\n      \"product_name\": \"Mr. Goudas Table Salt\",\n      \"product_name_zh\": null,\n      \"brand\": \"Mr. Goudas\",\n      \"price\": 2.99,\n      \"unit\": \"box\",\n      \"unit_price\": null,\n      \"unit_price_per_100g\": null,\n      \"regular_price\": null,\n      \"is_special\": false,\n      \"promo\": null,\n      \"barcode\": null,\n      \"size\": null,\n      \"net_weight\": null,\n      \"net_weight_lb\": null,\n      \"packed_on\": null,\n      \"category\": \"pantry\",\n      \"notes\": \"Price tag visible on shelf below\"\n    },\n    {\n      \"product_name\": \"Windsor Table Salt\",\n      \"product_name_zh\": null,\n      \"brand\": \"Windsor\",\n      \"price\": 3.99,\n      \"unit\": \"box\",\n      \"unit_price\": null,\n      \"unit_price_per_100g\": null,\n      \"regular_price\": null,\n      \"is_special\": false,\n      \"promo\": null,\n      \"barcode\": null,\n      \"size\": null,\n      \"net_weight\": null,\n      \"net_weight_lb\": null,\n      \"packed_on\": null,\n      \"category\": \"pantry\",\n      \"notes\": \"Price tag visible on shelf below\"\n    }\n  ]\n}",
+  "extractor": "gemini_direct",
+  "timing": {
+    "prep_ms": 118,
+    "llm_ms": 2815,
+    "duration_ms": 2933,
+    "model": "gemini-3.1-flash-lite",
+    "classify_ms": null
+  }
+}

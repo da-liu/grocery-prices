@@ -1,0 +1,123 @@
+{
+  "image_id": "IMG_2080",
+  "source_file": "data/receipts/IMG_2080.HEIC",
+  "photo_type": "receipt",
+  "meta": {
+    "image_id": "IMG_2080",
+    "source_file": "/Users/daliu/workspace/ep/grocery-prices/data/receipts/IMG_2080.HEIC",
+    "gps_latitude": 43.6425083333333,
+    "gps_longitude": -79.3824833333333,
+    "captured_at": "2026-07-04T12:23:05",
+    "date_folder": "2026_07_04"
+  },
+  "products": [
+    {
+      "product_name": "*BML Steamed Gluti-Nous Ri (北美龍猪肉糯米烧卖) @REG$6.99",
+      "product_name_zh": "北美龍猪肉糯米烧卖",
+      "brand": "BML",
+      "price": 9.98,
+      "unit": "EA",
+      "unit_price": 4.99,
+      "regular_price": 6.99,
+      "is_special": true,
+      "category": "pantry",
+      "notes": "Qty 2 @ $4.99"
+    },
+    {
+      "product_name": "*Frozen Grilled Eel Unagi- (冷冻烤鳗鱼蒲烧) @REG$10.99",
+      "product_name_zh": "冷冻烤鳗鱼蒲烧",
+      "price": 7.99,
+      "regular_price": 10.99,
+      "is_special": true,
+      "category": "frozen-seafood"
+    },
+    {
+      "product_name": "*Seafood Platinum Scallop (顶级带子) @REG$5.99",
+      "product_name_zh": "顶级带子",
+      "price": 9.98,
+      "unit": "EA",
+      "unit_price": 4.99,
+      "regular_price": 5.99,
+      "is_special": true,
+      "category": "frozen-seafood",
+      "notes": "Qty 2 @ $4.99"
+    },
+    {
+      "product_name": "*Seven Basket Frozen Squid (七个篮子冻鱿鱼) @REG$6.99",
+      "product_name_zh": "七个篮子冻鱿鱼",
+      "brand": "Seven Basket",
+      "price": 4.99,
+      "regular_price": 6.99,
+      "is_special": true,
+      "category": "frozen-seafood"
+    },
+    {
+      "product_name": "GY Crab Roe Broad Beans (甘源蟹黄味蚕豆瓜子仁)",
+      "product_name_zh": "甘源蟹黄味蚕豆瓜子仁",
+      "brand": "GY",
+      "price": 4.99,
+      "category": "snacks"
+    },
+    {
+      "product_name": "*Baby Nappa Cabbage (娃娃菜) @REG$1.99",
+      "product_name_zh": "娃娃菜",
+      "price": 2.89,
+      "unit": "lb",
+      "unit_price": 1.68,
+      "regular_price": 1.99,
+      "is_special": true,
+      "net_weight_lb": 1.72,
+      "category": "produce",
+      "notes": "1.72 lb @ $1.68/lb"
+    },
+    {
+      "product_name": "*SH Baby Bok Choy Miu (CT) (陈太上海苗) @REG$1.99",
+      "product_name_zh": "陈太上海苗",
+      "brand": "SH",
+      "price": 2.4,
+      "unit": "lb",
+      "unit_price": 1.59,
+      "regular_price": 1.99,
+      "is_special": true,
+      "net_weight_lb": 1.51,
+      "category": "produce",
+      "notes": "1.51 lb @ $1.59/lb"
+    },
+    {
+      "product_name": "Thai Basil (九层塔)",
+      "product_name_zh": "九层塔",
+      "price": 3.04,
+      "category": "produce-herbs"
+    },
+    {
+      "product_name": "Carrot (红萝卜)",
+      "product_name_zh": "红萝卜",
+      "price": 2.59,
+      "unit": "lb",
+      "unit_price": 0.99,
+      "net_weight_lb": 2.62,
+      "category": "produce",
+      "notes": "2.62 lb @ $0.99/lb"
+    },
+    {
+      "product_name": "*Stake Tomato (有枝番茄) @REG$2.99",
+      "product_name_zh": "有枝番茄",
+      "price": 2.45,
+      "unit": "lb",
+      "unit_price": 1.99,
+      "regular_price": 2.99,
+      "is_special": true,
+      "net_weight_lb": 1.23,
+      "category": "produce",
+      "notes": "1.23 lb @ $1.99/lb"
+    }
+  ],
+  "extractor": "cursor_sdk",
+  "timing": {
+    "prep_ms": 92,
+    "llm_ms": 54506,
+    "duration_ms": 54598,
+    "model": "auto"
+  },
+  "raw_response": "{\"products\":[{\"product_name\":\"*BML Steamed Gluti-Nous Ri (北美龍猪肉糯米烧卖) @REG$6.99\",\"product_name_zh\":\"北美龍猪肉糯米烧卖\",\"brand\":\"BML\",\"price\":9.98,\"unit\":\"EA\",\"unit_price\":4.99,\"unit_price_per_100g\":null,\"regular_price\":6.99,\"is_special\":true,\"promo\":null,\"barcode\":null,\"size\":null,\"net_weight\":null,\"net_weight_lb\":null,\"packed_on\":null,\"category\":\"pantry\",\"notes\":\"Qty 2 @ $4.99\"},{\"product_name\":\"*Frozen Grilled Eel Unagi- (冷冻烤鳗鱼蒲烧) @REG$10.99\",\"product_name_zh\":\"冷冻烤鳗鱼蒲烧\",\"brand\":null,\"price\":7.99,\"unit\":null,\"unit_price\":null,\"unit_price_per_100g\":null,\"regular_price\":10.99,\"is_special\":true,\"promo\":null,\"barcode\":null,\"size\":null,\"net_weight\":null,\"net_weight_lb\":null,\"packed_on\":null,\"category\":\"frozen-seafood\",\"notes\":null},{\"product_name\":\"*Seafood Platinum Scallop (顶级带子) @REG$5.99\",\"product_name_zh\":\"顶级带子\",\"brand\":null,\"price\":9.98,\"unit\":\"EA\",\"unit_price\":4.99,\"unit_price_per_100g\":null,\"regular_price\":5.99,\"is_special\":true,\"promo\":null,\"barcode\":null,\"size\":null,\"net_weight\":null,\"net_weight_lb\":null,\"packed_on\":null,\"category\":\"frozen-seafood\",\"notes\":\"Qty 2 @ $4.99\"},{\"product_name\":\"*Seven Basket Frozen Squid (七个篮子冻鱿鱼) @REG$6.99\",\"product_name_zh\":\"七个篮子冻鱿鱼\",\"brand\":\"Seven Basket\",\"price\":4.99,\"unit\":null,\"unit_price\":null,\"unit_price_per_100g\":null,\"regular_price\":6.99,\"is_special\":true,\"promo\":null,\"barcode\":null,\"size\":null,\"net_weight\":null,\"net_weight_lb\":null,\"packed_on\":null,\"category\":\"frozen-seafood\",\"notes\":null},{\"product_name\":\"GY Crab Roe Broad Beans (甘源蟹黄味蚕豆瓜子仁)\",\"product_name_zh\":\"甘源蟹黄味蚕豆瓜子仁\",\"brand\":\"GY\",\"price\":4.99,\"unit\":null,\"unit_price\":null,\"unit_price_per_100g\":null,\"regular_price\":null,\"is_special\":false,\"promo\":null,\"barcode\":null,\"size\":null,\"net_weight\":null,\"net_weight_lb\":null,\"packed_on\":null,\"category\":\"snacks\",\"notes\":null},{\"product_name\":\"*Baby Nappa Cabbage (娃娃菜) @REG$1.99\",\"product_name_zh\":\"娃娃菜\",\"brand\":null,\"price\":2.89,\"unit\":\"lb\",\"unit_price\":1.68,\"unit_price_per_100g\":null,\"regular_price\":1.99,\"is_special\":true,\"promo\":null,\"barcode\":null,\"size\":null,\"net_weight\":null,\"net_weight_lb\":1.72,\"packed_on\":null,\"category\":\"produce\",\"notes\":\"1.72 lb @ $1.68/lb\"},{\"product_name\":\"*SH Baby Bok Choy Miu (CT) (陈太上海苗) @REG$1.99\",\"product_name_zh\":\"陈太上海苗\",\"brand\":\"SH\",\"price\":2.4,\"unit\":\"lb\",\"unit_price\":1.59,\"unit_price_per_100g\":null,\"regular_price\":1.99,\"is_special\":true,\"promo\":null,\"barcode\":null,\"size\":null,\"net_weight\":null,\"net_weight_lb\":1.51,\"packed_on\":null,\"category\":\"produce\",\"notes\":\"1.51 lb @ $1.59/lb\"},{\"product_name\":\"Thai Basil (九层塔)\",\"product_name_zh\":\"九层塔\",\"brand\":null,\"price\":3.04,\"unit\":null,\"unit_price\":null,\"unit_price_per_100g\":null,\"regular_price\":null,\"is_special\":false,\"promo\":null,\"barcode\":null,\"size\":null,\"net_weight\":null,\"net_weight_lb\":null,\"packed_on\":null,\"category\":\"produce-herbs\",\"notes\":null},{\"product_name\":\"Carrot (红萝卜)\",\"product_name_zh\":\"红萝卜\",\"brand\":null,\"price\":2.59,\"unit\":\"lb\",\"unit_price\":0.99,\"unit_price_per_100g\":null,\"regular_price\":null,\"is_special\":false,\"promo\":null,\"barcode\":null,\"size\":null,\"net_weight\":null,\"net_weight_lb\":2.62,\"packed_on\":null,\"category\":\"produce\",\"notes\":\"2.62 lb @ $0.99/lb\"},{\"product_name\":\"*Stake Tomato (有枝番茄) @REG$2.99\",\"product_name_zh\":\"有枝番茄\",\"brand\":null,\"price\":2.45,\"unit\":\"lb\",\"unit_price\":1.99,\"unit_price_per_100g\":null,\"regular_price\":2.99,\"is_special\":true,\"promo\":null,\"barcode\":null,\"size\":null,\"net_weight\":null,\"net_weight_lb\":1.23,\"packed_on\":null,\"category\":\"produce\",\"notes\":\"1.23 lb @ $1.99/lb\"}]}"
+}

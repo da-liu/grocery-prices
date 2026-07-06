@@ -1,0 +1,40 @@
+{
+  "image_path": "data/2026_06_29/jpg/IMG_2029.jpg",
+  "meta": {
+    "image_id": "IMG_2029",
+    "source_file": "data/2026_06_29/IMG_2029.HEIC",
+    "gps_latitude": 43.6534277777778,
+    "gps_longitude": -79.3982388888889,
+    "captured_at": "2026-06-29T15:52:23",
+    "date_folder": "2026_06_29"
+  },
+  "products": [
+    {
+      "product_name": "Pearl River Mushroom Dark Soy Sauce",
+      "product_name_zh": "珠江橋牌草菰老抽",
+      "brand": "Pearl River Bridge",
+      "price": 8.99,
+      "unit": "EA",
+      "size": "1.8 L",
+      "category": "condiments"
+    },
+    {
+      "product_name": "Pearl River Golden Soy Sauce",
+      "product_name_zh": "珠江橋牌金標生抽王",
+      "brand": "Pearl River Bridge",
+      "price": 8.99,
+      "unit": "EA",
+      "size": "1.8 L",
+      "category": "condiments"
+    }
+  ],
+  "raw_response": "{\n  \"products\": [\n    {\n      \"product_name\": \"Pearl River Mushroom Dark Soy Sauce\",\n      \"product_name_zh\": \"珠江橋牌草菰老抽\",\n      \"brand\": \"Pearl River Bridge\",\n      \"price\": 8.99,\n      \"unit\": \"EA\",\n      \"unit_price\": null,\n      \"unit_price_per_100g\": null,\n      \"regular_price\": null,\n      \"is_special\": false,\n      \"promo\": null,\n      \"barcode\": null,\n      \"size\": \"1.8 L\",\n      \"net_weight\": null,\n      \"net_weight_lb\": null,\n      \"packed_on\": null,\n      \"category\": \"condiments\",\n      \"notes\": null\n    },\n    {\n      \"product_name\": \"Pearl River Golden Soy Sauce\",\n      \"product_name_zh\": \"珠江橋牌金標生抽王\",\n      \"brand\": \"Pearl River Bridge\",\n      \"price\": 8.99,\n      \"unit\": \"EA\",\n      \"unit_price\": null,\n      \"unit_price_per_100g\": null,\n      \"regular_price\": null,\n      \"is_special\": false,\n      \"promo\": null,\n      \"barcode\": null,\n      \"size\": \"1.8 L\",\n      \"net_weight\": null,\n      \"net_weight_lb\": null,\n      \"packed_on\": null,\n      \"category\": \"condiments\",\n      \"notes\": null\n    }\n  ]\n}",
+  "extractor": "gemini_direct",
+  "timing": {
+    "prep_ms": 156,
+    "llm_ms": 2416,
+    "duration_ms": 2572,
+    "model": "gemini-3.1-flash-lite",
+    "classify_ms": null
+  }
+}

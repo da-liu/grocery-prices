@@ -1,0 +1,49 @@
+{
+  "image_path": "data/2026_06_29/jpg/IMG_2031.jpg",
+  "meta": {
+    "image_id": "IMG_2031",
+    "source_file": "data/2026_06_29/IMG_2031.HEIC",
+    "gps_latitude": 43.6535388888889,
+    "gps_longitude": -79.3979555555556,
+    "captured_at": "2026-06-29T15:55:46",
+    "date_folder": "2026_06_29"
+  },
+  "products": [
+    {
+      "product_name": "Hikari Organic Miso White Type",
+      "product_name_zh": "有機白味噌",
+      "brand": "Hikari Miso",
+      "price": 8.99,
+      "unit": "EA",
+      "size": "500g",
+      "category": "tofu"
+    },
+    {
+      "product_name": "Hikari Organic Miso Red Type",
+      "product_name_zh": "有機味噌",
+      "brand": "Hikari Miso",
+      "price": 8.99,
+      "unit": "EA",
+      "size": "500g",
+      "category": "tofu"
+    },
+    {
+      "product_name": "Marukome Miso",
+      "product_name_zh": "味噌",
+      "brand": "Marukome",
+      "price": 7.99,
+      "unit": "EA",
+      "size": "35.2 oz",
+      "category": "tofu"
+    }
+  ],
+  "raw_response": "{\n  \"products\": [\n    {\n      \"product_name\": \"Hikari Organic Miso White Type\",\n      \"product_name_zh\": \"有機白味噌\",\n      \"brand\": \"Hikari Miso\",\n      \"price\": 8.99,\n      \"unit\": \"EA\",\n      \"unit_price\": null,\n      \"unit_price_per_100g\": null,\n      \"regular_price\": null,\n      \"is_special\": false,\n      \"promo\": null,\n      \"barcode\": null,\n      \"size\": \"500g\",\n      \"net_weight\": null,\n      \"net_weight_lb\": null,\n      \"packed_on\": null,\n      \"category\": \"tofu\",\n      \"notes\": null\n    },\n    {\n      \"product_name\": \"Hikari Organic Miso Red Type\",\n      \"product_name_zh\": \"有機味噌\",\n      \"brand\": \"Hikari Miso\",\n      \"price\": 8.99,\n      \"unit\": \"EA\",\n      \"unit_price\": null,\n      \"unit_price_per_100g\": null,\n      \"regular_price\": null,\n      \"is_special\": false,\n      \"promo\": null,\n      \"barcode\": null,\n      \"size\": \"500g\",\n      \"net_weight\": null,\n      \"net_weight_lb\": null,\n      \"packed_on\": null,\n      \"category\": \"tofu\",\n      \"notes\": null\n    },\n    {\n      \"product_name\": \"Marukome Miso\",\n      \"product_name_zh\": \"味噌\",\n      \"brand\": \"Marukome\",\n      \"price\": 7.99,\n      \"unit\": \"EA\",\n      \"unit_price\": null,\n      \"unit_price_per_100g\": null,\n      \"regular_price\": null,\n      \"is_special\": false,\n      \"promo\": null,\n      \"barcode\": null,\n      \"size\": \"35.2 oz\",\n      \"net_weight\": null,\n      \"net_weight_lb\": null,\n      \"packed_on\": null,\n      \"category\": \"tofu\",\n      \"notes\": null\n    }\n  ]\n}",
+  "extractor": "gemini_direct",
+  "timing": {
+    "prep_ms": 167,
+    "llm_ms": 2691,
+    "duration_ms": 2858,
+    "model": "gemini-3.1-flash-lite",
+    "classify_ms": null
+  }
+}

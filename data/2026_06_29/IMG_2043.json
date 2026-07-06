@@ -1,0 +1,50 @@
+{
+  "image_path": "data/2026_06_29/jpg/IMG_2043.jpg",
+  "meta": {
+    "image_id": "IMG_2043",
+    "source_file": "data/2026_06_29/IMG_2043.HEIC",
+    "gps_latitude": 43.6535916666667,
+    "gps_longitude": -79.3982694444444,
+    "captured_at": "2026-06-29T16:00:53",
+    "date_folder": "2026_06_29"
+  },
+  "products": [
+    {
+      "product_name": "Lao Gan Ma Chilli in Oil With Peanuts",
+      "product_name_zh": "老干妈油辣椒",
+      "brand": "Lao Gan Ma",
+      "price": 3.29,
+      "unit": "EA",
+      "unit_price": 3.29,
+      "size": "275g",
+      "category": "condiments"
+    },
+    {
+      "product_name": "Laoganma Hot Pepper Sauce",
+      "product_name_zh": "风味豆豉油制辣椒",
+      "brand": "Lao Gan Ma",
+      "price": 3.29,
+      "unit": "EA",
+      "unit_price": 3.29,
+      "size": "280g",
+      "category": "condiments"
+    },
+    {
+      "product_name": "Laoganma Chili Sauce",
+      "brand": "Lao Gan Ma",
+      "price": 3.29,
+      "unit": "EA",
+      "unit_price": 3.29,
+      "category": "condiments"
+    }
+  ],
+  "raw_response": "{\n  \"products\": [\n    {\n      \"product_name\": \"Lao Gan Ma Chilli in Oil With Peanuts\",\n      \"product_name_zh\": \"老干妈油辣椒\",\n      \"brand\": \"Lao Gan Ma\",\n      \"price\": 3.29,\n      \"unit\": \"EA\",\n      \"unit_price\": 3.29,\n      \"unit_price_per_100g\": null,\n      \"regular_price\": null,\n      \"is_special\": false,\n      \"promo\": null,\n      \"barcode\": null,\n      \"size\": \"275g\",\n      \"net_weight\": null,\n      \"net_weight_lb\": null,\n      \"packed_on\": null,\n      \"category\": \"condiments\",\n      \"notes\": null\n    },\n    {\n      \"product_name\": \"Laoganma Hot Pepper Sauce\",\n      \"product_name_zh\": \"风味豆豉油制辣椒\",\n      \"brand\": \"Lao Gan Ma\",\n      \"price\": 3.29,\n      \"unit\": \"EA\",\n      \"unit_price\": 3.29,\n      \"unit_price_per_100g\": null,\n      \"regular_price\": null,\n      \"is_special\": false,\n      \"promo\": null,\n      \"barcode\": null,\n      \"size\": \"280g\",\n      \"net_weight\": null,\n      \"net_weight_lb\": null,\n      \"packed_on\": null,\n      \"category\": \"condiments\",\n      \"notes\": null\n    },\n    {\n      \"product_name\": \"Laoganma Chili Sauce\",\n      \"product_name_zh\": null,\n      \"brand\": \"Lao Gan Ma\",\n      \"price\": 3.29,\n      \"unit\": \"EA\",\n      \"unit_price\": 3.29,\n      \"unit_price_per_100g\": null,\n      \"regular_price\": null,\n      \"is_special\": false,\n      \"promo\": null,\n      \"barcode\": null,\n      \"size\": null,\n      \"net_weight\": null,\n      \"net_weight_lb\": null,\n      \"packed_on\": null,\n      \"category\": \"condiments\",\n      \"notes\": null\n    }\n  ]\n}",
+  "extractor": "gemini_direct",
+  "timing": {
+    "prep_ms": 122,
+    "llm_ms": 2824,
+    "duration_ms": 2946,
+    "model": "gemini-3.1-flash-lite",
+    "classify_ms": null
+  }
+}

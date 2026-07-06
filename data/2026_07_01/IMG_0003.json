@@ -1,0 +1,37 @@
+{
+  "image_id": "IMG_0003",
+  "date_folder": "2026_07_01",
+  "source_file": "data/2026_07_01/IMG_0003.jpg",
+  "photo_type": "shelf",
+  "meta": {
+    "image_id": "IMG_0003",
+    "source_file": "data/2026_07_01/IMG_0003.jpg",
+    "gps_latitude": null,
+    "gps_longitude": null,
+    "captured_at": null,
+    "date_folder": null
+  },
+  "products": [
+    {
+      "product_name": "Previously Frozen Tuna Steaks",
+      "brand": "Longo's",
+      "price": 6.35,
+      "unit": "kg",
+      "unit_price": 33.05,
+      "barcode": "0204993006357",
+      "size": "0.192 kg",
+      "net_weight": 0.192,
+      "net_weight_lb": 0.423,
+      "category": "frozen-seafood",
+      "notes": "Wild; best before 2026-07-06; Longo's Store #24, Vaughan ON; keep refrigerated"
+    }
+  ],
+  "extractor": "cursor_sdk",
+  "timing": {
+    "prep_ms": 96,
+    "llm_ms": 20317,
+    "duration_ms": 20413,
+    "model": "auto",
+    "classify_ms": 14785
+  }
+}

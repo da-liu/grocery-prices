@@ -1,0 +1,36 @@
+{
+  "image_path": "data/2026_06_29/jpg/IMG_2046.jpg",
+  "meta": {
+    "image_id": "IMG_2046",
+    "source_file": "data/2026_06_29/IMG_2046.HEIC",
+    "gps_latitude": 43.653725,
+    "gps_longitude": -79.3943111111111,
+    "captured_at": "2026-06-29T16:06:53",
+    "date_folder": "2026_06_29"
+  },
+  "products": [
+    {
+      "product_name": "Basil",
+      "product_name_zh": "香花草 (九層塔)",
+      "brand": "Lucky Moose Food Mart",
+      "price": 2.08,
+      "unit": "lb",
+      "unit_price": 12.99,
+      "barcode": "220159002087",
+      "net_weight": 0.07257,
+      "net_weight_lb": 0.16,
+      "packed_on": "26.JN.27",
+      "category": "produce-herbs",
+      "notes": "Weight converted from 0.16 lb to approx 0.07257 kg"
+    }
+  ],
+  "raw_response": "{\n  \"products\": [\n    {\n      \"product_name\": \"Basil\",\n      \"product_name_zh\": \"香花草 (九層塔)\",\n      \"brand\": \"Lucky Moose Food Mart\",\n      \"price\": 2.08,\n      \"unit\": \"lb\",\n      \"unit_price\": 12.99,\n      \"unit_price_per_100g\": null,\n      \"regular_price\": null,\n      \"is_special\": false,\n      \"promo\": null,\n      \"barcode\": \"220159002087\",\n      \"size\": null,\n      \"net_weight\": 0.07257,\n      \"net_weight_lb\": 0.16,\n      \"packed_on\": \"26.JN.27\",\n      \"category\": \"produce-herbs\",\n      \"notes\": \"Weight converted from 0.16 lb to approx 0.07257 kg\"\n    }\n  ]\n}",
+  "extractor": "gemini_direct",
+  "timing": {
+    "prep_ms": 99,
+    "llm_ms": 1871,
+    "duration_ms": 1970,
+    "model": "gemini-3.1-flash-lite",
+    "classify_ms": null
+  }
+}

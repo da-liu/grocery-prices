@@ -34,7 +34,7 @@ from extract_server.auth import (  # noqa: E402
 from fastapi import Form, Response  # noqa: E402
 
 from grocery_extract.catalog_edit import add_product, reextract_photo, update_product  # noqa: E402
-from grocery_extract.catalog_db import list_product_rows
+from grocery_extract.catalog_db import list_product_rows, is_valid_photo_id
 from grocery_extract.cursor_extractor import configured_api_key  # noqa: E402
 from grocery_extract.delete import delete_product, delete_products_bulk  # noqa: E402
 from grocery_extract.errors import ConfigError, ExtractionError, GroceryError  # noqa: E402
@@ -347,7 +347,7 @@ def create_manual_product(
     body: ManualProductBody,
     user: Annotated[AuthUser, Depends(require_user)],
 ) -> dict:
-    if not image_id.startswith("IMG_"):
+    if not is_valid_photo_id(image_id):
         raise HTTPException(status_code=400, detail="Invalid image id")
     created = add_product(user.id, image_id, body.model_dump(exclude_unset=True))
     if created is None:
@@ -360,7 +360,7 @@ def rerun_extraction(
     image_id: str,
     user: Annotated[AuthUser, Depends(require_user)],
 ) -> dict:
-    if not image_id.startswith("IMG_"):
+    if not is_valid_photo_id(image_id):
         raise HTTPException(status_code=400, detail="Invalid image id")
     api_key = configured_api_key()
     result = reextract_photo(user.id, image_id, api_key=api_key)
@@ -467,7 +467,7 @@ def assign_photo_store(
     body: AssignPhotoStoreBody,
     user: Annotated[AuthUser, Depends(require_user)],
 ) -> dict:
-    if not image_id.startswith("IMG_"):
+    if not is_valid_photo_id(image_id):
         raise HTTPException(status_code=400, detail="Invalid image id")
     if get_user_store(user.id, body.store_location_id) is None:
         raise HTTPException(status_code=404, detail="Store location not found")
@@ -482,15 +482,21 @@ def get_media(
     header_token: Annotated[str | None, Depends(bearer_token)],
     access_token: str | None = None,
 ) -> FileResponse:
-    if not image_id.startswith("IMG_"):
+    if not is_valid_photo_id(image_id):
         raise HTTPException(status_code=400, detail="Invalid image id")
     user = user_from_token(access_token or header_token)
     if not user:
         raise HTTPException(status_code=401, detail="Sign in required")
-    jpg = find_user_jpg(user.id, image_id)
-    if jpg is None or not jpg.exists():
+    image_path = find_user_jpg(user.id, image_id)
+    if image_path is None or not image_path.exists():
         raise HTTPException(status_code=404, detail="Image not found")
-    return FileResponse(jpg, media_type="image/jpeg")
+    media_types = {
+        ".jpg": "image/jpeg",
+        ".jpeg": "image/jpeg",
+        ".webp": "image/webp",
+    }
+    media_type = media_types.get(image_path.suffix.lower(), "application/octet-stream")
+    return FileResponse(image_path, media_type=media_type)
 
 
 class PhotoStatusRequest(BaseModel):
@@ -537,6 +543,11 @@ async def upload_photos_bulk(
             raise HTTPException(status_code=400, detail="Invalid exif_json") from err
         if not isinstance(parsed, list):
             raise HTTPException(status_code=400, detail="exif_json must be a JSON array")
+        if len(parsed) != len(files):
+            raise HTTPException(
+                status_code=400,
+                detail="exif_json length must match number of uploaded files",
+            )
         client_exifs = parsed
 
     saved_paths: list[Path] = []

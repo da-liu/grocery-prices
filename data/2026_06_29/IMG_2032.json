@@ -1,0 +1,40 @@
+{
+  "image_path": "data/2026_06_29/jpg/IMG_2032.jpg",
+  "meta": {
+    "image_id": "IMG_2032",
+    "source_file": "data/2026_06_29/IMG_2032.HEIC",
+    "gps_latitude": 43.6535388888889,
+    "gps_longitude": -79.3979638888889,
+    "captured_at": "2026-06-29T15:55:48",
+    "date_folder": "2026_06_29"
+  },
+  "products": [
+    {
+      "product_name": "Chung Jung One Ssamjang",
+      "product_name_zh": "調味黃豆醬",
+      "brand": "Chung Jung One",
+      "price": 4.99,
+      "unit": "EA",
+      "size": "500g",
+      "category": "condiments"
+    },
+    {
+      "product_name": "Marukome Organic Miso",
+      "product_name_zh": "有機味噌",
+      "brand": "Marukome",
+      "price": 7.99,
+      "unit": "EA",
+      "size": "500g",
+      "category": "condiments"
+    }
+  ],
+  "raw_response": "{\n  \"products\": [\n    {\n      \"product_name\": \"Chung Jung One Ssamjang\",\n      \"product_name_zh\": \"調味黃豆醬\",\n      \"brand\": \"Chung Jung One\",\n      \"price\": 4.99,\n      \"unit\": \"EA\",\n      \"unit_price\": null,\n      \"unit_price_per_100g\": null,\n      \"regular_price\": null,\n      \"is_special\": false,\n      \"promo\": null,\n      \"barcode\": null,\n      \"size\": \"500g\",\n      \"net_weight\": null,\n      \"net_weight_lb\": null,\n      \"packed_on\": null,\n      \"category\": \"condiments\",\n      \"notes\": null\n    },\n    {\n      \"product_name\": \"Marukome Organic Miso\",\n      \"product_name_zh\": \"有機味噌\",\n      \"brand\": \"Marukome\",\n      \"price\": 7.99,\n      \"unit\": \"EA\",\n      \"unit_price\": null,\n      \"unit_price_per_100g\": null,\n      \"regular_price\": null,\n      \"is_special\": false,\n      \"promo\": null,\n      \"barcode\": null,\n      \"size\": \"500g\",\n      \"net_weight\": null,\n      \"net_weight_lb\": null,\n      \"packed_on\": null,\n      \"category\": \"condiments\",\n      \"notes\": null\n    }\n  ]\n}",
+  "extractor": "gemini_direct",
+  "timing": {
+    "prep_ms": 129,
+    "llm_ms": 2049,
+    "duration_ms": 2178,
+    "model": "gemini-3.1-flash-lite",
+    "classify_ms": null
+  }
+}

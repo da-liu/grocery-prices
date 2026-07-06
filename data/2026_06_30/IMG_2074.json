@@ -1,0 +1,31 @@
+{
+  "image_path": "data/2026_06_30/jpg/IMG_2074.jpg",
+  "meta": {
+    "image_id": "IMG_2074",
+    "source_file": "/Users/daliu/workspace/ep/grocery-prices/data/2026_06_30/IMG_2074.jpg",
+    "gps_latitude": 43.6396055555556,
+    "gps_longitude": -79.3803944444444,
+    "captured_at": "2026-06-30T19:33:18",
+    "date_folder": "2026_06_30"
+  },
+  "products": [
+    {
+      "product_name": "Tomato Paste",
+      "brand": "Hunt's",
+      "price": 1.79,
+      "unit": "EA",
+      "size": "156 ml",
+      "category": "canned-goods",
+      "notes": "Shelf code F4-8813"
+    }
+  ],
+  "raw_response": "{\n  \"products\": [\n    {\n      \"product_name\": \"Tomato Paste\",\n      \"product_name_zh\": null,\n      \"brand\": \"Hunt's\",\n      \"price\": 1.79,\n      \"unit\": \"EA\",\n      \"unit_price\": null,\n      \"unit_price_per_100g\": null,\n      \"regular_price\": null,\n      \"is_special\": false,\n      \"promo\": null,\n      \"barcode\": null,\n      \"size\": \"156 ml\",\n      \"net_weight\": null,\n      \"net_weight_lb\": null,\n      \"packed_on\": null,\n      \"category\": \"canned-goods\",\n      \"notes\": \"Shelf code F4-8813\"\n    }\n  ]\n}",
+  "extractor": "cursor_sdk",
+  "timing": {
+    "prep_ms": 104,
+    "llm_ms": 25002,
+    "duration_ms": 25106,
+    "model": "auto",
+    "classify_ms": null
+  }
+}

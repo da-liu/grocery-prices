@@ -5,6 +5,7 @@ from grocery_extract.catalog_db import (
     extraction_timing_payload,
     get_extraction,
     get_photo,
+    is_valid_photo_id,
     list_product_rows,
     replace_photo_extraction,
     update_sighting,
@@ -39,7 +40,7 @@ def update_product(user_id: str, product_id: str, updates: dict) -> dict | None:
 
 
 def add_product(user_id: str, image_id: str, product: dict) -> dict | None:
-    if not image_id.startswith("IMG_"):
+    if not is_valid_photo_id(image_id):
         return None
     if get_photo(user_id, image_id) is None:
         return None
@@ -59,7 +60,7 @@ def add_product(user_id: str, image_id: str, product: dict) -> dict | None:
 
 
 def reextract_photo(user_id: str, image_id: str, *, api_key: str | None = None) -> dict | None:
-    if not image_id.startswith("IMG_"):
+    if not is_valid_photo_id(image_id):
         return None
 
     jpg_path = find_user_jpg(user_id, image_id)

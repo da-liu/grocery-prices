@@ -38,7 +38,7 @@ def test_find_exact_duplicate(tmp_path: Path, monkeypatch):
         photo_id="IMG_0001",
         photo_type="shelf",
         original_blob_key=None,
-        jpeg_blob_key=f"users/{user_id}/photos/2026_07_02/jpg/IMG_0001.jpg",
+        photo_blob_key=f"users/{user_id}/photos/2026_07_02/jpg/IMG_0001.jpg",
         content_hash="abc123",
         gps_latitude=None,
         gps_longitude=None,

@@ -1,0 +1,32 @@
+{
+  "image_path": "data/2026_06_29/jpg/IMG_2055.jpg",
+  "meta": {
+    "image_id": "IMG_2055",
+    "source_file": "data/2026_06_29/IMG_2055.HEIC",
+    "gps_latitude": 43.6423638888889,
+    "gps_longitude": -79.381225,
+    "captured_at": "2026-06-29T16:34:36",
+    "date_folder": "2026_06_29"
+  },
+  "products": [
+    {
+      "product_name": "Tilda Pure Basmati Rice",
+      "brand": "Tilda",
+      "price": 19.99,
+      "unit": "bag",
+      "size": "4.54 kg",
+      "net_weight": 4.54,
+      "net_weight_lb": 10.0,
+      "category": "rice"
+    }
+  ],
+  "raw_response": "{\n  \"products\": [\n    {\n      \"product_name\": \"Tilda Pure Basmati Rice\",\n      \"product_name_zh\": null,\n      \"brand\": \"Tilda\",\n      \"price\": 19.99,\n      \"unit\": \"bag\",\n      \"unit_price\": null,\n      \"unit_price_per_100g\": null,\n      \"regular_price\": null,\n      \"is_special\": false,\n      \"promo\": null,\n      \"barcode\": null,\n      \"size\": \"4.54 kg\",\n      \"net_weight\": 4.54,\n      \"net_weight_lb\": 10.0,\n      \"packed_on\": null,\n      \"category\": \"rice\",\n      \"notes\": null\n    }\n  ]\n}",
+  "extractor": "gemini_direct",
+  "timing": {
+    "prep_ms": 118,
+    "llm_ms": 2109,
+    "duration_ms": 2227,
+    "model": "gemini-3.1-flash-lite",
+    "classify_ms": null
+  }
+}

@@ -20,7 +20,7 @@ def test_accept_upload_uses_client_exif_when_provided(tmp_path: Path, monkeypatc
     user_dir = tmp_path / "data" / "users" / user_id
     user_dir.mkdir(parents=True)
 
-    upload = tmp_path / "photo.jpg"
+    upload = tmp_path / "photo.webp"
     upload.write_bytes(b"compressed-bytes-without-exif")
 
     monkeypatch.setattr(
@@ -29,10 +29,6 @@ def test_accept_upload_uses_client_exif_when_provided(tmp_path: Path, monkeypatc
     )
     monkeypatch.setattr("grocery_extract.ingest.file_content_hash", lambda _path: "hash123")
     monkeypatch.setattr("grocery_extract.ingest.find_photo_by_content_hash", lambda *_args: None)
-    monkeypatch.setattr(
-        "grocery_extract.ingest.extract_exif",
-        lambda _path: (_ for _ in ()).throw(AssertionError("should not read file exif")),
-    )
     monkeypatch.setattr(
         "grocery_extract.user_stores_db.list_user_stores_as_dicts",
         lambda *_args: [],

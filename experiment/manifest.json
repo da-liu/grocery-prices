@@ -1,0 +1,308 @@
+[
+  {
+    "image_id": "IMG_2027",
+    "path": "data/2026_06_29/IMG_2027.HEIC",
+    "expected_type": "shelf",
+    "product_count": 3
+  },
+  {
+    "image_id": "IMG_2028",
+    "path": "data/2026_06_29/IMG_2028.HEIC",
+    "expected_type": "shelf",
+    "product_count": 2
+  },
+  {
+    "image_id": "IMG_2029",
+    "path": "data/2026_06_29/IMG_2029.HEIC",
+    "expected_type": "shelf",
+    "product_count": 2
+  },
+  {
+    "image_id": "IMG_2030",
+    "path": "data/2026_06_29/IMG_2030.HEIC",
+    "expected_type": "shelf",
+    "product_count": 5
+  },
+  {
+    "image_id": "IMG_2031",
+    "path": "data/2026_06_29/IMG_2031.HEIC",
+    "expected_type": "shelf",
+    "product_count": 3
+  },
+  {
+    "image_id": "IMG_2032",
+    "path": "data/2026_06_29/IMG_2032.HEIC",
+    "expected_type": "shelf",
+    "product_count": 3
+  },
+  {
+    "image_id": "IMG_2033",
+    "path": "data/2026_06_29/IMG_2033.HEIC",
+    "expected_type": "shelf",
+    "product_count": 4
+  },
+  {
+    "image_id": "IMG_2034",
+    "path": "data/2026_06_29/IMG_2034.HEIC",
+    "expected_type": "shelf",
+    "product_count": 6
+  },
+  {
+    "image_id": "IMG_2035",
+    "path": "data/2026_06_29/IMG_2035.HEIC",
+    "expected_type": "shelf",
+    "product_count": 4
+  },
+  {
+    "image_id": "IMG_2036",
+    "path": "data/2026_06_29/IMG_2036.HEIC",
+    "expected_type": "shelf",
+    "product_count": 3
+  },
+  {
+    "image_id": "IMG_2037",
+    "path": "data/2026_06_29/IMG_2037.HEIC",
+    "expected_type": "shelf",
+    "product_count": 6
+  },
+  {
+    "image_id": "IMG_2038",
+    "path": "data/2026_06_29/IMG_2038.HEIC",
+    "expected_type": "shelf",
+    "product_count": 3
+  },
+  {
+    "image_id": "IMG_2039",
+    "path": "data/2026_06_29/IMG_2039.HEIC",
+    "expected_type": "shelf",
+    "product_count": 3
+  },
+  {
+    "image_id": "IMG_2040",
+    "path": "data/2026_06_29/IMG_2040.HEIC",
+    "expected_type": "shelf",
+    "product_count": 3
+  },
+  {
+    "image_id": "IMG_2041",
+    "path": "data/2026_06_29/IMG_2041.HEIC",
+    "expected_type": "shelf",
+    "product_count": 3
+  },
+  {
+    "image_id": "IMG_2042",
+    "path": "data/2026_06_29/IMG_2042.HEIC",
+    "expected_type": "shelf",
+    "product_count": 6
+  },
+  {
+    "image_id": "IMG_2043",
+    "path": "data/2026_06_29/IMG_2043.HEIC",
+    "expected_type": "shelf",
+    "product_count": 3
+  },
+  {
+    "image_id": "IMG_2044",
+    "path": "data/2026_06_29/IMG_2044.HEIC",
+    "expected_type": "shelf",
+    "product_count": 1
+  },
+  {
+    "image_id": "IMG_2045",
+    "path": "data/2026_06_29/IMG_2045.HEIC",
+    "expected_type": "shelf",
+    "product_count": 2
+  },
+  {
+    "image_id": "IMG_2046",
+    "path": "data/2026_06_29/IMG_2046.HEIC",
+    "expected_type": "shelf",
+    "product_count": 1
+  },
+  {
+    "image_id": "IMG_2047",
+    "path": "data/2026_06_29/IMG_2047.HEIC",
+    "expected_type": "shelf",
+    "product_count": 1
+  },
+  {
+    "image_id": "IMG_2048",
+    "path": "data/2026_06_29/IMG_2048.HEIC",
+    "expected_type": "shelf",
+    "product_count": 1
+  },
+  {
+    "image_id": "IMG_2049",
+    "path": "data/2026_06_29/IMG_2049.HEIC",
+    "expected_type": "shelf",
+    "product_count": 1
+  },
+  {
+    "image_id": "IMG_2050",
+    "path": "data/2026_06_29/IMG_2050.HEIC",
+    "expected_type": "shelf",
+    "product_count": 1
+  },
+  {
+    "image_id": "IMG_2051",
+    "path": "data/2026_06_29/IMG_2051.HEIC",
+    "expected_type": "shelf",
+    "product_count": 2
+  },
+  {
+    "image_id": "IMG_2052",
+    "path": "data/2026_06_29/IMG_2052.HEIC",
+    "expected_type": "shelf",
+    "product_count": 3
+  },
+  {
+    "image_id": "IMG_2053",
+    "path": "data/2026_06_29/IMG_2053.HEIC",
+    "expected_type": "shelf",
+    "product_count": 3
+  },
+  {
+    "image_id": "IMG_2054",
+    "path": "data/2026_06_29/IMG_2054.HEIC",
+    "expected_type": "shelf",
+    "product_count": 1
+  },
+  {
+    "image_id": "IMG_2055",
+    "path": "data/2026_06_29/IMG_2055.HEIC",
+    "expected_type": "shelf",
+    "product_count": 1
+  },
+  {
+    "image_id": "IMG_2058",
+    "path": "data/2026_06_30/IMG_2058.HEIC",
+    "expected_type": "shelf",
+    "product_count": 1
+  },
+  {
+    "image_id": "IMG_2059",
+    "path": "data/2026_06_30/IMG_2059.HEIC",
+    "expected_type": "shelf",
+    "product_count": 1
+  },
+  {
+    "image_id": "IMG_2060",
+    "path": "data/2026_06_30/IMG_2060.HEIC",
+    "expected_type": "shelf",
+    "product_count": 1
+  },
+  {
+    "image_id": "IMG_2061",
+    "path": "data/2026_06_30/IMG_2061.HEIC",
+    "expected_type": "shelf",
+    "product_count": 4
+  },
+  {
+    "image_id": "IMG_2062",
+    "path": "data/2026_06_30/IMG_2062.HEIC",
+    "expected_type": "shelf",
+    "product_count": 4
+  },
+  {
+    "image_id": "IMG_2063",
+    "path": "data/2026_06_30/IMG_2063.HEIC",
+    "expected_type": "shelf",
+    "product_count": 1
+  },
+  {
+    "image_id": "IMG_2064",
+    "path": "data/2026_06_30/IMG_2064.HEIC",
+    "expected_type": "shelf",
+    "product_count": 1
+  },
+  {
+    "image_id": "IMG_2065",
+    "path": "data/2026_06_30/IMG_2065.HEIC",
+    "expected_type": "shelf",
+    "product_count": 5
+  },
+  {
+    "image_id": "IMG_2066",
+    "path": "data/2026_06_30/IMG_2066.HEIC",
+    "expected_type": "shelf",
+    "product_count": 1
+  },
+  {
+    "image_id": "IMG_2067",
+    "path": "data/2026_06_30/IMG_2067.HEIC",
+    "expected_type": "shelf",
+    "product_count": 3
+  },
+  {
+    "image_id": "IMG_2068",
+    "path": "data/2026_06_30/IMG_2068.HEIC",
+    "expected_type": "shelf",
+    "product_count": 3
+  },
+  {
+    "image_id": "IMG_2069",
+    "path": "data/2026_06_30/IMG_2069.HEIC",
+    "expected_type": "shelf",
+    "product_count": 4
+  },
+  {
+    "image_id": "IMG_2070",
+    "path": "data/2026_06_30/IMG_2070.HEIC",
+    "expected_type": "shelf",
+    "product_count": 4
+  },
+  {
+    "image_id": "IMG_2071",
+    "path": "data/2026_06_30/IMG_2071.HEIC",
+    "expected_type": "shelf",
+    "product_count": 1
+  },
+  {
+    "image_id": "IMG_2072",
+    "path": "data/2026_06_30/IMG_2072.HEIC",
+    "expected_type": "shelf",
+    "product_count": 1
+  },
+  {
+    "image_id": "IMG_2073",
+    "path": "data/2026_06_30/IMG_2073.HEIC",
+    "expected_type": "shelf",
+    "product_count": 1
+  },
+  {
+    "image_id": "IMG_2079",
+    "path": "data/receipts/IMG_2079.HEIC",
+    "expected_type": "receipt",
+    "product_count": 15
+  },
+  {
+    "image_id": "IMG_2080",
+    "path": "data/receipts/IMG_2080.HEIC",
+    "expected_type": "receipt",
+    "product_count": 10
+  },
+  {
+    "image_id": "IMG_2081",
+    "path": "data/receipts/IMG_2081.HEIC",
+    "expected_type": "receipt",
+    "product_count": 3
+  },
+  {
+    "image_id": "IMG_2082",
+    "path": "data/receipts/IMG_2082.HEIC",
+    "expected_type": "receipt",
+    "product_count": 4
+  },
+  {
+    "image_id": "IMG_2083",
+    "path": "data/receipts/IMG_2083.HEIC",
+    "expected_type": "receipt",
+    "product_count": 4
+  },
+  {
+    "image_id": "IMG_2084",
+    "path": "data/receipts/IMG_2084.HEIC",
+    "expected_type": "receipt",
+    "product_count": 3
+  }
+]

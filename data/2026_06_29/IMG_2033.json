@@ -1,0 +1,40 @@
+{
+  "image_path": "data/2026_06_29/jpg/IMG_2033.jpg",
+  "meta": {
+    "image_id": "IMG_2033",
+    "source_file": "data/2026_06_29/IMG_2033.HEIC",
+    "gps_latitude": 43.6535833333333,
+    "gps_longitude": -79.3976277777778,
+    "captured_at": "2026-06-29T15:55:52",
+    "date_folder": "2026_06_29"
+  },
+  "products": [
+    {
+      "product_name": "Sempio Gochujang Hot Pepper Paste",
+      "brand": "Sempio",
+      "price": 5.99,
+      "unit": "EA",
+      "size": "500g",
+      "net_weight": 0.5,
+      "category": "condiments"
+    },
+    {
+      "product_name": "Korean Gochujang Hot Pepper Paste",
+      "product_name_zh": "韓國辣椒醬",
+      "price": 5.99,
+      "unit": "EA",
+      "size": "500g",
+      "net_weight": 0.5,
+      "category": "condiments"
+    }
+  ],
+  "raw_response": "{\n  \"products\": [\n    {\n      \"product_name\": \"Sempio Gochujang Hot Pepper Paste\",\n      \"product_name_zh\": null,\n      \"brand\": \"Sempio\",\n      \"price\": 5.99,\n      \"unit\": \"EA\",\n      \"unit_price\": null,\n      \"unit_price_per_100g\": null,\n      \"regular_price\": null,\n      \"is_special\": false,\n      \"promo\": null,\n      \"barcode\": null,\n      \"size\": \"500g\",\n      \"net_weight\": 0.5,\n      \"net_weight_lb\": null,\n      \"packed_on\": null,\n      \"category\": \"condiments\",\n      \"notes\": null\n    },\n    {\n      \"product_name\": \"Korean Gochujang Hot Pepper Paste\",\n      \"product_name_zh\": \"韓國辣椒醬\",\n      \"brand\": null,\n      \"price\": 5.99,\n      \"unit\": \"EA\",\n      \"unit_price\": null,\n      \"unit_price_per_100g\": null,\n      \"regular_price\": null,\n      \"is_special\": false,\n      \"promo\": null,\n      \"barcode\": null,\n      \"size\": \"500g\",\n      \"net_weight\": 0.5,\n      \"net_weight_lb\": null,\n      \"packed_on\": null,\n      \"category\": \"condiments\",\n      \"notes\": null\n    }\n  ]\n}",
+  "extractor": "gemini_direct",
+  "timing": {
+    "prep_ms": 116,
+    "llm_ms": 2351,
+    "duration_ms": 2467,
+    "model": "gemini-3.1-flash-lite",
+    "classify_ms": null
+  }
+}

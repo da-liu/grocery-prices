@@ -1,0 +1,55 @@
+{
+  "image_path": "data/2026_06_29/jpg/IMG_2041.jpg",
+  "meta": {
+    "image_id": "IMG_2041",
+    "source_file": "data/2026_06_29/IMG_2041.HEIC",
+    "gps_latitude": 43.6535305555556,
+    "gps_longitude": -79.3980416666667,
+    "captured_at": "2026-06-29T15:58:20",
+    "date_folder": "2026_06_29"
+  },
+  "products": [
+    {
+      "product_name": "Mr. Goudas Calrose Rice",
+      "product_name_zh": "日本蓬萊米",
+      "brand": "Mr. Goudas",
+      "price": 17.99,
+      "unit": "EA",
+      "barcode": "1549",
+      "size": "15lb",
+      "net_weight_lb": 15.0,
+      "category": "rice"
+    },
+    {
+      "product_name": "Tastie Jasmine Rice",
+      "product_name_zh": "品坊茉莉香米",
+      "brand": "Tastie",
+      "price": 11.99,
+      "unit": "bag",
+      "barcode": "87159300713",
+      "size": "6.8kg",
+      "net_weight": 6.8,
+      "category": "rice"
+    },
+    {
+      "product_name": "Phoenix Barge Jasmine Rice",
+      "product_name_zh": "鳳艇香米",
+      "brand": "Phoenix Barge",
+      "price": 19.99,
+      "unit": "bag",
+      "regular_price": 22.99,
+      "is_special": true,
+      "promo": "Special",
+      "category": "rice"
+    }
+  ],
+  "raw_response": "{\n  \"products\": [\n    {\n      \"product_name\": \"Mr. Goudas Calrose Rice\",\n      \"product_name_zh\": \"日本蓬萊米\",\n      \"brand\": \"Mr. Goudas\",\n      \"price\": 17.99,\n      \"unit\": \"EA\",\n      \"unit_price\": null,\n      \"unit_price_per_100g\": null,\n      \"regular_price\": null,\n      \"is_special\": false,\n      \"promo\": null,\n      \"barcode\": \"1549\",\n      \"size\": \"15lb\",\n      \"net_weight\": null,\n      \"net_weight_lb\": 15,\n      \"packed_on\": null,\n      \"category\": \"rice\",\n      \"notes\": null\n    },\n    {\n      \"product_name\": \"Tastie Jasmine Rice\",\n      \"product_name_zh\": \"品坊茉莉香米\",\n      \"brand\": \"Tastie\",\n      \"price\": 11.99,\n      \"unit\": \"bag\",\n      \"unit_price\": null,\n      \"unit_price_per_100g\": null,\n      \"regular_price\": null,\n      \"is_special\": false,\n      \"promo\": null,\n      \"barcode\": \"87159300713\",\n      \"size\": \"6.8kg\",\n      \"net_weight\": 6.8,\n      \"net_weight_lb\": null,\n      \"packed_on\": null,\n      \"category\": \"rice\",\n      \"notes\": null\n    },\n    {\n      \"product_name\": \"Phoenix Barge Jasmine Rice\",\n      \"product_name_zh\": \"鳳艇香米\",\n      \"brand\": \"Phoenix Barge\",\n      \"price\": 19.99,\n      \"unit\": \"bag\",\n      \"unit_price\": null,\n      \"unit_price_per_100g\": null,\n      \"regular_price\": 22.99,\n      \"is_special\": true,\n      \"promo\": \"Special\",\n      \"barcode\": null,\n      \"size\": null,\n      \"net_weight\": null,\n      \"net_weight_lb\": null,\n      \"packed_on\": null,\n      \"category\": \"rice\",\n      \"notes\": null\n    }\n  ]\n}",
+  "extractor": "gemini_direct",
+  "timing": {
+    "prep_ms": 114,
+    "llm_ms": 2452,
+    "duration_ms": 2566,
+    "model": "gemini-3.1-flash-lite",
+    "classify_ms": null
+  }
+}
