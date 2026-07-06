@@ -100,12 +100,15 @@ export function StoreLabelModal({ request, onDone, onDismiss }: StoreLabelModalP
             <figcaption>{request.imageId}</figcaption>
           </figure>
           {hasGps && (
-            <MapPreview
-              lat={request.latitude!}
-              lon={request.longitude!}
-              label="Photo location"
-              className="store-label-map"
-            />
+            <figure className="store-label-preview">
+              <MapPreview
+                lat={request.latitude!}
+                lon={request.longitude!}
+                label="Photo location"
+                className="store-label-map"
+              />
+              <figcaption>Photo location</figcaption>
+            </figure>
           )}
         </div>
 

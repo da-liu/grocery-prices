@@ -37,18 +37,4 @@ def resolve_blob_path(blob_key: str) -> Path:
 def find_user_jpg(user_id: str, image_id: str) -> Path | None:
     from grocery_extract.catalog_db import get_photo_blob_path
 
-    path = get_photo_blob_path(user_id, image_id)
-    if path is not None:
-        return path
-
-    photos_root = user_root(user_id) / "photos"
-    if not photos_root.exists():
-        return None
-    for batch_dir in sorted(photos_root.glob("20*")):
-        jpg = batch_dir / "jpg" / f"{image_id}.jpg"
-        if jpg.exists():
-            return jpg
-        webp = batch_dir / f"{image_id}.webp"
-        if webp.exists():
-            return webp
-    return None
+    return get_photo_blob_path(user_id, image_id)

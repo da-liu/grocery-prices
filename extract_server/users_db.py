@@ -92,7 +92,9 @@ def init_db() -> None:
             id TEXT PRIMARY KEY,
             username TEXT NOT NULL UNIQUE COLLATE NOCASE,
             password_hash TEXT NOT NULL,
-            created_at TEXT NOT NULL
+            created_at TEXT NOT NULL,
+            onboarding_completed_at TEXT,
+            extract_backend TEXT
         );
         CREATE TABLE IF NOT EXISTS sessions (
             token TEXT PRIMARY KEY,
@@ -103,9 +105,6 @@ def init_db() -> None:
         CREATE INDEX IF NOT EXISTS idx_sessions_user ON sessions(user_id);
         """
     )
-    columns = {row[1] for row in conn.execute("PRAGMA table_info(users)")}
-    if "onboarding_completed_at" not in columns:
-        conn.execute("ALTER TABLE users ADD COLUMN onboarding_completed_at TEXT")
 
     from grocery_extract.catalog_db import init_catalog_tables
     from grocery_extract.user_stores_db import init_user_store_tables
@@ -214,3 +213,31 @@ def count_user_extractions(user_id: str) -> int:
     from grocery_extract.catalog_db import count_extractions
 
     return count_extractions(user_id)
+
+
+def get_user_extract_backend(user_id: str) -> str:
+    from grocery_extract.cursor_extractor import VALID_EXTRACT_BACKENDS, current_extract_backend
+
+    conn = get_conn()
+    row = conn.execute(
+        "SELECT extract_backend FROM users WHERE id = ?",
+        (user_id,),
+    ).fetchone()
+    if row is None or row["extract_backend"] is None:
+        return current_extract_backend()
+    backend = row["extract_backend"]
+    if backend not in VALID_EXTRACT_BACKENDS:
+        return current_extract_backend()
+    return backend
+
+
+def set_user_extract_backend(user_id: str, backend: str) -> str:
+    from grocery_extract.cursor_extractor import normalize_extract_backend
+
+    normalized = normalize_extract_backend(backend)
+    conn = get_conn()
+    conn.execute(
+        "UPDATE users SET extract_backend = ? WHERE id = ?",
+        (normalized, user_id),
+    )
+    return normalized

@@ -33,7 +33,7 @@ const sampleProducts: Product[] = [
     price: 3.99,
     category: "produce",
     captured_at: "2026-01-15T12:00:00Z",
-    is_special: false,
+    other: { is_special: false },
     location: { store: "Longos", store_location_id: "s1" },
   }),
   makeProduct({
@@ -42,7 +42,7 @@ const sampleProducts: Product[] = [
     price: 1.99,
     category: "produce",
     captured_at: "2026-02-01T12:00:00Z",
-    is_special: true,
+    other: { is_special: true },
     location: { store: "Costco" },
   }),
   makeProduct({
@@ -59,7 +59,7 @@ const sampleProducts: Product[] = [
     price: 4.5,
     category: "bakery",
     captured_at: "2025-12-01T12:00:00Z",
-    is_special: false,
+    other: { is_special: false },
     location: { store: "Longos", store_location_id: "s1" },
   }),
 ];

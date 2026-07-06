@@ -10,17 +10,16 @@ def _seed_user_products(client, username: str, token: str) -> tuple[str, list[st
         ).fetchone()["id"]
 
     user_dir = user_root(user_id)
-    batch_dir = user_dir / "photos" / "2026_06_30" / "jpg"
+    batch_dir = user_dir / "photos" / "2026_06_30"
     batch_dir.mkdir(parents=True, exist_ok=True)
-    (batch_dir / "IMG_0001.jpg").write_bytes(b"jpg")
-    (batch_dir / "IMG_0002.jpg").write_bytes(b"jpg")
+    (batch_dir / "IMG_0001.webp").write_bytes(b"webp")
+    (batch_dir / "IMG_0002.webp").write_bytes(b"webp")
 
     save_photo_ingest(
         user_id,
         photo_id="IMG_0001",
         photo_type="shelf",
-        original_blob_key=None,
-        photo_blob_key=f"users/{user_id}/photos/2026_06_30/jpg/IMG_0001.jpg",
+        blob_key=f"users/{user_id}/photos/2026_06_30/IMG_0001.webp",
         content_hash=None,
         gps_latitude=None,
         gps_longitude=None,
@@ -37,8 +36,7 @@ def _seed_user_products(client, username: str, token: str) -> tuple[str, list[st
         user_id,
         photo_id="IMG_0002",
         photo_type="shelf",
-        original_blob_key=None,
-        photo_blob_key=f"users/{user_id}/photos/2026_06_30/jpg/IMG_0002.jpg",
+        blob_key=f"users/{user_id}/photos/2026_06_30/IMG_0002.webp",
         content_hash=None,
         gps_latitude=None,
         gps_longitude=None,

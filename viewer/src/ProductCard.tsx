@@ -7,6 +7,42 @@ import { StoreLink } from "./StoreLink";
 import { photoGroupLinkLabel } from "./browseQuery";
 import type { PriceInsight, Product } from "./types";
 
+function formatOtherKey(key: string) {
+  return key
+    .replace(/_/g, " ")
+    .replace(/\b\w/g, (char) => char.toUpperCase());
+}
+
+function formatOtherValue(value: string | number | boolean | null) {
+  if (typeof value === "boolean") {
+    return value ? "Yes" : "No";
+  }
+  if (typeof value === "number") {
+    return String(value);
+  }
+  return String(value);
+}
+
+function otherEntries(other: Product["other"]) {
+  return Object.entries(other ?? {}).filter(
+    ([key, value]) => key !== "is_special" && value != null && value !== "",
+  );
+}
+
+function otherFlag(product: Product, key: string) {
+  return product.other?.[key] === true;
+}
+
+function otherNumber(product: Product, key: string) {
+  const value = product.other?.[key];
+  return typeof value === "number" ? value : null;
+}
+
+function otherString(product: Product, key: string) {
+  const value = product.other?.[key];
+  return value == null ? "" : String(value);
+}
+
 function formatPrice(price: number | null | undefined, currency = "CAD") {
   if (price == null) return "—";
   return new Intl.NumberFormat("en-CA", {
@@ -43,7 +79,7 @@ function ProductEditForm({ product, saving, onSave, onCancel }: ProductEditFormP
   const [price, setPrice] = useState(product.price?.toString() ?? "");
   const [unit, setUnit] = useState(product.unit ?? "");
   const [unitPrice, setUnitPrice] = useState(product.unit_price?.toString() ?? "");
-  const [barcode, setBarcode] = useState(product.barcode ?? "");
+  const [barcode, setBarcode] = useState(otherString(product, "barcode"));
 
   return (
     <form
@@ -55,7 +91,10 @@ function ProductEditForm({ product, saving, onSave, onCancel }: ProductEditFormP
           price: price.trim() ? Number(price) : null,
           unit: unit.trim() || undefined,
           unit_price: unitPrice.trim() ? Number(unitPrice) : null,
-          barcode: barcode.trim() || undefined,
+          other: {
+            ...product.other,
+            ...(barcode.trim() ? { barcode: barcode.trim() } : {}),
+          },
         });
       }}
     >
@@ -339,7 +378,7 @@ export function ProductCard({
         }}
       >
         <img src={imgSrc} alt={product.product_name} loading="lazy" />
-        {product.is_special && <span className="badge special">Special</span>}
+        {otherFlag(product, "is_special") && <span className="badge special">Special</span>}
         {isEmpty && <span className="badge empty">No products</span>}
       </button>
       {!selecting && lightboxOpen && (
@@ -459,7 +498,6 @@ export function ProductCard({
           </div>
         ) : (
           <>
-            {product.product_name_zh && <p className="zh">{product.product_name_zh}</p>}
             {editing && onEdit ? (
               <ProductEditForm
                 product={product}
@@ -475,11 +513,12 @@ export function ProductCard({
                 <div className="price-row">
                   <span className="price">{formatPrice(product.price, product.price_currency)}</span>
                   {product.unit && <span className="unit">/ {product.unit}</span>}
-                  {product.regular_price != null && product.is_special && (
-                    <span className="was">was {formatPrice(product.regular_price)}</span>
+                  {otherNumber(product, "regular_price") != null && otherFlag(product, "is_special") && (
+                    <span className="was">
+                      was {formatPrice(otherNumber(product, "regular_price"))}
+                    </span>
                   )}
                 </div>
-                {product.promo && <p className="promo">{product.promo}</p>}
                 {product.price_insights && product.price_insights.length > 0 && (
                   <PriceInsights
                     insights={product.price_insights}
@@ -492,18 +531,11 @@ export function ProductCard({
         )}
 
         <dl className="meta">
-          {!isEmpty && product.brand && (
-            <>
-              <dt>Brand</dt>
-              <dd>{product.brand}</dd>
-            </>
-          )}
-          {!isEmpty && product.size && (
-            <>
-              <dt>Size</dt>
-              <dd>{product.size}</dd>
-            </>
-          )}
+          {!isEmpty &&
+            otherEntries(product.other).flatMap(([key, value]) => [
+              <dt key={`${key}-label`}>{formatOtherKey(key)}</dt>,
+              <dd key={`${key}-value`}>{formatOtherValue(value)}</dd>,
+            ])}
           {!isEmpty && product.unit_price != null && (
             <>
               <dt>Unit price</dt>
@@ -512,21 +544,11 @@ export function ProductCard({
               </dd>
             </>
           )}
-          {!isEmpty && product.barcode && (
-            <>
-              <dt>Barcode</dt>
-              <dd className="mono">{product.barcode}</dd>
-            </>
-          )}
-          {!isEmpty && product.packed_on && (
-            <>
-              <dt>Packed on</dt>
-              <dd>{product.packed_on}</dd>
-            </>
-          )}
           <dt>Store</dt>
           <dd className="store-meta-row">
-            <StoreLink location={product.location} />
+            <span className="store-meta-name">
+              <StoreLink location={product.location} />
+            </span>
             {onLabelLocation && (
               <LocationLabelButton
                 needsLabel={needsLabel}

@@ -246,6 +246,9 @@ export function UploadQueueProvider({
             status.extraction_status === "pending" ||
             status.extraction_status === "processing"
           ) {
+            if (status.photo_type === "receipt") {
+              updateItem(item.id, { detectedReceipt: true });
+            }
             continue;
           }
           await finishUpload(item, status);
@@ -258,7 +261,7 @@ export function UploadQueueProvider({
         }
       }
     },
-    [finishUpload],
+    [finishUpload, updateItem],
   );
 
   const handleItemResult = useCallback(

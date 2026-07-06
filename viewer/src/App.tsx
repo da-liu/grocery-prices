@@ -22,8 +22,6 @@ import {
   type BrowseQueryState,
 } from "./browseQuery";
 import { ComparePage, hasComparableProducts } from "./ComparePage";
-import { CompressPage } from "./CompressPage";
-import { MetadataPage } from "./MetadataPage";
 import { OnboardingGuide } from "./OnboardingGuide";
 import { SettingsPage } from "./SettingsPage";
 import { AuthLoadingScreen } from "./AuthLoadingScreen";
@@ -37,14 +35,13 @@ import type { Product } from "./types";
 import type { ManualProductInput, ProductUpdateInput } from "./api";
 import "./App.css";
 
-type Page = "browse" | "compare" | "settings" | "metadata" | "compress";
+type Page = "browse" | "compare" | "settings";
 
 function pageFromHash(): Page {
   const hash = window.location.hash.replace(/^#\/?/, "");
-  if (hash === "compare" || hash === "settings" || hash === "metadata" || hash === "compress") {
+  if (hash === "compare" || hash === "settings") {
     return hash;
   }
-  if (hash === "exif") return "metadata";
   return "browse";
 }
 
@@ -646,8 +643,6 @@ function AuthenticatedApp({
         />
       )}
       {page === "settings" && <SettingsPage />}
-      {page === "metadata" && <MetadataPage />}
-      {page === "compress" && <CompressPage />}
       {page === "compare" && (products.length > 0 || !productsLoading) && (
         <ComparePage
           products={products}

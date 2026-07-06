@@ -96,10 +96,20 @@ def test_upload_with_gemini_direct_backend_uses_google_key(client):
         json={"username": "gemini-uploader", "password": "password123"},
     )
     token = reg.json()["token"]
+    headers = {"Authorization": f"Bearer {token}"}
     captured: dict[str, object] = {}
+
+    settings = client.patch(
+        "/api/settings",
+        headers=headers,
+        json={"extract_backend": "gemini_direct"},
+    )
+    assert settings.status_code == 200, settings.text
+    assert settings.json()["extract_backend"] == "gemini_direct"
 
     def fake_batch(paths, **kwargs):
         captured["api_key"] = kwargs["api_key"]
+        captured["extract_backend"] = kwargs["extract_backend"]
         return [
             {
                 "image_id": "IMG_0001",
@@ -117,18 +127,18 @@ def test_upload_with_gemini_direct_backend_uses_google_key(client):
         with patch.dict(
             "os.environ",
             {
-                "GROCERY_EXTRACT_BACKEND": "gemini_direct",
                 "GOOGLE_API_KEY": "google-test-key",
             },
         ):
             resp = client.post(
                 "/api/photos/bulk",
-                headers={"Authorization": f"Bearer {token}"},
+                headers=headers,
                 files=[("files", ("x.jpg", b"abc", "image/jpeg"))],
                 data={"source": "upload"},
             )
     assert resp.status_code == 202
     assert captured["api_key"] == "google-test-key"
+    assert captured["extract_backend"] == "gemini_direct"
 
 
 def test_rerun_extraction_with_gemini_direct_uses_google_key(client):
@@ -137,6 +147,14 @@ def test_rerun_extraction_with_gemini_direct_uses_google_key(client):
         json={"username": "gemini-reextract", "password": "password123"},
     )
     token = reg.json()["token"]
+    headers = {"Authorization": f"Bearer {token}"}
+
+    settings = client.patch(
+        "/api/settings",
+        headers=headers,
+        json={"extract_backend": "gemini_direct"},
+    )
+    assert settings.status_code == 200, settings.text
 
     with patch(
         "server.reextract_photo",
@@ -151,17 +169,47 @@ def test_rerun_extraction_with_gemini_direct_uses_google_key(client):
         with patch.dict(
             "os.environ",
             {
-                "GROCERY_EXTRACT_BACKEND": "gemini_direct",
                 "GOOGLE_API_KEY": "google-test-key",
             },
         ):
             resp = client.post(
                 "/api/photos/IMG_0001/re-extract",
-                headers={"Authorization": f"Bearer {token}"},
+                headers=headers,
             )
 
     assert resp.status_code == 200
     assert reextract.call_args.kwargs["api_key"] == "google-test-key"
+    assert reextract.call_args.kwargs["extract_backend"] == "gemini_direct"
+
+
+def test_settings_get_and_patch(client):
+    reg = client.post(
+        "/api/auth/register",
+        json={"username": "settings-user", "password": "password123"},
+    )
+    token = reg.json()["token"]
+    headers = {"Authorization": f"Bearer {token}"}
+
+    get_resp = client.get("/api/settings", headers=headers)
+    assert get_resp.status_code == 200
+    assert get_resp.json()["extract_backend"] == "cursor"
+    assert get_resp.json()["extract_model"] == "auto"
+
+    patch_resp = client.patch(
+        "/api/settings",
+        headers=headers,
+        json={"extract_backend": "gemini_direct"},
+    )
+    assert patch_resp.status_code == 200
+    assert patch_resp.json()["extract_backend"] == "gemini_direct"
+    assert patch_resp.json()["extract_model"] == "gemini-3.1-flash-lite"
+
+    bad_resp = client.patch(
+        "/api/settings",
+        headers=headers,
+        json={"extract_backend": "openai"},
+    )
+    assert bad_resp.status_code == 400
 
 
 def test_complete_onboarding(client):
@@ -233,8 +281,8 @@ def test_store_locations_crud(client):
     assert client.get("/api/store-locations", headers=headers).json() == []
 
 
-def test_store_location_snap_and_merge(client):
-    username = f"stores_merge_{uuid.uuid4().hex[:8]}"
+def test_store_location_snap_on_create(client):
+    username = f"stores_snap_{uuid.uuid4().hex[:8]}"
     reg = client.post(
         "/api/auth/register",
         json={"username": username, "password": "password123"},
@@ -271,27 +319,6 @@ def test_store_location_snap_and_merge(client):
     second_store = second.json()
     assert second_store["matched_existing"] is True
     assert second_store["id"] == first_store["id"]
-
-    third = client.post(
-        "/api/store-locations",
-        headers=headers,
-        json={
-            "name": "Longos",
-            "latitude": 43.642394,
-            "longitude": -79.381181,
-            "match_radius_m": 150,
-        },
-    )
-    assert third.status_code == 200, third.text
-    longos_id = third.json()["id"]
-
-    merged = client.post(
-        "/api/store-locations/merge",
-        headers=headers,
-        json={"source_id": longos_id, "target_id": first_store["id"]},
-    )
-    assert merged.status_code == 200, merged.text
-    assert merged.json()["id"] == first_store["id"]
 
     listed = client.get("/api/store-locations", headers=headers)
     assert len(listed.json()) == 1

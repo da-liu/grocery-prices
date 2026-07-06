@@ -19,7 +19,7 @@ def test_persist_image_keeps_webp_without_jpeg_copy(tmp_path: Path, monkeypatch)
     upload = tmp_path / "upload.webp"
     upload.write_bytes(b"RIFF....WEBP")
 
-    original_key, canonical_key, suffix = _persist_image(
+    key, suffix = _persist_image(
         upload,
         image_id,
         date_folder,
@@ -27,27 +27,20 @@ def test_persist_image_keeps_webp_without_jpeg_copy(tmp_path: Path, monkeypatch)
     )
 
     assert suffix == ".webp"
-    assert original_key == canonical_key
-    assert canonical_key.endswith("/IMG_0001.webp")
+    assert key.endswith("/IMG_0001.webp")
 
-    webp_path = tmp_path / "data" / canonical_key
+    webp_path = tmp_path / "data" / key
     jpg_path = webp_path.parent / "jpg" / f"{image_id}.jpg"
     assert webp_path.exists()
     assert webp_path.read_bytes() == b"RIFF....WEBP"
     assert not jpg_path.exists()
 
 
-def test_blob_keys_always_uses_webp_path():
-    from grocery_extract.catalog_db import blob_keys
+def test_blob_key_uses_webp_path():
+    from grocery_extract.catalog_db import blob_key
 
-    original, canonical = blob_keys(
-        "user-1",
-        "2026_07_06",
-        "IMG_0002",
-        original_suffix=".jpg",
-    )
-    assert original == "users/user-1/photos/2026_07_06/IMG_0002.webp"
-    assert canonical == original
+    key = blob_key("user-1", "2026_07_06", "IMG_0002")
+    assert key == "users/user-1/photos/2026_07_06/IMG_0002.webp"
 
 
 def test_persist_image_rejects_jpeg(tmp_path: Path, monkeypatch):

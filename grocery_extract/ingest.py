@@ -5,14 +5,13 @@ import os
 import shutil
 import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 from zoneinfo import ZoneInfo
 
 from grocery_extract.catalog_db import (
-    blob_keys,
-    compute_extraction_timing_metrics,
+    blob_key,
     finalize_photo_extraction,
     find_photo_by_content_hash,
     get_photo,
@@ -21,24 +20,18 @@ from grocery_extract.catalog_db import (
     new_photo_id,
     new_photo_ids,
     photo_type_from_ingest_source,
-    save_photo_pending,
-    set_extraction_status,
+    record_photo_extraction_failure,
+    save_photo,
 )
 from grocery_extract.delete import delete_photo
 from grocery_extract.duplicate import file_content_hash
-from grocery_extract.exif import (
-    captured_at_from_exif,
-    date_folder_from_exif,
-    normalize_client_exif,
-)
 from grocery_extract.extract_worker import ExtractionJob, enqueue_extraction, record_extraction_failure
 from grocery_extract.request_context import get_request_id
 from grocery_extract.pipeline import extract_from_upload
-from grocery_extract.photo_classifier import classify_photo_type
 from grocery_extract.photo_stores import image_needs_store_label
 from grocery_extract.product_matching import overlapping_product_keys, products_to_match_rows
 from grocery_extract.stores import store_from_gps
-from grocery_extract.user_paths import resolve_blob_path, user_photos_dir, user_root
+from grocery_extract.user_paths import user_photos_dir, user_root
 
 TORONTO = ZoneInfo("America/Toronto")
 DEFAULT_UPLOAD_WORKERS = int(os.environ.get("GROCERY_UPLOAD_WORKERS", "4"))
@@ -54,7 +47,7 @@ def _persist_image(
     image_id: str,
     date_folder: str,
     user_id: str,
-) -> tuple[str | None, str, str]:
+) -> tuple[str, str]:
     batch_dir = user_photos_dir(user_id, date_folder)
     batch_dir.mkdir(parents=True, exist_ok=True)
 
@@ -66,8 +59,8 @@ def _persist_image(
 
     dest = batch_dir / f"{image_id}.webp"
     shutil.copy2(upload_path, dest)
-    original_key, photo_key = blob_keys(user_id, date_folder, image_id)
-    return photo_key, photo_key, ".webp"
+    key = blob_key(user_id, date_folder, image_id)
+    return key, ".webp"
 
 
 def _duplicate_response(
@@ -132,6 +125,7 @@ def accept_upload(
     existing_products: list[dict[str, Any]] | None = None,
     user_stores: list[dict[str, Any]] | None = None,
     client_exif: dict | None = None,
+    extract_backend: str | None = None,
 ) -> dict:
     """Persist an uploaded photo and return quickly with extraction_status=pending."""
     user_root(user_id).mkdir(parents=True, exist_ok=True)
@@ -152,32 +146,12 @@ def accept_upload(
 
     image_id = image_id or new_photo_id()
     photo_type = photo_type_from_ingest_source(source)
-    detected_receipt = False
-    classify_ms: int | None = None
 
-    exif = normalize_client_exif(client_exif) or {}
-    raw_dt = exif.get("DateTimeOriginal")
-    date_folder = date_folder_from_exif(raw_dt) or _today_folder()
-    captured_at = captured_at_from_exif(raw_dt)
+    exif = client_exif if isinstance(client_exif, dict) else {}
+    captured_at = exif.get("captured_at")
+    date_folder = exif.get("date_folder") or _today_folder()
 
-    original_key, photo_key, _suffix = _persist_image(upload_path, image_id, date_folder, user_id)
-
-    if source == "upload":
-        image_path = resolve_blob_path(photo_key)
-        try:
-            classification = classify_photo_type(image_path)
-            classify_ms = classification.classify_ms
-            if classification.photo_type == "receipt":
-                photo_type = "receipt"
-                detected_receipt = True
-        except Exception:
-            logger.warning(
-                "photo_classification_failed photo_id=%s user_id=%s request_id=%s",
-                image_id,
-                user_id,
-                get_request_id() or "-",
-                exc_info=True,
-            )
+    key, _suffix = _persist_image(upload_path, image_id, date_folder, user_id)
 
     if user_stores is None:
         from grocery_extract.user_stores_db import list_user_stores_as_dicts
@@ -192,12 +166,11 @@ def accept_upload(
         if matched:
             store_location_id = matched["id"]
 
-    save_photo_pending(
+    save_photo(
         user_id,
         photo_id=image_id,
         photo_type=photo_type,
-        original_blob_key=original_key,
-        photo_blob_key=photo_key,
+        blob_key=key,
         content_hash=content_hash,
         gps_latitude=lat,
         gps_longitude=lon,
@@ -232,16 +205,14 @@ def accept_upload(
         "overlapping_products": [],
         "duplicate": False,
         "extraction_status": "pending",
-        "detected_receipt": detected_receipt,
         "_job": {
             "exif": exif,
-            "photo_type": photo_type,
-            "classify_ms": classify_ms,
             "date_folder": date_folder,
             "captured_at": captured_at,
             "store_location_id": store_location_id,
             "existing_products": existing_products or [],
             "user_stores": user_stores,
+            "extract_backend": extract_backend,
         },
     }
 
@@ -255,8 +226,6 @@ def run_extraction(job: ExtractionJob) -> dict:
         job.user_id,
         request_id,
     )
-    set_extraction_status(job.user_id, job.image_id, "processing")
-
     from grocery_extract.catalog_db import get_photo_blob_path
 
     image_path = get_photo_blob_path(job.user_id, job.image_id)
@@ -268,59 +237,53 @@ def run_extraction(job: ExtractionJob) -> dict:
             image_path,
             image_id=job.image_id,
             api_key=job.api_key,
-            prompt_variant="receipt" if job.photo_type == "receipt" else "shelf",
+            backend=job.extract_backend,
             exif=job.exif,
             skip_normalize=True,
         )
         products = [product.to_product_dict() for product in result.products]
+        photo_type = result.photo_type
         timing = result.timing
-        if job.classify_ms is not None:
-            if timing is None:
-                from grocery_extract.schema import ExtractionTiming
-
-                timing = ExtractionTiming(classify_ms=job.classify_ms)
-            else:
-                timing = timing.model_copy(update={"classify_ms": job.classify_ms})
-        duration_ms = timing.duration_ms if timing else int((time.perf_counter() - extraction_start) * 1000)
-        photo = get_photo(job.user_id, job.image_id)
-        queue_wait_ms, total_ms = compute_extraction_timing_metrics(
-            created_at=photo["created_at"] if photo else None,
-            extraction_started_at=photo.get("extraction_started_at") if photo else None,
-            duration_ms=duration_ms,
-            classify_ms=timing.classify_ms if timing else None,
-        )
+        if timing is not None:
+            llm_ms = timing.llm_ms
+            other_ms = timing.other_ms
+        else:
+            elapsed_ms = int((time.perf_counter() - extraction_start) * 1000)
+            llm_ms = None
+            other_ms = elapsed_ms
         product_count = finalize_photo_extraction(
             job.user_id,
             job.image_id,
             extractor=result.extractor,
             raw_response=result.raw_response,
             products=products,
-            duration_ms=duration_ms,
-            prep_ms=timing.prep_ms if timing else None,
-            llm_ms=timing.llm_ms if timing else None,
+            llm_ms=llm_ms,
+            other_ms=other_ms,
             model=timing.model if timing else None,
-            photo_type=job.photo_type,
-            classify_ms=timing.classify_ms if timing else None,
+            photo_type=photo_type,
         )
         logger.info(
-            "extraction_complete photo_id=%s user_id=%s request_id=%s extract_ms=%s queue_wait_ms=%s "
-            "classify_ms=%s model=%s products=%s total_ms=%s",
+            "extraction_complete photo_id=%s user_id=%s request_id=%s llm_ms=%s other_ms=%s "
+            "photo_type=%s model=%s products=%s",
             job.image_id,
             job.user_id,
             request_id,
-            duration_ms,
-            queue_wait_ms,
-            timing.classify_ms if timing else None,
+            llm_ms,
+            other_ms,
+            photo_type,
             timing.model if timing else None,
             product_count,
-            total_ms,
         )
 
+        store_location_id = job.store_location_id
+        if photo_type == "receipt":
+            store_location_id = None
+
         location = _location_for_accept(
-            photo_type=job.photo_type,
+            photo_type=photo_type,
             exif=job.exif,
             user_stores=job.user_stores,
-            store_location_id=job.store_location_id,
+            store_location_id=store_location_id,
         )
         new_rows = products_to_match_rows(
             products,
@@ -356,6 +319,7 @@ def run_extraction(job: ExtractionJob) -> dict:
             "overlapping_products": overlaps,
             "duplicate": False,
             "extraction_status": "done",
+            "detected_receipt": photo_type == "receipt",
         }
     except Exception as err:
         record_extraction_failure(type(err).__name__)
@@ -366,7 +330,7 @@ def run_extraction(job: ExtractionJob) -> dict:
             request_id,
             type(err).__name__,
         )
-        set_extraction_status(job.user_id, job.image_id, "failed", error=str(err))
+        record_photo_extraction_failure(job.user_id, job.image_id, str(err))
         return {
             "image_id": job.image_id,
             "extraction_status": "failed",
@@ -382,7 +346,7 @@ def run_extraction(job: ExtractionJob) -> dict:
 
 
 def _job_from_accept_result(result: dict, *, user_id: str, source: str, api_key: str | None) -> ExtractionJob | None:
-    if result.get("extraction_status") != "pending":
+    if result.get("skipped") or result.get("duplicate"):
         return None
     job_data = result.get("_job")
     if job_data is None:
@@ -395,13 +359,12 @@ def _job_from_accept_result(result: dict, *, user_id: str, source: str, api_key:
         existing_products=job_data["existing_products"],
         user_stores=job_data["user_stores"],
         exif=job_data["exif"],
-        photo_type=job_data["photo_type"],
         date_folder=job_data["date_folder"],
         captured_at=job_data["captured_at"],
         store_location_id=job_data["store_location_id"],
         content_hash=result["content_hash"],
-        classify_ms=job_data.get("classify_ms"),
         request_id=result.get("request_id"),
+        extract_backend=job_data.get("extract_backend"),
     )
 
 
@@ -416,6 +379,7 @@ def accept_upload_batch(
     enqueue: bool = True,
     client_exifs: list[dict | None] | None = None,
     request_id: str | None = None,
+    extract_backend: str | None = None,
 ) -> list[dict]:
     image_ids = new_photo_ids(len(upload_paths))
     workers = max(1, min(max_workers or DEFAULT_UPLOAD_WORKERS, len(upload_paths)))
@@ -443,6 +407,7 @@ def accept_upload_batch(
             existing_products=existing_products,
             user_stores=user_stores,
             client_exif=exif_payload,
+            extract_backend=extract_backend,
         )
 
     if workers == 1:

@@ -28,18 +28,17 @@ def test_accept_upload_returns_pending_without_extraction(tmp_path: Path, monkey
     )
     monkeypatch.setattr("grocery_extract.ingest.image_needs_store_label", lambda *_args: False)
 
-    with patch("grocery_extract.ingest.classify_photo_type") as classify:
-        classify.return_value.photo_type = "shelf"
-        classify.return_value.classify_ms = 1
-        started = time.perf_counter()
-        result = accept_upload(upload, user_id=user.id, source="upload")
-        accept_ms = (time.perf_counter() - started) * 1000
+    started = time.perf_counter()
+    result = accept_upload(upload, user_id=user.id, source="upload")
+    accept_ms = (time.perf_counter() - started) * 1000
 
     assert result["extraction_status"] == "pending"
     assert accept_ms < 5000
     photo = get_photo(user.id, result["image_id"])
     assert photo is not None
-    assert photo["extraction_status"] == "pending"
+    from grocery_extract.catalog_db import get_extraction
+
+    assert get_extraction(user.id, result["image_id"]) is None
 
 
 def test_run_extraction_completes_photo(tmp_path: Path, monkeypatch):
@@ -62,10 +61,7 @@ def test_run_extraction_completes_photo(tmp_path: Path, monkeypatch):
     )
     monkeypatch.setattr("grocery_extract.ingest.image_needs_store_label", lambda *_args: False)
 
-    with patch("grocery_extract.ingest.classify_photo_type") as classify:
-        classify.return_value.photo_type = "shelf"
-        classify.return_value.classify_ms = 1
-        accepted = accept_upload(upload, user_id=user.id, source="upload")
+    accepted = accept_upload(upload, user_id=user.id, source="upload")
     job = ExtractionJob(
         user_id=user.id,
         image_id=accepted["image_id"],
@@ -74,7 +70,6 @@ def test_run_extraction_completes_photo(tmp_path: Path, monkeypatch):
         existing_products=[],
         user_stores=[],
         exif={},
-        photo_type="shelf",
         date_folder=accepted["date_folder"],
         captured_at=None,
         store_location_id=None,
@@ -90,9 +85,10 @@ def test_run_extraction_completes_photo(tmp_path: Path, monkeypatch):
             products=[
                 ExtractedProduct(product_name="Milk", price=4.99, category="dairy"),
             ],
-            raw_response='[{"product_name":"Milk","price":4.99,"category":"dairy"}]',
+            photo_type="shelf",
+            raw_response='{"type":"shelf","products":[{"product_name":"Milk","price":4.99,"category":"dairy"}]}',
             extractor="cursor_sdk",
-            timing=ExtractionTiming(prep_ms=50, llm_ms=2000, duration_ms=2050, model="auto"),
+            timing=ExtractionTiming(llm_ms=2000, other_ms=50, model="auto"),
         )
 
     monkeypatch.setattr("grocery_extract.ingest.extract_from_upload", fake_extract)
@@ -100,19 +96,17 @@ def test_run_extraction_completes_photo(tmp_path: Path, monkeypatch):
     result = run_extraction(job)
     assert result["extraction_status"] == "done"
     assert result["product_count"] == 1
-    photo = get_photo(user.id, accepted["image_id"])
-    assert photo["extraction_status"] == "done"
-    assert photo.get("extraction_started_at") is not None
 
     extraction = get_extraction(user.id, accepted["image_id"])
     assert extraction is not None
-    assert extraction["duration_ms"] == 2050
-    assert extraction["prep_ms"] == 50
+    assert extraction.get("extraction_error") is None
     assert extraction["llm_ms"] == 2000
+    assert extraction["other_ms"] == 50
     assert extraction["model"] == "auto"
-    assert extraction["queue_wait_ms"] is not None
-    assert extraction["queue_wait_ms"] >= 0
-    assert extraction["total_ms"] == extraction["queue_wait_ms"] + 2050
+
+    photo = get_photo(user.id, accepted["image_id"])
+    assert photo is not None
+    assert photo["type"] == "shelf"
 
 
 def test_photos_status_endpoint(client, monkeypatch, tmp_path: Path):

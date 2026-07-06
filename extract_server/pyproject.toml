@@ -16,8 +16,4 @@ dependencies = [
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
-markers = [
-  "slow: full Cursor SDK benchmark over many images",
-  "integration: calls live Cursor SDK",
-]
 filterwarnings = ["ignore::DeprecationWarning"]

@@ -18,6 +18,7 @@ from fastapi import Depends, FastAPI, File, HTTPException, Request, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, JSONResponse, Response
 from pydantic import BaseModel, Field
+from typing import Any
 
 ROOT = Path(__file__).resolve().parents[1]
 if str(ROOT) not in sys.path:
@@ -33,9 +34,14 @@ from extract_server.auth import (  # noqa: E402
 )
 from fastapi import Form, Response  # noqa: E402
 
-from grocery_extract.catalog_edit import add_product, reextract_photo, update_product  # noqa: E402
-from grocery_extract.catalog_db import list_product_rows, is_valid_photo_id
-from grocery_extract.cursor_extractor import configured_api_key  # noqa: E402
+from grocery_extract.catalog_db import (  # noqa: E402
+    add_product,
+    is_valid_photo_id,
+    list_product_rows,
+    reextract_photo,
+    update_product,
+)
+from grocery_extract.cursor_extractor import configured_api_key, default_extract_model  # noqa: E402
 from grocery_extract.delete import delete_product, delete_products_bulk  # noqa: E402
 from grocery_extract.errors import ConfigError, ExtractionError, GroceryError  # noqa: E402
 from grocery_extract.ingest import accept_upload_batch, build_status_response  # noqa: E402
@@ -50,7 +56,6 @@ from grocery_extract.user_stores_db import (  # noqa: E402
     delete_user_store,
     get_user_store,
     list_user_stores,
-    merge_user_stores,
     store_to_api_dict,
     update_user_store,
 )
@@ -59,8 +64,10 @@ from extract_server.users_db import (  # noqa: E402
     close_all_connections,
     complete_onboarding,
     count_user_extractions,
+    get_user_extract_backend,
     init_db,
     register_user,
+    set_user_extract_backend,
     user_needs_onboarding,
 )
 
@@ -206,16 +213,10 @@ class StoreLocationBody(BaseModel):
     latitude: float
     longitude: float
     match_radius_m: int = Field(default=150, ge=25, le=2000)
-    maps_url: str | None = None
 
 
 class AssignPhotoStoreBody(BaseModel):
     store_location_id: str
-
-
-class MergeStoreLocationsBody(BaseModel):
-    source_id: str
-    target_id: str
 
 
 class BulkDeleteProductsBody(BaseModel):
@@ -224,32 +225,32 @@ class BulkDeleteProductsBody(BaseModel):
 
 class ProductUpdateBody(BaseModel):
     product_name: str | None = None
-    product_name_zh: str | None = None
-    brand: str | None = None
+    other: dict[str, Any] | None = None
     price: float | None = None
     unit: str | None = None
     unit_price: float | None = None
-    unit_price_per_100g: float | None = None
-    regular_price: float | None = None
-    is_special: bool | None = None
-    promo: str | None = None
-    barcode: str | None = None
-    size: str | None = None
     category: str | None = None
-    notes: str | None = None
 
 
 class ManualProductBody(BaseModel):
     product_name: str = Field(min_length=1)
-    product_name_zh: str | None = None
-    brand: str | None = None
+    other: dict[str, Any] | None = None
     price: float | None = None
     unit: str | None = None
     unit_price: float | None = None
-    barcode: str | None = None
-    size: str | None = None
     category: str = "pantry"
-    notes: str | None = None
+
+
+class SettingsBody(BaseModel):
+    extract_backend: str = Field(min_length=1, max_length=32)
+
+
+def _settings_payload(user_id: str) -> dict[str, str]:
+    backend = get_user_extract_backend(user_id)
+    return {
+        "extract_backend": backend,
+        "extract_model": default_extract_model(backend),
+    }
 
 
 def _auth_payload(user) -> AuthResponse:
@@ -321,6 +322,23 @@ def finish_onboarding(user: Annotated[AuthUser, Depends(require_user)]) -> dict:
     }
 
 
+@app.get("/api/settings")
+def get_settings(user: Annotated[AuthUser, Depends(require_user)]) -> dict:
+    return _settings_payload(user.id)
+
+
+@app.patch("/api/settings")
+def update_settings(
+    body: SettingsBody,
+    user: Annotated[AuthUser, Depends(require_user)],
+) -> dict:
+    try:
+        set_user_extract_backend(user.id, body.extract_backend)
+    except ValueError as err:
+        raise HTTPException(status_code=400, detail=str(err)) from err
+    return _settings_payload(user.id)
+
+
 @app.get("/api/products")
 def list_products(user: Annotated[AuthUser, Depends(require_user)]) -> list[dict]:
     return list_product_rows(user.id)
@@ -362,8 +380,14 @@ def rerun_extraction(
 ) -> dict:
     if not is_valid_photo_id(image_id):
         raise HTTPException(status_code=400, detail="Invalid image id")
-    api_key = configured_api_key()
-    result = reextract_photo(user.id, image_id, api_key=api_key)
+    extract_backend = get_user_extract_backend(user.id)
+    api_key = configured_api_key(backend=extract_backend)
+    result = reextract_photo(
+        user.id,
+        image_id,
+        api_key=api_key,
+        extract_backend=extract_backend,
+    )
     if result is None:
         raise HTTPException(status_code=404, detail="Photo not found")
     return result
@@ -417,23 +441,6 @@ def create_store_location(
         ),
         "matched_existing": result.matched_existing,
     }
-
-
-@app.post("/api/store-locations/merge")
-def merge_store_locations(
-    body: MergeStoreLocationsBody,
-    user: Annotated[AuthUser, Depends(require_user)],
-) -> dict:
-    try:
-        merged = merge_user_stores(user.id, body.source_id, body.target_id)
-    except ValueError as err:
-        raise HTTPException(status_code=400, detail=str(err)) from err
-    if merged is None:
-        raise HTTPException(status_code=404, detail="Store location not found")
-    return store_to_api_dict(
-        merged,
-        photo_count=count_photos_for_store(user.id, merged.id),
-    )
 
 
 @app.put("/api/store-locations/{store_id}")
@@ -564,7 +571,8 @@ async def upload_photos_bulk(
         if not saved_paths:
             raise HTTPException(status_code=400, detail="No valid files uploaded")
 
-        api_key = configured_api_key()
+        extract_backend = get_user_extract_backend(user.id)
+        api_key = configured_api_key(backend=extract_backend)
         try:
             results = await asyncio.to_thread(
                 accept_upload_batch,
@@ -576,6 +584,7 @@ async def upload_photos_bulk(
                 enqueue=True,
                 client_exifs=client_exifs,
                 request_id=_request_id_from_request(request),
+                extract_backend=extract_backend,
             )
         except ValueError as err:
             raise HTTPException(status_code=400, detail=str(err)) from err

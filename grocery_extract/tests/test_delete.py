@@ -18,7 +18,7 @@ def user_env(tmp_path: Path, monkeypatch):
     monkeypatch.setattr("grocery_extract.user_paths.DATA_DIR", tmp_path / "data")
     monkeypatch.setattr(
         "grocery_extract.user_stores_db.list_user_stores_as_dicts",
-        lambda *_args: [],
+        lambda *_args, **_kwargs: [],
     )
     monkeypatch.setattr(
         "grocery_extract.catalog_db.attach_price_insights",
@@ -33,18 +33,19 @@ def user_env(tmp_path: Path, monkeypatch):
     user_dir = tmp_path / "data" / "users" / user_id
     user_dir.mkdir(parents=True)
 
-    return user_id, user_dir
+    try:
+        yield user_id, user_dir
+    finally:
+        from extract_server.scripts.remove_user import remove_registered_user
+
+        remove_registered_user(user_id)
 
 
-def _write_photo(user_dir: Path, user_id: str, image_id: str) -> tuple[str, str]:
+def _write_photo(user_dir: Path, user_id: str, image_id: str) -> str:
     batch_dir = user_dir / "photos" / "2026_06_30"
-    jpg_dir = batch_dir / "jpg"
-    jpg_dir.mkdir(parents=True, exist_ok=True)
+    batch_dir.mkdir(parents=True, exist_ok=True)
     (batch_dir / f"{image_id}.webp").write_bytes(b"webp")
-    (jpg_dir / f"{image_id}.jpg").write_bytes(b"jpg")
-    original = f"users/{user_id}/photos/2026_06_30/{image_id}.webp"
-    jpeg = f"users/{user_id}/photos/2026_06_30/jpg/{image_id}.jpg"
-    return original, jpeg
+    return f"users/{user_id}/photos/2026_06_30/{image_id}.webp"
 
 
 def _seed_products(
@@ -53,13 +54,12 @@ def _seed_products(
     image_id: str,
     products: list[dict],
 ) -> list[str]:
-    original, jpeg = _write_photo(user_dir, user_id, image_id)
+    key = _write_photo(user_dir, user_id, image_id)
     save_photo_ingest(
         user_id,
         photo_id=image_id,
         photo_type="shelf",
-        original_blob_key=original,
-        photo_blob_key=jpeg,
+        blob_key=key,
         content_hash=None,
         gps_latitude=None,
         gps_longitude=None,
@@ -85,7 +85,6 @@ def test_delete_last_product_removes_photo_files(user_env):
     assert delete_product(user_id, sighting_ids[0])
 
     assert not (user_dir / "photos" / "2026_06_30" / "IMG_0001.webp").exists()
-    assert not (user_dir / "photos" / "2026_06_30" / "jpg" / "IMG_0001.jpg").exists()
 
 
 def test_bulk_delete_last_products_removes_photo_files(user_env):
@@ -103,7 +102,7 @@ def test_bulk_delete_last_products_removes_photo_files(user_env):
     result = delete_products_bulk(user_id, sighting_ids)
 
     assert result == {"deleted": 2, "photos_removed": 1, "failed": []}
-    assert not (user_dir / "photos" / "2026_06_30" / "jpg" / "IMG_0001.jpg").exists()
+    assert not (user_dir / "photos" / "2026_06_30" / "IMG_0001.webp").exists()
 
 
 def test_prune_orphan_photos_removes_photos_without_db_rows(user_env):
@@ -112,5 +111,5 @@ def test_prune_orphan_photos_removes_photos_without_db_rows(user_env):
 
     removed = prune_orphan_photos(user_id)
 
-    assert removed == 2
-    assert not (user_dir / "photos" / "2026_06_30" / "jpg" / "IMG_0009.jpg").exists()
+    assert removed == 1
+    assert not (user_dir / "photos" / "2026_06_30" / "IMG_0009.webp").exists()

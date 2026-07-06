@@ -40,7 +40,8 @@ describe("buildUploadForm", () => {
         {
           GPSLatitude: 43.65,
           GPSLongitude: -79.38,
-          DateTimeOriginal: "2026:07:04 18:30:00",
+          captured_at: "2026-07-04T18:30:00-04:00",
+          date_folder: "2026_07_04",
         },
       ],
     );
@@ -51,7 +52,8 @@ describe("buildUploadForm", () => {
         {
           GPSLatitude: 43.65,
           GPSLongitude: -79.38,
-          DateTimeOriginal: "2026:07:04 18:30:00",
+          captured_at: "2026-07-04T18:30:00-04:00",
+          date_folder: "2026_07_04",
         },
       ]),
     );

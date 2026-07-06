@@ -22,10 +22,10 @@ export const SORT_OPTIONS: { value: SortOption; label: string }[] = [
 export type GridColumns = 1 | 2 | 3 | 4;
 
 export const GRID_COLUMN_OPTIONS: { value: GridColumns; label: string }[] = [
-  { value: 1, label: "1 per row" },
-  { value: 2, label: "2 per row" },
-  { value: 3, label: "3 per row" },
-  { value: 4, label: "4 per row" },
+  { value: 1, label: "Large" },
+  { value: 2, label: "Medium" },
+  { value: 3, label: "Small" },
+  { value: 4, label: "Dense" },
 ];
 
 export const DEFAULT_GRID_COLUMNS: GridColumns = 1;
@@ -97,11 +97,9 @@ export function productMatchesSearch(product: Product, search: string): boolean 
   if (!q) return true;
   const hay = [
     product.product_name,
-    product.product_name_zh,
-    product.brand,
+    ...Object.values(product.other ?? {}),
     product.location.store,
     product.category,
-    product.barcode,
   ]
     .filter(Boolean)
     .join(" ")
@@ -319,7 +317,7 @@ export function matchesBrowseQuery(
   }
 
   if (query.onSale !== null) {
-    const onSale = Boolean(product.is_special);
+    const onSale = product.other?.is_special === true;
     if (onSale !== query.onSale) return false;
   }
 

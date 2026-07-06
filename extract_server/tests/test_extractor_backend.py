@@ -42,7 +42,7 @@ def test_extract_products_from_image_posts_to_gemini_direct(tmp_path: Path, monk
                             "parts": [
                                 {
                                     "text": (
-                                        '{"products":[{"product_name":"Milk","price":4.99,"category":"dairy"}]}'
+                                        '{"type":"shelf","products":[{"product_name":"Milk","price":4.99,"category":"dairy"}]}'
                                     )
                                 }
                             ]
@@ -72,7 +72,8 @@ def test_extract_products_from_image_posts_to_gemini_direct(tmp_path: Path, monk
     result = extract_products_from_image(source)
 
     assert result.products[0].product_name == "Milk"
-    assert result.raw_response.startswith('{"products"')
+    assert result.photo_type == "shelf"
+    assert result.raw_response.startswith('{"type"')
     assert captured["url"] == (
         "https://generativelanguage.googleapis.com/v1beta/models/"
         "gemini-3.1-flash-lite:generateContent"
@@ -92,21 +93,27 @@ def test_extract_from_upload_uses_backend_extractor_label(tmp_path: Path, monkey
         "grocery_extract.pipeline.extract_products_from_image",
         lambda *_args, **_kwargs: ExtractImageResult(
             products=[ExtractedProduct(product_name="Milk", price=4.99, category="dairy")],
-            raw_response='{"products":[{"product_name":"Milk","price":4.99,"category":"dairy"}]}',
-            prep_ms=1,
+            photo_type="shelf",
+            raw_response='{"type":"shelf","products":[{"product_name":"Milk","price":4.99,"category":"dairy"}]}',
             llm_ms=2,
+            other_ms=1,
             model="gemini-3.1-flash-lite",
         ),
     )
-    monkeypatch.setattr("grocery_extract.pipeline.current_extractor_name", lambda: "gemini_direct")
+    monkeypatch.setattr(
+        "grocery_extract.pipeline.current_extractor_name",
+        lambda backend=None: "gemini_direct",
+    )
 
     result = extract_from_upload(
         upload,
         image_id="IMG_0001",
         api_key="test-key",
+        backend="gemini_direct",
         exif={},
         skip_normalize=True,
     )
 
     assert result.extractor == "gemini_direct"
     assert len(result.products) == 1
+    assert result.photo_type == "shelf"

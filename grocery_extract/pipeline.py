@@ -6,10 +6,6 @@ from pathlib import Path
 from typing import Any
 
 from grocery_extract.cursor_extractor import current_extractor_name, extract_products_from_image
-from grocery_extract.exif import (
-    captured_at_from_exif,
-    date_folder_from_exif,
-)
 from grocery_extract.schema import ExtractionResult, ExtractedProduct, ExtractionTiming, ImageMeta
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -46,7 +42,7 @@ def extract_from_upload(
     *,
     image_id: str | None = None,
     api_key: str | None = None,
-    prompt_variant: str = "shelf",
+    backend: str | None = None,
     exif: dict[str, Any] | None = None,
     skip_normalize: bool = False,
 ) -> ExtractionResult:
@@ -62,60 +58,56 @@ def extract_from_upload(
             work_dir = Path(tmp)
             jpg_path = _resolve_jpg_path(upload_path, work_dir)
             meta_exif = exif or {}
-            raw_dt = meta_exif.get("DateTimeOriginal")
-            date_folder = date_folder_from_exif(raw_dt)
             meta = ImageMeta(
                 image_id=stem,
                 source_file=str(upload_path),
                 gps_latitude=meta_exif.get("GPSLatitude"),
                 gps_longitude=meta_exif.get("GPSLongitude"),
-                captured_at=captured_at_from_exif(raw_dt),
-                date_folder=date_folder,
+                captured_at=meta_exif.get("captured_at"),
+                date_folder=meta_exif.get("date_folder"),
             )
             products_result = extract_products_from_image(
                 jpg_path,
                 api_key=api_key,
-                prompt_variant=prompt_variant,
+                backend=backend,
             )
             return ExtractionResult(
-                image_path=find_image_path(stem, date_folder) if (ROOT / "data").exists() else str(jpg_path),
+                image_path=find_image_path(stem, meta.date_folder) if (ROOT / "data").exists() else str(jpg_path),
                 meta=meta,
                 products=products_result.products,
+                photo_type=products_result.photo_type,
                 raw_response=products_result.raw_response,
-                extractor=current_extractor_name(),
+                extractor=current_extractor_name(backend),
                 timing=ExtractionTiming(
-                    prep_ms=products_result.prep_ms,
                     llm_ms=products_result.llm_ms,
-                    duration_ms=products_result.prep_ms + products_result.llm_ms,
+                    other_ms=products_result.other_ms,
                     model=products_result.model,
                 ),
             )
 
-    raw_dt = meta_exif.get("DateTimeOriginal")
-    date_folder = date_folder_from_exif(raw_dt)
     meta = ImageMeta(
         image_id=stem,
         source_file=str(upload_path),
         gps_latitude=meta_exif.get("GPSLatitude"),
         gps_longitude=meta_exif.get("GPSLongitude"),
-        captured_at=captured_at_from_exif(raw_dt),
-        date_folder=date_folder,
+        captured_at=meta_exif.get("captured_at"),
+        date_folder=meta_exif.get("date_folder"),
     )
     products_result = extract_products_from_image(
         jpg_path,
         api_key=api_key,
-        prompt_variant=prompt_variant,
+        backend=backend,
     )
     return ExtractionResult(
-        image_path=find_image_path(stem, date_folder) if (ROOT / "data").exists() else str(jpg_path),
+        image_path=find_image_path(stem, meta.date_folder) if (ROOT / "data").exists() else str(jpg_path),
         meta=meta,
         products=products_result.products,
+        photo_type=products_result.photo_type,
         raw_response=products_result.raw_response,
-        extractor=current_extractor_name(),
+        extractor=current_extractor_name(backend),
         timing=ExtractionTiming(
-            prep_ms=products_result.prep_ms,
             llm_ms=products_result.llm_ms,
-            duration_ms=products_result.prep_ms + products_result.llm_ms,
+            other_ms=products_result.other_ms,
             model=products_result.model,
         ),
     )

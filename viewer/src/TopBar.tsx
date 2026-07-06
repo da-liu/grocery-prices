@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, type RefObject } from "react";
 
-type Page = "browse" | "compare" | "settings" | "metadata" | "compress";
+type Page = "browse" | "compare" | "settings";
 
 interface BrowseStats {
   shown: number;
@@ -124,10 +124,6 @@ export function TopBar({
     <header className="top-bar">
       {page === "settings" ? (
         <p className="top-bar-title">Settings</p>
-      ) : page === "metadata" ? (
-        <p className="top-bar-title">Metadata</p>
-      ) : page === "compress" ? (
-        <p className="top-bar-title">Compress</p>
       ) : (
         <input
           type="search"
@@ -231,22 +227,6 @@ export function TopBar({
                 onClick={() => pickNav("settings")}
               >
                 Settings
-              </button>
-              <button
-                type="button"
-                role="menuitem"
-                className={page === "metadata" ? "active" : undefined}
-                onClick={() => pickNav("metadata")}
-              >
-                Metadata
-              </button>
-              <button
-                type="button"
-                role="menuitem"
-                className={page === "compress" ? "active" : undefined}
-                onClick={() => pickNav("compress")}
-              >
-                Compress
               </button>
 
               <p className="top-bar-dropdown-label">Help</p>

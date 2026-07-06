@@ -33,12 +33,14 @@ def test_find_exact_duplicate(tmp_path: Path, monkeypatch):
     init_db()
     user = register_user("dupuser", "password12345")
     user_id = user.id
+    batch_dir = tmp_path / "data" / "users" / user_id / "photos" / "2026_07_02"
+    batch_dir.mkdir(parents=True, exist_ok=True)
+    (batch_dir / "IMG_0001.webp").write_bytes(b"webp")
     save_photo_ingest(
         user_id,
         photo_id="IMG_0001",
         photo_type="shelf",
-        original_blob_key=None,
-        photo_blob_key=f"users/{user_id}/photos/2026_07_02/jpg/IMG_0001.jpg",
+        blob_key=f"users/{user_id}/photos/2026_07_02/IMG_0001.webp",
         content_hash="abc123",
         gps_latitude=None,
         gps_longitude=None,

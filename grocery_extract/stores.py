@@ -15,10 +15,8 @@ def haversine_m(lat1: float, lon1: float, lat2: float, lon2: float) -> float:
     return 2 * radius_m * math.asin(math.sqrt(a))
 
 
-def anchor_points(store: dict) -> list[tuple[float, float]]:
-    if anchors := store.get("anchors"):
-        return [(a["latitude"], a["longitude"]) for a in anchors]
-    return [(store["latitude"], store["longitude"])]
+def maps_url_for_coords(latitude: float, longitude: float) -> str:
+    return f"https://www.google.com/maps?q={latitude},{longitude}"
 
 
 def store_from_gps(
@@ -32,9 +30,8 @@ def store_from_gps(
     best_distance = float("inf")
     for store in stores:
         radius_m = store.get("match_radius_m", 150)
-        for anchor_lat, anchor_lon in anchor_points(store):
-            distance = haversine_m(lat, lon, anchor_lat, anchor_lon)
-            if distance <= radius_m and distance < best_distance:
-                best = store
-                best_distance = distance
+        distance = haversine_m(lat, lon, store["latitude"], store["longitude"])
+        if distance <= radius_m and distance < best_distance:
+            best = store
+            best_distance = distance
     return best

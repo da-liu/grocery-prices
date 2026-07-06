@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 from pathlib import Path
-from unittest.mock import patch
 
 from grocery_extract.ingest import accept_upload
 
@@ -36,21 +35,26 @@ def test_accept_upload_uses_client_exif_when_provided(tmp_path: Path, monkeypatc
     monkeypatch.setattr("grocery_extract.ingest.image_needs_store_label", lambda *_args: False)
     monkeypatch.setattr("grocery_extract.ingest.list_products_for_matching", lambda _user_id: [])
 
-    with patch("grocery_extract.ingest.classify_photo_type") as classify:
-        classify.return_value.photo_type = "shelf"
-        classify.return_value.classify_ms = 1
+    client_exif = {
+        "GPSLatitude": 43.6532,
+        "GPSLongitude": -79.3832,
+        "captured_at": "2026-07-04T18:30:00-04:00",
+        "date_folder": "2026_07_04",
+    }
+    try:
         result = accept_upload(
             upload,
             user_id=user_id,
             source="upload",
-            client_exif={
-                "GPSLatitude": 43.6532,
-                "GPSLongitude": -79.3832,
-                "DateTimeOriginal": "2026:07:04 18:30:00",
-            },
+            client_exif=client_exif,
         )
 
-    assert result["meta"]["gps_latitude"] == 43.6532
-    assert result["meta"]["gps_longitude"] == -79.3832
-    assert result["meta"]["captured_at"] == "2026-07-04T18:30:00"
-    assert result["date_folder"] == "2026_07_04"
+        assert result["meta"]["gps_latitude"] == 43.6532
+        assert result["meta"]["gps_longitude"] == -79.3832
+        assert result["meta"]["captured_at"] == "2026-07-04T18:30:00-04:00"
+        assert result["date_folder"] == "2026_07_04"
+        assert result["_job"]["exif"] == client_exif
+    finally:
+        from extract_server.scripts.remove_user import remove_registered_user
+
+        remove_registered_user(user_id)

@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { photoMetadataToClientExif, prepareUploadFile } from "./prepareUploadFile";
+import { prepareUploadFile } from "./prepareUploadFile";
 
 vi.mock("./compressImage", () => ({
   compressImageFile: vi.fn(),
@@ -77,25 +77,5 @@ describe("prepareUploadFile", () => {
 
     await expect(prepareUploadFile(source)).rejects.toThrow("Could not decode image");
     expect(mockedRevoke).toHaveBeenCalled();
-  });
-});
-
-describe("photoMetadataToClientExif", () => {
-  it("maps GPS and capture time to server payload", () => {
-    expect(
-      photoMetadataToClientExif({
-        dateTimeOriginal: "2026:07:04 18:30:00",
-        gpsLatitude: 43.65,
-        gpsLongitude: -79.38,
-      }),
-    ).toEqual({
-      DateTimeOriginal: "2026:07:04 18:30:00",
-      GPSLatitude: 43.65,
-      GPSLongitude: -79.38,
-    });
-  });
-
-  it("returns undefined when metadata is empty", () => {
-    expect(photoMetadataToClientExif({})).toBeUndefined();
   });
 });

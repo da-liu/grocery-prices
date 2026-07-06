@@ -32,7 +32,7 @@ function formatShortCaptureDate(captured: Date, now: Date): string {
  * - Switch to a short absolute date after one week (Atlassian).
  * - Pair with formatCapturedAt in a tooltip for the precise timestamp.
  *
- * EXIF DateTimeOriginal has no timezone; captured_at strings are local time.
+ * `captured_at` is ISO 8601 with timezone offset from the browser.
  */
 export function formatCapturedAgo(
   capturedAt: string | undefined,

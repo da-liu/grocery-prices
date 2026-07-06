@@ -191,8 +191,10 @@ export function BrowseSortFilterPanel({
           </fieldset>
 
           <fieldset className="browse-filter-group">
-            <legend>Cards per row (mobile)</legend>
-            <p className="browse-filter-hint">Desktop fits as many cards as the screen allows.</p>
+            <legend>Card size</legend>
+            <p className="browse-filter-hint">
+              Fits as many cards as your screen allows. Larger settings show fewer, bigger cards.
+            </p>
             <div className="browse-tristate browse-grid-cols">
               {GRID_COLUMN_OPTIONS.map((opt) => (
                 <button

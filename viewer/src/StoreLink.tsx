@@ -1,7 +1,6 @@
 import type { Location } from "./types";
 
 function storeMapsUrl(location: Location): string | null {
-  if (location.maps_url) return location.maps_url;
   if (location.store.startsWith("http://") || location.store.startsWith("https://")) {
     return location.store;
   }

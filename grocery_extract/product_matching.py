@@ -4,7 +4,10 @@ from typing import Any
 
 
 def product_match_key(product: dict[str, Any]) -> str | None:
+    other = product.get("other")
     barcode = product.get("barcode")
+    if not barcode and isinstance(other, dict):
+        barcode = other.get("barcode")
     if barcode:
         return f"barcode:{str(barcode).strip()}"
     name = (product.get("product_name") or "").strip().lower()

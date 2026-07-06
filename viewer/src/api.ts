@@ -179,18 +179,17 @@ export type DuplicateAction = "skip" | "replace" | "new";
 export type ClientExifPayload = {
   GPSLatitude?: number;
   GPSLongitude?: number;
-  DateTimeOriginal?: string;
+  /** ISO 8601 capture time with timezone offset, ready for DB storage. */
+  captured_at?: string;
+  /** Local capture date folder name (`YYYY_MM_DD`). */
+  date_folder?: string;
 };
 
 export type ExtractionStatus = "pending" | "processing" | "done" | "failed";
 
 export interface ExtractionTiming {
-  classify_ms?: number;
-  prep_ms?: number;
   llm_ms?: number;
-  extract_ms?: number;
-  queue_wait_ms?: number;
-  total_ms?: number;
+  other_ms?: number;
   model?: string;
 }
 
@@ -214,6 +213,7 @@ export interface UploadResult {
   extraction_error?: string;
   extraction_timing?: ExtractionTiming;
   overlapping_products?: import("./types").OverlappingProduct[];
+  photo_type?: "shelf" | "receipt";
   detected_receipt?: boolean;
 }
 
@@ -228,32 +228,20 @@ export interface ReextractResult {
 
 export type ProductUpdateInput = {
   product_name?: string;
-  product_name_zh?: string | null;
-  brand?: string | null;
+  other?: Record<string, string | number | boolean | null> | null;
   price?: number | null;
   unit?: string | null;
   unit_price?: number | null;
-  unit_price_per_100g?: number | null;
-  regular_price?: number | null;
-  is_special?: boolean | null;
-  promo?: string | null;
-  barcode?: string | null;
-  size?: string | null;
   category?: string | null;
-  notes?: string | null;
 };
 
 export type ManualProductInput = {
   product_name: string;
-  product_name_zh?: string;
-  brand?: string;
+  other?: Record<string, string | number | boolean | null>;
   price?: number | null;
   unit?: string;
   unit_price?: number | null;
-  barcode?: string;
-  size?: string;
   category?: string;
-  notes?: string;
 };
 
 export function buildUploadForm(
@@ -387,12 +375,34 @@ export async function reextractPhoto(imageId: string): Promise<ReextractResult> 
   return resp.json();
 }
 
+export type ExtractBackend = "cursor" | "gemini_direct";
+
+export interface UserSettings {
+  extract_backend: ExtractBackend;
+  extract_model: string;
+}
+
+export async function fetchSettings(): Promise<UserSettings> {
+  const resp = await authFetch(`${API_BASE}/api/settings`);
+  if (!resp.ok) throw new Error(await parseError(resp));
+  return resp.json();
+}
+
+export async function updateSettings(settings: { extract_backend: ExtractBackend }): Promise<UserSettings> {
+  const resp = await authFetch(`${API_BASE}/api/settings`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(settings),
+  });
+  if (!resp.ok) throw new Error(await parseError(resp));
+  return resp.json();
+}
+
 export type StoreLocationInput = {
   name: string;
   latitude: number;
   longitude: number;
   match_radius_m?: number;
-  maps_url?: string | null;
 };
 
 export async function fetchStoreLocations() {

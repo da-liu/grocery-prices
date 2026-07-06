@@ -24,8 +24,6 @@ Shared logic lives in `../grocery_extract/`:
 | `scoring.py` | Benchmark metrics vs ground truth |
 | `pipeline.py` | End-to-end upload pipeline |
 
-Ground truth for benchmarks lives in `extract_server/tests/fixtures/ground_truth_products.json`.
-
 ## Setup
 
 ```bash
@@ -106,27 +104,5 @@ Response shape:
 ## Tests
 
 ```bash
-# Unit tests (scoring, no API key needed)
-PYTHONPATH=.. pytest tests/test_scoring.py -v
-
-# Integration: single image + 8-image benchmark vs ground truth (~3 min)
-PYTHONPATH=.. pytest tests/test_benchmark.py -m integration -v
-
-# Full 45-image benchmark (~20 min)
-GROCERY_BENCHMARK_FULL=1 PYTHONPATH=.. pytest tests/test_benchmark.py -m slow -v
+PYTHONPATH=.. pytest tests -v
 ```
-
-Results are cached in `.extract_cache/` to avoid re-billing on reruns.
-
-### Benchmark thresholds
-
-Compared against manual extractions in `tests/fixtures/ground_truth_products.json`:
-
-| Metric | Threshold |
-|--------|-----------|
-| mean recall | ≥ 0.75 |
-| mean F1 | ≥ 0.70 |
-| price accuracy | ≥ 0.80 |
-| category accuracy | ≥ 0.70 |
-
-Latest subset run (8 images): recall 0.85, F1 0.854, price accuracy 0.905.

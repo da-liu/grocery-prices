@@ -65,7 +65,7 @@ export function BrowsePage({
     );
   }
 
-  const compact = selectionMode || gridColumns > 1;
+  const compact = selectionMode || gridColumns >= 3;
   const gridClass = `grid grid--cols-${gridColumns}${compact ? " grid--compact" : ""}`;
 
   if (viewMode === "photos" && !selectionMode) {

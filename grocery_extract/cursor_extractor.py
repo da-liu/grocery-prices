@@ -12,31 +12,43 @@ import httpx
 from cursor_sdk import Agent, AgentOptions, CursorAgentError, LocalAgentOptions, SDKImage, UserMessage
 
 from grocery_extract.errors import ConfigError, CursorExtractError, ExtractionError
-from grocery_extract.parse_response import parse_products_json
-from grocery_extract.prompt import build_prompt, build_receipt_prompt
+from grocery_extract.parse_response import parse_unified_response
+from grocery_extract.prompt import build_unified_prompt
 from grocery_extract.schema import ExtractedProduct
 
 ROOT = Path(__file__).resolve().parents[1]
 CURSOR_BACKEND = "cursor"
 GEMINI_DIRECT_BACKEND = "gemini_direct"
+VALID_EXTRACT_BACKENDS = frozenset({CURSOR_BACKEND, GEMINI_DIRECT_BACKEND})
 DEFAULT_CURSOR_MODEL = "auto"
 DEFAULT_GEMINI_DIRECT_MODEL = "gemini-3.1-flash-lite"
 
 logger = logging.getLogger(__name__)
 
 
+def normalize_extract_backend(backend: str) -> str:
+    normalized = backend.strip().lower()
+    if normalized not in VALID_EXTRACT_BACKENDS:
+        raise ValueError(
+            f"Unsupported extract backend: {backend}. "
+            f"Expected {CURSOR_BACKEND} or {GEMINI_DIRECT_BACKEND}."
+        )
+    return normalized
+
+
 @dataclass(frozen=True)
 class ExtractImageResult:
     products: list[ExtractedProduct]
+    photo_type: str
     raw_response: str
-    prep_ms: int
     llm_ms: int
+    other_ms: int
     model: str
 
 
 def current_extract_backend() -> str:
     backend = os.environ.get("GROCERY_EXTRACT_BACKEND", CURSOR_BACKEND).strip().lower()
-    if backend not in {CURSOR_BACKEND, GEMINI_DIRECT_BACKEND}:
+    if backend not in VALID_EXTRACT_BACKENDS:
         raise ConfigError(
             f"Unsupported GROCERY_EXTRACT_BACKEND: {backend}. "
             f"Expected {CURSOR_BACKEND} or {GEMINI_DIRECT_BACKEND}."
@@ -154,6 +166,20 @@ def _run_gemini_direct(
     return raw
 
 
+def _run_vision_backend(
+    image_path: Path,
+    *,
+    prompt: str,
+    api_key: str,
+    model: str,
+    backend: str,
+    cwd: Path,
+) -> str:
+    if backend == GEMINI_DIRECT_BACKEND:
+        return _run_gemini_direct(image_path, prompt=prompt, api_key=api_key, model=model)
+    return _run_cursor_sdk(image_path, prompt=prompt, api_key=api_key, model=model, cwd=cwd)
+
+
 def extract_products_from_image(
     image_path: Path,
     *,
@@ -161,11 +187,10 @@ def extract_products_from_image(
     model: str | None = None,
     backend: str | None = None,
     cwd: Path | None = None,
-    prompt_variant: str = "shelf",
     llm_max_dim: int | None = None,
     llm_scale_pct: int | None = None,
 ) -> ExtractImageResult:
-    """Extract products from a grocery photo using the configured vision backend."""
+    """Classify and extract products from a grocery photo in one LLM call."""
     backend = backend or current_extract_backend()
     model = model or default_extract_model(backend)
     api_key = configured_api_key(api_key, backend)
@@ -175,32 +200,38 @@ def extract_products_from_image(
 
     _ = llm_max_dim, llm_scale_pct
 
-    prep_start = time.perf_counter()
-    prep_ms = int((time.perf_counter() - prep_start) * 1000)
+    call_start = time.perf_counter()
 
     cwd = cwd or ROOT
-    prompt = build_receipt_prompt() if prompt_variant == "receipt" else build_prompt()
+    prompt = build_unified_prompt()
 
     llm_start = time.perf_counter()
-    if backend == GEMINI_DIRECT_BACKEND:
-        raw = _run_gemini_direct(image_path, prompt=prompt, api_key=api_key, model=model)
-    else:
-        raw = _run_cursor_sdk(image_path, prompt=prompt, api_key=api_key, model=model, cwd=cwd)
+    raw = _run_vision_backend(
+        image_path,
+        prompt=prompt,
+        api_key=api_key,
+        model=model,
+        backend=backend,
+        cwd=cwd,
+    )
     llm_ms = int((time.perf_counter() - llm_start) * 1000)
 
-    products = parse_products_json(raw)
+    parsed = parse_unified_response(raw)
+    other_ms = max(0, int((time.perf_counter() - call_start) * 1000) - llm_ms)
     logger.info(
-        "llm_extract_complete backend=%s model=%s prep_ms=%s llm_ms=%s products=%s",
+        "llm_extract_complete backend=%s model=%s llm_ms=%s other_ms=%s photo_type=%s products=%s",
         backend,
         model,
-        prep_ms,
         llm_ms,
-        len(products),
+        other_ms,
+        parsed.photo_type,
+        len(parsed.products),
     )
     return ExtractImageResult(
-        products=products,
+        products=parsed.products,
+        photo_type=parsed.photo_type,
         raw_response=raw,
-        prep_ms=prep_ms,
         llm_ms=llm_ms,
+        other_ms=other_ms,
         model=model,
     )

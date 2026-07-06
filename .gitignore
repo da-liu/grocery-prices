@@ -8,6 +8,7 @@ viewer/node_modules/
 viewer/dist/
 viewer/.env.local
 extract_server/.venv/
+*.egg-info/
 extract_server/.env
 extract_server/data/
 extract_server/.extract_cache/

@@ -36,13 +36,12 @@ class ExtractionJob:
     existing_products: list[dict[str, Any]]
     user_stores: list[dict[str, Any]]
     exif: dict[str, Any]
-    photo_type: str
     date_folder: str
     captured_at: str | None
     store_location_id: str | None
     content_hash: str
-    classify_ms: int | None = None
     request_id: str | None = None
+    extract_backend: str | None = None
 
 
 def register_extraction_complete(callback: Callable[[str, dict[str, Any]], None]) -> None:

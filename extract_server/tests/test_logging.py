@@ -105,7 +105,6 @@ def test_run_extraction_failure_logs(tmp_path, monkeypatch, caplog):
         existing_products=[],
         user_stores=[],
         exif={},
-        photo_type="shelf",
         date_folder=accepted["date_folder"],
         captured_at=None,
         store_location_id=None,

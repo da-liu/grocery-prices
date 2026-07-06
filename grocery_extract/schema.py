@@ -4,30 +4,50 @@ from typing import Any
 
 from pydantic import BaseModel, Field
 
+CANONICAL_PRODUCT_FIELDS = frozenset({
+    "product_name",
+    "price",
+    "unit",
+    "unit_price",
+    "category",
+    "other",
+})
+
+
+def fold_product_fields(product: dict[str, Any]) -> dict[str, Any]:
+    """Keep canonical top-level fields; move everything else into other."""
+    other = dict(product["other"]) if isinstance(product.get("other"), dict) else {}
+    folded: dict[str, Any] = {}
+    for key, value in product.items():
+        if key == "other":
+            continue
+        if key in CANONICAL_PRODUCT_FIELDS:
+            folded[key] = value
+        elif value is not None:
+            other[key] = value
+    if other:
+        folded["other"] = other
+    return folded
+
 
 class ExtractedProduct(BaseModel):
     product_name: str
-    product_name_zh: str | None = None
-    brand: str | None = None
     price: float | None = None
     unit: str | None = None
     unit_price: float | None = None
-    unit_price_per_100g: float | None = None
-    regular_price: float | None = None
-    is_special: bool | None = None
-    promo: str | None = None
-    barcode: str | None = None
-    size: str | None = None
-    net_weight: float | None = None
-    net_weight_lb: float | None = None
-    packed_on: str | None = None
     category: str
-    notes: str | None = None
+    other: dict[str, Any] | None = None
 
     def to_product_dict(self) -> dict[str, Any]:
         data = self.model_dump(exclude_none=True)
-        if self.is_special is False and "is_special" in data:
-            data.pop("is_special")
+        other = data.get("other")
+        if isinstance(other, dict) and other.get("is_special") is False:
+            other = dict(other)
+            other.pop("is_special", None)
+            if other:
+                data["other"] = other
+            else:
+                data.pop("other", None)
         return data
 
 
@@ -41,17 +61,16 @@ class ImageMeta(BaseModel):
 
 
 class ExtractionTiming(BaseModel):
-    prep_ms: int = 0
     llm_ms: int = 0
-    duration_ms: int = 0
+    other_ms: int = 0
     model: str | None = None
-    classify_ms: int | None = None
 
 
 class ExtractionResult(BaseModel):
     image_path: str
     meta: ImageMeta
     products: list[ExtractedProduct] = Field(default_factory=list)
+    photo_type: str = "shelf"
     raw_response: str | None = None
     extractor: str = "cursor_sdk"
     timing: ExtractionTiming | None = None

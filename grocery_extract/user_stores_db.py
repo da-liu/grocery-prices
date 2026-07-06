@@ -1,14 +1,11 @@
 from __future__ import annotations
 
-import json
 import sqlite3
 import uuid
 from dataclasses import dataclass
 
 from extract_server.users_db import get_conn
-from grocery_extract.stores import store_from_gps
-
-_LEGACY_USER_STORE_COLUMNS = frozenset({"address", "area", "created_at"})
+from grocery_extract.stores import store_from_gps, maps_url_for_coords
 
 
 @dataclass(frozen=True)
@@ -18,8 +15,6 @@ class UserStoreLocation:
     latitude: float
     longitude: float
     match_radius_m: int
-    maps_url: str | None
-    anchors: list[dict[str, float]] | None = None
 
 
 @dataclass(frozen=True)
@@ -28,7 +23,8 @@ class CreateStoreResult:
     matched_existing: bool
 
 
-def _create_user_store_locations_table(conn: sqlite3.Connection) -> None:
+def init_user_store_tables() -> None:
+    conn = get_conn()
     conn.execute(
         """
         CREATE TABLE IF NOT EXISTS user_store_locations (
@@ -37,87 +33,13 @@ def _create_user_store_locations_table(conn: sqlite3.Connection) -> None:
             name TEXT NOT NULL,
             latitude REAL NOT NULL,
             longitude REAL NOT NULL,
-            match_radius_m INTEGER NOT NULL DEFAULT 150,
-            maps_url TEXT,
-            anchors TEXT
+            match_radius_m INTEGER NOT NULL DEFAULT 150
         )
         """
     )
     conn.execute(
         "CREATE INDEX IF NOT EXISTS idx_user_store_locations_user ON user_store_locations(user_id)"
     )
-
-
-def _migrate_user_store_locations(conn: sqlite3.Connection) -> None:
-    rows = conn.execute("PRAGMA table_info(user_store_locations)").fetchall()
-    if not rows:
-        return
-    colnames = {row[1] for row in rows}
-    if not (_LEGACY_USER_STORE_COLUMNS & colnames):
-        return
-
-    conn.execute(
-        """
-        CREATE TABLE user_store_locations_new (
-            id TEXT PRIMARY KEY,
-            user_id TEXT NOT NULL,
-            name TEXT NOT NULL,
-            latitude REAL NOT NULL,
-            longitude REAL NOT NULL,
-            match_radius_m INTEGER NOT NULL DEFAULT 150,
-            maps_url TEXT,
-            anchors TEXT
-        )
-        """
-    )
-    conn.execute(
-        """
-        INSERT INTO user_store_locations_new (
-            id, user_id, name, latitude, longitude, match_radius_m, maps_url, anchors
-        )
-        SELECT id, user_id, name, latitude, longitude, match_radius_m, maps_url, NULL
-        FROM user_store_locations
-        """
-    )
-    conn.execute("DROP TABLE user_store_locations")
-    conn.execute("ALTER TABLE user_store_locations_new RENAME TO user_store_locations")
-    conn.execute(
-        "CREATE INDEX IF NOT EXISTS idx_user_store_locations_user ON user_store_locations(user_id)"
-    )
-
-
-def init_user_store_tables() -> None:
-    conn = get_conn()
-    _create_user_store_locations_table(conn)
-    _migrate_user_store_locations(conn)
-    _ensure_anchors_column(conn)
-
-
-def _ensure_anchors_column(conn: sqlite3.Connection) -> None:
-    rows = conn.execute("PRAGMA table_info(user_store_locations)").fetchall()
-    colnames = {row[1] for row in rows}
-    if "anchors" not in colnames:
-        conn.execute("ALTER TABLE user_store_locations ADD COLUMN anchors TEXT")
-
-
-def _parse_anchors(raw: str | None) -> list[dict[str, float]] | None:
-    if not raw:
-        return None
-    try:
-        parsed = json.loads(raw)
-    except json.JSONDecodeError:
-        return None
-    if not isinstance(parsed, list):
-        return None
-    anchors: list[dict[str, float]] = []
-    for item in parsed:
-        if not isinstance(item, dict):
-            continue
-        lat = item.get("latitude")
-        lon = item.get("longitude")
-        if isinstance(lat, (int, float)) and isinstance(lon, (int, float)):
-            anchors.append({"latitude": float(lat), "longitude": float(lon)})
-    return anchors or None
 
 
 def _row_to_store(row) -> UserStoreLocation:
@@ -127,23 +49,18 @@ def _row_to_store(row) -> UserStoreLocation:
         latitude=row["latitude"],
         longitude=row["longitude"],
         match_radius_m=row["match_radius_m"],
-        maps_url=row["maps_url"],
-        anchors=_parse_anchors(row["anchors"] if "anchors" in row.keys() else None),
     )
 
 
 def store_as_match_dict(store: UserStoreLocation) -> dict:
-    payload = {
+    return {
         "id": store.id,
         "store": store.name,
         "latitude": store.latitude,
         "longitude": store.longitude,
         "match_radius_m": store.match_radius_m,
-        "maps_url": store.maps_url,
+        "maps_url": maps_url_for_coords(store.latitude, store.longitude),
     }
-    if store.anchors:
-        payload["anchors"] = store.anchors
-    return payload
 
 
 def list_user_stores(
@@ -154,7 +71,7 @@ def list_user_stores(
     db = conn or get_conn()
     rows = db.execute(
         """
-        SELECT id, name, latitude, longitude, match_radius_m, maps_url, anchors
+        SELECT id, name, latitude, longitude, match_radius_m
         FROM user_store_locations
         WHERE user_id = ?
         ORDER BY name COLLATE NOCASE
@@ -181,7 +98,7 @@ def get_user_store(
     db = conn or get_conn()
     row = db.execute(
         """
-        SELECT id, name, latitude, longitude, match_radius_m, maps_url, anchors
+        SELECT id, name, latitude, longitude, match_radius_m
         FROM user_store_locations
         WHERE user_id = ? AND id = ?
         """,
@@ -197,7 +114,6 @@ def create_user_store(
     latitude: float,
     longitude: float,
     match_radius_m: int = 150,
-    maps_url: str | None = None,
 ) -> CreateStoreResult:
     name = name.strip()
     if not name:
@@ -215,8 +131,8 @@ def create_user_store(
     conn.execute(
         """
         INSERT INTO user_store_locations (
-            id, user_id, name, latitude, longitude, match_radius_m, maps_url, anchors
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+            id, user_id, name, latitude, longitude, match_radius_m
+        ) VALUES (?, ?, ?, ?, ?, ?)
         """,
         (
             store_id,
@@ -225,8 +141,6 @@ def create_user_store(
             latitude,
             longitude,
             match_radius_m,
-            maps_url,
-            None,
         ),
     )
     store = get_user_store(user_id, store_id, conn=conn)
@@ -242,7 +156,6 @@ def update_user_store(
     latitude: float,
     longitude: float,
     match_radius_m: int = 150,
-    maps_url: str | None = None,
 ) -> UserStoreLocation | None:
     name = name.strip()
     if not name:
@@ -253,7 +166,7 @@ def update_user_store(
         """
         UPDATE user_store_locations
         SET name = ?, latitude = ?, longitude = ?,
-            match_radius_m = ?, maps_url = ?
+            match_radius_m = ?
         WHERE user_id = ? AND id = ?
         """,
         (
@@ -261,7 +174,6 @@ def update_user_store(
             latitude,
             longitude,
             match_radius_m,
-            maps_url,
             user_id,
             store_id,
         ),
@@ -298,52 +210,6 @@ def count_photos_for_store(
     return int(row["count"]) if row else 0
 
 
-def merge_user_stores(user_id: str, source_id: str, target_id: str) -> UserStoreLocation | None:
-    if source_id == target_id:
-        raise ValueError("Cannot merge a store into itself")
-
-    conn = get_conn()
-    source = get_user_store(user_id, source_id, conn=conn)
-    target = get_user_store(user_id, target_id, conn=conn)
-    if source is None or target is None:
-        return None
-
-    anchors = list(target.anchors or [])
-    anchors.append({"latitude": source.latitude, "longitude": source.longitude})
-    if target.anchors is None:
-        anchors.append({"latitude": target.latitude, "longitude": target.longitude})
-    seen: set[tuple[float, float]] = set()
-    unique_anchors: list[dict[str, float]] = []
-    for anchor in anchors:
-        key = (round(anchor["latitude"], 6), round(anchor["longitude"], 6))
-        if key in seen:
-            continue
-        seen.add(key)
-        unique_anchors.append(anchor)
-
-    conn.execute(
-        """
-        UPDATE photos
-        SET store_location_id = ?, updated_at = datetime('now')
-        WHERE user_id = ? AND store_location_id = ?
-        """,
-        (target_id, user_id, source_id),
-    )
-    conn.execute(
-        """
-        UPDATE user_store_locations
-        SET anchors = ?
-        WHERE user_id = ? AND id = ?
-        """,
-        (json.dumps(unique_anchors), user_id, target_id),
-    )
-    conn.execute(
-        "DELETE FROM user_store_locations WHERE user_id = ? AND id = ?",
-        (user_id, source_id),
-    )
-    return get_user_store(user_id, target_id, conn=conn)
-
-
 def store_to_api_dict(store: UserStoreLocation, *, photo_count: int | None = None) -> dict:
     payload = {
         "id": store.id,
@@ -351,8 +217,7 @@ def store_to_api_dict(store: UserStoreLocation, *, photo_count: int | None = Non
         "latitude": store.latitude,
         "longitude": store.longitude,
         "match_radius_m": store.match_radius_m,
-        "maps_url": store.maps_url,
-        "anchors": store.anchors,
+        "maps_url": maps_url_for_coords(store.latitude, store.longitude),
     }
     if photo_count is not None:
         payload["photo_count"] = photo_count

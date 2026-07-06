@@ -1,21 +1,9 @@
 import type { ClientExifPayload } from "./api";
+import { photoMetadataToClientExif } from "./clientExif";
 import { compressImageFile, revokeCompressResult } from "./compressImage";
-import { parseExifMetadata, type PhotoMetadata } from "./exifParse";
+import { parseExifMetadata } from "./exifParse";
 
-export function photoMetadataToClientExif(
-  metadata: PhotoMetadata,
-): ClientExifPayload | undefined {
-  const payload: ClientExifPayload = {};
-  if (metadata.gpsLatitude != null && metadata.gpsLongitude != null) {
-    payload.GPSLatitude = metadata.gpsLatitude;
-    payload.GPSLongitude = metadata.gpsLongitude;
-  }
-  const captured = metadata.dateTimeOriginal ?? metadata.dateTime;
-  if (captured) {
-    payload.DateTimeOriginal = captured;
-  }
-  return Object.keys(payload).length > 0 ? payload : undefined;
-}
+export { photoMetadataToClientExif } from "./clientExif";
 
 export async function prepareUploadFile(file: File): Promise<{
   file: File;

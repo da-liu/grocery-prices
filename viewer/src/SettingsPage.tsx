@@ -1,10 +1,34 @@
 import { useCallback, useEffect, useState } from "react";
-import { deleteStoreLocation, fetchStoreLocations } from "./api";
+import {
+  deleteStoreLocation,
+  fetchSettings,
+  fetchStoreLocations,
+  updateSettings,
+  type ExtractBackend,
+} from "./api";
 import { MapPreview } from "./MapPreview";
 import { StoreEditModal } from "./StoreEditModal";
 import { StoresMap } from "./StoresMap";
 import { hasValidCoords } from "./maps";
 import type { StoreLocation } from "./types";
+
+const EXTRACT_BACKEND_OPTIONS: {
+  id: ExtractBackend;
+  label: string;
+  detail: (model: string | null) => string;
+}[] = [
+  {
+    id: "cursor",
+    label: "Cursor",
+    detail: () => "Routes through the Cursor agent SDK (model: auto).",
+  },
+  {
+    id: "gemini_direct",
+    label: "Gemini direct",
+    detail: (model) =>
+      `Calls Google's API directly${model ? ` (model: ${model})` : ""}.`,
+  },
+];
 
 export function SettingsPage() {
   const [stores, setStores] = useState<StoreLocation[]>([]);
@@ -13,6 +37,10 @@ export function SettingsPage() {
   const [busy, setBusy] = useState(false);
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
   const [editingStore, setEditingStore] = useState<StoreLocation | null>(null);
+  const [extractBackend, setExtractBackend] = useState<ExtractBackend | null>(null);
+  const [extractModel, setExtractModel] = useState<string | null>(null);
+  const [settingsLoading, setSettingsLoading] = useState(true);
+  const [settingsBusy, setSettingsBusy] = useState(false);
 
   const loadStores = useCallback(() => {
     setLoading(true);
@@ -26,6 +54,32 @@ export function SettingsPage() {
   useEffect(() => {
     void loadStores();
   }, [loadStores]);
+
+  useEffect(() => {
+    setSettingsLoading(true);
+    fetchSettings()
+      .then((settings) => {
+        setExtractBackend(settings.extract_backend);
+        setExtractModel(settings.extract_model);
+      })
+      .catch((err: Error) => setError(err.message))
+      .finally(() => setSettingsLoading(false));
+  }, []);
+
+  async function handleExtractBackendChange(backend: ExtractBackend) {
+    if (backend === extractBackend || settingsBusy) return;
+    setSettingsBusy(true);
+    setError(null);
+    try {
+      const settings = await updateSettings({ extract_backend: backend });
+      setExtractBackend(settings.extract_backend);
+      setExtractModel(settings.extract_model);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Could not update extraction settings");
+    } finally {
+      setSettingsBusy(false);
+    }
+  }
 
   async function handleDelete(storeId: string) {
     setBusy(true);
@@ -46,11 +100,48 @@ export function SettingsPage() {
       <div className="panel-header">
         <div>
           <h1>Settings</h1>
-          <p className="subtitle">Manage saved store labels.</p>
+          <p className="subtitle">Manage extraction and store preferences.</p>
         </div>
       </div>
 
       {error && <p className="status error">{error}</p>}
+
+      <section className="settings-section">
+        <div className="settings-section-header">
+          <h2>Extraction model</h2>
+          <p className="subtitle">
+            Choose which vision backend processes new uploads and re-extractions.
+          </p>
+        </div>
+
+        {settingsLoading && <p className="status">Loading settings…</p>}
+
+        {!settingsLoading && (
+          <div className="settings-extract-options" role="radiogroup" aria-label="Extraction model">
+            {EXTRACT_BACKEND_OPTIONS.map((option) => (
+              <label
+                key={option.id}
+                className={`settings-extract-option${extractBackend === option.id ? " is-selected" : ""}`}
+              >
+                <input
+                  type="radio"
+                  name="extract-backend"
+                  value={option.id}
+                  checked={extractBackend === option.id}
+                  disabled={settingsBusy || extractBackend === null}
+                  onChange={() => void handleExtractBackendChange(option.id)}
+                />
+                <span className="settings-extract-option-body">
+                  <strong>{option.label}</strong>
+                  <span className="settings-extract-option-detail">
+                    {option.detail(extractBackend === option.id ? extractModel : null)}
+                  </span>
+                </span>
+              </label>
+            ))}
+          </div>
+        )}
+      </section>
 
       <section className="settings-section">
         <div className="settings-section-header">

@@ -11,7 +11,8 @@ function formatPrice(price: number | null | undefined) {
 }
 
 function productKey(product: Product): string {
-  if (product.barcode) return `barcode:${product.barcode}`;
+  const barcode = product.other?.barcode;
+  if (barcode) return `barcode:${barcode}`;
   return `name:${product.product_name.trim().toLowerCase()}`;
 }
 
