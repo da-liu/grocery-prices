@@ -4,18 +4,18 @@ import time
 from pathlib import Path
 from unittest.mock import patch
 
-from grocery_extract.extract_worker import ExtractionJob
-from grocery_extract.ingest import accept_upload_batch, run_extraction
+from extract_server.extraction.worker import ExtractionJob
+from extract_server.extraction.ingest import accept_upload_batch, run_extraction
 
 
 def test_accept_upload_batch_returns_pending_without_extraction(tmp_path: Path, monkeypatch):
     monkeypatch.setenv("GROCERY_DATA_DIR", str(tmp_path / "data"))
     monkeypatch.setenv("GROCERY_DB_PATH", str(tmp_path / "grocery.db"))
-    monkeypatch.setattr("grocery_extract.user_paths.ROOT", tmp_path)
-    monkeypatch.setattr("grocery_extract.user_paths.DATA_DIR", tmp_path / "data")
+    monkeypatch.setattr("extract_server.extraction.paths.ROOT", tmp_path)
+    monkeypatch.setattr("extract_server.extraction.paths.DATA_DIR", tmp_path / "data")
 
-    from extract_server.users_db import init_db, register_user
-    from grocery_extract.catalog_db import get_extraction, get_photo
+    from extract_server.db import init_db, register_user
+    from extract_server.db import get_extraction, get_photo
 
     init_db()
     user = register_user("async-user", "password12345")
@@ -23,10 +23,10 @@ def test_accept_upload_batch_returns_pending_without_extraction(tmp_path: Path, 
     upload.write_bytes(b"RIFF....WEBP")
 
     monkeypatch.setattr(
-        "grocery_extract.user_stores_db.list_user_stores_as_dicts",
+        "extract_server.db.user_stores.list_user_stores_as_dicts",
         lambda *_args: [],
     )
-    monkeypatch.setattr("grocery_extract.ingest.image_needs_store_label", lambda *_args: False)
+    monkeypatch.setattr("extract_server.extraction.ingest.image_needs_store_label", lambda *_args: False)
 
     started = time.perf_counter()
     results = accept_upload_batch([upload], user_id=user.id, enqueue=False)
@@ -45,11 +45,11 @@ def test_accept_upload_batch_returns_pending_without_extraction(tmp_path: Path, 
 def test_run_extraction_completes_photo(tmp_path: Path, monkeypatch):
     monkeypatch.setenv("GROCERY_DATA_DIR", str(tmp_path / "data"))
     monkeypatch.setenv("GROCERY_DB_PATH", str(tmp_path / "grocery.db"))
-    monkeypatch.setattr("grocery_extract.user_paths.ROOT", tmp_path)
-    monkeypatch.setattr("grocery_extract.user_paths.DATA_DIR", tmp_path / "data")
+    monkeypatch.setattr("extract_server.extraction.paths.ROOT", tmp_path)
+    monkeypatch.setattr("extract_server.extraction.paths.DATA_DIR", tmp_path / "data")
 
-    from extract_server.users_db import init_db, register_user
-    from grocery_extract.catalog_db import get_extraction, get_photo
+    from extract_server.db import init_db, register_user
+    from extract_server.db import get_extraction, get_photo
 
     init_db()
     user = register_user("extract-user", "password12345")
@@ -57,10 +57,10 @@ def test_run_extraction_completes_photo(tmp_path: Path, monkeypatch):
     upload.write_bytes(b"RIFF....WEBP")
 
     monkeypatch.setattr(
-        "grocery_extract.user_stores_db.list_user_stores_as_dicts",
+        "extract_server.db.user_stores.list_user_stores_as_dicts",
         lambda *_args: [],
     )
-    monkeypatch.setattr("grocery_extract.ingest.image_needs_store_label", lambda *_args: False)
+    monkeypatch.setattr("extract_server.extraction.ingest.image_needs_store_label", lambda *_args: False)
 
     accepted = accept_upload_batch([upload], user_id=user.id, enqueue=False)[0]
     job = ExtractionJob(
@@ -76,7 +76,7 @@ def test_run_extraction_completes_photo(tmp_path: Path, monkeypatch):
     )
 
     def fake_extract(upload_path: Path, **kwargs):
-        from grocery_extract.schema import ExtractionResult, ExtractedProduct, ExtractionTiming, ImageMeta
+        from extract_server.extraction.schema import ExtractionResult, ExtractedProduct, ExtractionTiming, ImageMeta
 
         return ExtractionResult(
             image_path=str(upload_path),
@@ -90,7 +90,7 @@ def test_run_extraction_completes_photo(tmp_path: Path, monkeypatch):
             timing=ExtractionTiming(llm_ms=2000, other_ms=50, model="auto"),
         )
 
-    monkeypatch.setattr("grocery_extract.ingest.extract_from_upload", fake_extract)
+    monkeypatch.setattr("extract_server.extraction.ingest.extract_from_upload", fake_extract)
 
     result = run_extraction(job)
     assert result["extraction_status"] == "done"
@@ -111,10 +111,10 @@ def test_run_extraction_completes_photo(tmp_path: Path, monkeypatch):
 def test_photos_status_endpoint(client, monkeypatch, tmp_path: Path):
     monkeypatch.setenv("GROCERY_DATA_DIR", str(tmp_path / "data"))
     monkeypatch.setenv("GROCERY_DB_PATH", str(tmp_path / "grocery.db"))
-    monkeypatch.setattr("grocery_extract.user_paths.ROOT", tmp_path)
-    monkeypatch.setattr("grocery_extract.user_paths.DATA_DIR", tmp_path / "data")
+    monkeypatch.setattr("extract_server.extraction.paths.ROOT", tmp_path)
+    monkeypatch.setattr("extract_server.extraction.paths.DATA_DIR", tmp_path / "data")
 
-    from extract_server.users_db import close_all_connections, init_db
+    from extract_server.db import close_all_connections, init_db
 
     close_all_connections()
     init_db()
@@ -126,7 +126,7 @@ def test_photos_status_endpoint(client, monkeypatch, tmp_path: Path):
     token = reg.json()["token"]
     headers = {"Authorization": f"Bearer {token}"}
 
-    with patch("extract_server.routes.photos.accept_upload_batch") as accept:
+    with patch("extract_server.api.routes.photos.accept_upload_batch") as accept:
         accept.return_value = [
             {
                 "image_id": "IMG_0001",

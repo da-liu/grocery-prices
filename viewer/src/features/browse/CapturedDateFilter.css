@@ -1,0 +1,44 @@
+.browse-date-presets {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  margin-bottom: 0.65rem;
+}
+
+.browse-date-preset {
+  padding: 0.35rem 0.6rem;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--surface);
+  color: var(--text-secondary);
+  font: inherit;
+  font-size: 0.8rem;
+  cursor: pointer;
+}
+
+.browse-date-preset.active {
+  border-color: var(--accent-bar);
+  background: var(--accent-bg);
+  color: var(--accent-strong);
+}
+
+.browse-date-custom {
+  margin-top: 0.35rem;
+}
+
+.browse-date-custom summary {
+  font-size: 0.82rem;
+  color: var(--text-muted);
+  cursor: pointer;
+  user-select: none;
+}
+
+.browse-date-custom .browse-date-inputs {
+  margin-top: 0.5rem;
+}
+
+.browse-date-inputs {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.5rem;
+}

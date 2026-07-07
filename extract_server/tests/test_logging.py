@@ -42,7 +42,7 @@ def test_config_error_returns_safe_503(client):
     token = reg.json()["token"]
     headers = {"Authorization": f"Bearer {token}"}
 
-    with patch("extract_server.extract_config.configured_api_key", side_effect=ConfigError("CURSOR_API_KEY missing")):
+    with patch("extract_server.core.config.configured_api_key", side_effect=ConfigError("CURSOR_API_KEY missing")):
         resp = client.post(
             "/api/photos/bulk",
             headers=headers,
@@ -53,7 +53,7 @@ def test_config_error_returns_safe_503(client):
 
 
 def test_extraction_error_returns_safe_502(client):
-    from grocery_extract.errors import ExtractionError
+    from extract_server.core.exceptions import ExtractionError
 
     username = f"extract_{uuid.uuid4().hex[:8]}"
     reg = client.post(
@@ -63,8 +63,8 @@ def test_extraction_error_returns_safe_502(client):
     token = reg.json()["token"]
     headers = {"Authorization": f"Bearer {token}"}
 
-    with patch("extract_server.extract_config.configured_api_key", return_value="test-key"):
-        with patch("extract_server.routes.photos.accept_upload_batch", side_effect=ExtractionError("LLM timeout")):
+    with patch("extract_server.core.config.configured_api_key", return_value="test-key"):
+        with patch("extract_server.api.routes.photos.accept_upload_batch", side_effect=ExtractionError("LLM timeout")):
             resp = client.post(
                 "/api/photos/bulk",
                 headers=headers,
@@ -77,12 +77,12 @@ def test_extraction_error_returns_safe_502(client):
 def test_run_extraction_failure_logs(tmp_path, monkeypatch, caplog):
     monkeypatch.setenv("GROCERY_DATA_DIR", str(tmp_path / "data"))
     monkeypatch.setenv("GROCERY_DB_PATH", str(tmp_path / "grocery.db"))
-    monkeypatch.setattr("grocery_extract.user_paths.ROOT", tmp_path)
-    monkeypatch.setattr("grocery_extract.user_paths.DATA_DIR", tmp_path / "data")
+    monkeypatch.setattr("extract_server.extraction.paths.ROOT", tmp_path)
+    monkeypatch.setattr("extract_server.extraction.paths.DATA_DIR", tmp_path / "data")
 
-    from extract_server.users_db import init_db, register_user
-    from grocery_extract.extract_worker import ExtractionJob
-    from grocery_extract.ingest import accept_upload_batch, run_extraction
+    from extract_server.db import init_db, register_user
+    from extract_server.extraction.worker import ExtractionJob
+    from extract_server.extraction.ingest import accept_upload_batch, run_extraction
 
     caplog.set_level(logging.ERROR)
 
@@ -91,10 +91,10 @@ def test_run_extraction_failure_logs(tmp_path, monkeypatch, caplog):
     upload = tmp_path / "photo.webp"
     upload.write_bytes(b"RIFF....WEBP")
 
-    monkeypatch.setattr("grocery_extract.user_stores_db.list_user_stores_as_dicts", lambda *_args: [])
-    monkeypatch.setattr("grocery_extract.ingest.image_needs_store_label", lambda *_args: False)
+    monkeypatch.setattr("extract_server.db.user_stores.list_user_stores_as_dicts", lambda *_args: [])
+    monkeypatch.setattr("extract_server.extraction.ingest.image_needs_store_label", lambda *_args: False)
     monkeypatch.setattr(
-        "grocery_extract.ingest.extract_from_upload",
+        "extract_server.extraction.ingest.extract_from_upload",
         lambda *_args, **_kwargs: (_ for _ in ()).throw(RuntimeError("mock llm failure")),
     )
 
@@ -118,4 +118,4 @@ def test_run_extraction_failure_logs(tmp_path, monkeypatch, caplog):
 
 
 # Import after test module load so server patches resolve correctly.
-from grocery_extract.errors import ConfigError  # noqa: E402
+from extract_server.core.exceptions import ConfigError  # noqa: E402

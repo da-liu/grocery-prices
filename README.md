@@ -14,7 +14,7 @@ Uploaded photos are stored on the API host filesystem; catalog metadata lives in
 Automated photo extraction (Cursor SDK vision) lives in `extract_server/`. See [extract_server/README.md](extract_server/README.md).
 
 ```bash
-cd extract_server && PYTHONPATH=.. .venv/bin/python server.py
+cd extract_server && pip install -e . && python -m extract_server.main
 ```
 
 Authenticated upload endpoints used by the viewer:
@@ -37,7 +37,7 @@ Expose the API at **https://api-g.daliu.ca** via the shared Cloudflare tunnel (s
 
 Add DNS once: CNAME `api-g` → `ed055d32-6cc4-482b-9aad-dac154f99551.cfargotunnel.com`
 
-The viewer build defaults to `VITE_API_URL=https://api-g.daliu.ca` in `deploy.sh`.
+The viewer build defaults to `VITE_API_URL=https://api-g.daliu.ca` in `infra/deploy.sh`.
 
 ### Auth
 
@@ -70,11 +70,11 @@ Open http://localhost:41873
 Static site at **https://g.daliu.ca** (S3 + CloudFront).
 
 ```bash
-./deploy-infra.sh   # once
-./deploy.sh         # build + sync
+./infra/deploy-infra.sh   # once
+./infra/deploy.sh         # build + sync
 ```
 
-`./deploy.sh` builds the viewer and syncs it to https://g.daliu.ca. Product photos are served by the API, not the static site.
+`./infra/deploy.sh` builds the viewer and syncs it to https://g.daliu.ca. Product photos are served by the API, not the static site.
 
 ## Stores
 

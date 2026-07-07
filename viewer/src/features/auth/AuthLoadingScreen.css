@@ -1,0 +1,45 @@
+.auth-loading-card {
+  width: min(100%, 20rem);
+  padding: 1.5rem 1.25rem;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  background: var(--surface);
+  box-shadow: 0 20px 50px var(--shadow-3xl);
+  text-align: center;
+}
+
+.auth-loading-logo {
+  display: block;
+  margin: 0 auto 0.85rem;
+  animation: auth-logo-pulse 1.4s ease-in-out infinite;
+}
+
+.auth-loading-text {
+  margin: 0 0 1rem;
+  font-size: 0.9rem;
+  color: var(--text-muted);
+}
+
+.auth-loading-skeleton {
+  display: grid;
+  gap: 0.55rem;
+}
+
+.auth-loading-bar {
+  display: block;
+  height: 0.55rem;
+  border-radius: 999px;
+  background: linear-gradient(
+    90deg,
+    var(--bg-hover) 0%,
+    var(--border-input) 50%,
+    var(--bg-hover) 100%
+  );
+  background-size: 200% 100%;
+  animation: auth-skeleton-shimmer 1.2s ease-in-out infinite;
+}
+
+.auth-loading-bar--short {
+  width: 72%;
+  margin-inline: auto;
+}

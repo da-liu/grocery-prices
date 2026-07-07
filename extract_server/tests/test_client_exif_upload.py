@@ -28,7 +28,7 @@ def test_bulk_upload_accepts_exif_json(client, monkeypatch):
 
     exif_payload = '[{"GPSLatitude":43.65,"GPSLongitude":-79.38,"captured_at":"2026-07-04T18:30:00-04:00","date_folder":"2026_07_04"}]'
 
-    with patch("extract_server.routes.photos.accept_upload_batch", side_effect=fake_batch):
+    with patch("extract_server.api.routes.photos.accept_upload_batch", side_effect=fake_batch):
         resp = client.post(
             "/api/photos/bulk",
             headers={"Authorization": f"Bearer {token}"},

@@ -3,14 +3,14 @@ from __future__ import annotations
 import base64
 from pathlib import Path
 
-from extract_server.grocery_extract.cursor_extractor import (
+from extract_server.extraction.cursor_extractor import (
     ExtractImageResult,
     default_extract_model,
     current_extractor_name,
     extract_products_from_image,
 )
-from extract_server.grocery_extract.pipeline import extract_from_upload
-from extract_server.grocery_extract.schema import ExtractedProduct
+from extract_server.extraction.pipeline import extract_from_upload
+from extract_server.extraction.schema import ExtractedProduct
 
 
 def test_default_extract_model_uses_backend_defaults(monkeypatch):
@@ -67,7 +67,7 @@ def test_extract_products_from_image_posts_to_gemini_direct(tmp_path: Path, monk
             captured["payload"] = json
             return FakeResponse()
 
-    monkeypatch.setattr("grocery_extract.cursor_extractor.httpx.Client", FakeClient)
+    monkeypatch.setattr("extract_server.extraction.cursor_extractor.httpx.Client", FakeClient)
 
     result = extract_products_from_image(source)
 
@@ -90,7 +90,7 @@ def test_extract_from_upload_uses_backend_extractor_label(tmp_path: Path, monkey
     upload.write_bytes(b"jpg-bytes")
 
     monkeypatch.setattr(
-        "extract_server.grocery_extract.pipeline.extract_products_from_image",
+        "extract_server.extraction.pipeline.extract_products_from_image",
         lambda *_args, **_kwargs: ExtractImageResult(
             products=[ExtractedProduct(product_name="Milk", price=4.99, category="dairy")],
             photo_type="shelf",
@@ -101,7 +101,7 @@ def test_extract_from_upload_uses_backend_extractor_label(tmp_path: Path, monkey
         ),
     )
     monkeypatch.setattr(
-        "extract_server.grocery_extract.pipeline.current_extractor_name",
+        "extract_server.extraction.pipeline.current_extractor_name",
         lambda backend=None: "gemini_direct",
     )
 

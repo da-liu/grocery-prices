@@ -1,0 +1,47 @@
+.panel {
+  max-width: 900px;
+}
+
+.panel-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1rem;
+  margin-bottom: 1.25rem;
+}
+
+.panel h1 {
+  margin: 0;
+  font-size: 1.75rem;
+}
+
+.stack {
+  display: grid;
+  gap: 0.75rem;
+  max-width: 24rem;
+}
+
+.stack label {
+  display: grid;
+  gap: 0.35rem;
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+}
+
+.stack input {
+  padding: 0.65rem 0.85rem;
+  border: 1px solid var(--border-input);
+  border-radius: 10px;
+  font: inherit;
+}
+
+.stack button,
+.ghost {
+  padding: 0.65rem 1rem;
+  border: 0;
+  border-radius: 10px;
+  background: var(--accent);
+  color: var(--text-on-accent);
+  font: inherit;
+  cursor: pointer;
+}

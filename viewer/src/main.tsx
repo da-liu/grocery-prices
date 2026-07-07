@@ -1,7 +1,9 @@
-import { StrictMode } from 'react'
-import { createRoot } from 'react-dom/client'
-import './index.css'
-import App from './App.tsx'
+import { StrictMode } from "react";
+import { createRoot } from "react-dom/client";
+import { BrowserRouter } from "react-router";
+import "@/shared/styles/index.css";
+import "@/shared/styles/utilities.css";
+import App from "@/app/App";
 
 function isInsideLightbox(target: EventTarget | null) {
   return target instanceof Element && Boolean(target.closest(".photo-lightbox-backdrop"));
@@ -26,8 +28,10 @@ function disablePinchZoom() {
 
 disablePinchZoom();
 
-createRoot(document.getElementById('root')!).render(
+createRoot(document.getElementById("root")!).render(
   <StrictMode>
-    <App />
+    <BrowserRouter>
+      <App />
+    </BrowserRouter>
   </StrictMode>,
-)
+);

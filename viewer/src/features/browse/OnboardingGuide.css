@@ -1,0 +1,99 @@
+.onboarding-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 1200;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.25rem;
+  background: var(--scrim-strong);
+}
+
+.onboarding-card {
+  width: min(100%, 28rem);
+  padding: 1.25rem 1.25rem 1rem;
+  border-radius: 16px;
+  background: var(--surface);
+  box-shadow: 0 20px 50px var(--shadow-3xl);
+}
+
+.onboarding-eyebrow {
+  margin: 0 0 0.35rem;
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.onboarding-card h2 {
+  margin: 0 0 0.5rem;
+  font-size: 1.35rem;
+}
+
+.onboarding-body {
+  margin: 0 0 1rem;
+  color: var(--text-secondary);
+  line-height: 1.5;
+}
+
+.onboarding-sample {
+  margin: 0 0 0.85rem;
+}
+
+.onboarding-sample img {
+  display: block;
+  width: 100%;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  aspect-ratio: 4 / 3;
+  object-fit: cover;
+}
+
+.onboarding-sample figcaption {
+  margin-top: 0.45rem;
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  text-align: center;
+}
+
+.onboarding-dots {
+  display: flex;
+  gap: 0.35rem;
+  margin-bottom: 1rem;
+}
+
+.onboarding-dots span {
+  width: 0.55rem;
+  height: 0.55rem;
+  border-radius: 999px;
+  background: var(--border-input);
+}
+
+.onboarding-dots span.active {
+  background: var(--accent);
+}
+
+.onboarding-actions {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.onboarding-actions .ghost {
+  background: var(--bg-hover);
+  color: var(--text-secondary);
+}
+
+.onboarding-actions button {
+  padding: 0.6rem 0.9rem;
+  border: 0;
+  border-radius: 10px;
+  background: var(--accent);
+  color: var(--text-on-accent);
+  font: inherit;
+  cursor: pointer;
+}
+
+.store-label-header .onboarding-body {
+  margin-bottom: 0.85rem;
+}

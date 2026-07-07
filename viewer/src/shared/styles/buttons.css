@@ -1,0 +1,44 @@
+.ghost {
+  background: var(--bg-hover);
+  color: var(--text-secondary);
+}
+
+.danger-outline {
+  padding: 0.5rem 0.85rem;
+  border: 1px solid var(--danger);
+  border-radius: 10px;
+  background: var(--surface);
+  color: var(--danger);
+  font: inherit;
+  font-weight: 400;
+  cursor: pointer;
+}
+
+.danger-outline:hover:not(:disabled) {
+  background: var(--danger-bg);
+}
+
+.danger-outline:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.danger {
+  padding: 0.5rem 0.85rem;
+  border: 1px solid var(--danger);
+  border-radius: 10px;
+  background: var(--danger);
+  color: var(--text-on-accent);
+  font: inherit;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.danger:hover:not(:disabled) {
+  filter: brightness(1.05);
+}
+
+.danger:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}

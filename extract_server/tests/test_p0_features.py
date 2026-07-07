@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from grocery_extract.duplicate import file_content_hash, find_exact_duplicate
+from extract_server.extraction.duplicate import file_content_hash, find_exact_duplicate
 
 
 def test_file_content_hash(tmp_path: Path):
@@ -15,11 +15,11 @@ def test_find_exact_duplicate(tmp_path: Path, monkeypatch):
     user_id = "user-1"
     monkeypatch.setenv("GROCERY_DATA_DIR", str(tmp_path / "data"))
     monkeypatch.setenv("GROCERY_DB_PATH", str(tmp_path / "grocery.db"))
-    monkeypatch.setattr("grocery_extract.user_paths.ROOT", tmp_path)
-    monkeypatch.setattr("grocery_extract.user_paths.DATA_DIR", tmp_path / "data")
+    monkeypatch.setattr("extract_server.extraction.paths.ROOT", tmp_path)
+    monkeypatch.setattr("extract_server.extraction.paths.DATA_DIR", tmp_path / "data")
 
-    from extract_server.users_db import init_db, register_user
-    from grocery_extract.catalog_db import save_photo_extraction, save_photo
+    from extract_server.db import init_db, register_user
+    from extract_server.db import save_photo_extraction, save_photo
 
     init_db()
     user = register_user("dupuser", "password12345")

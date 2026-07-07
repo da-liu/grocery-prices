@@ -5,8 +5,8 @@ from unittest.mock import patch
 
 import pytest
 
-from grocery_extract.catalog_db import is_valid_photo_id, new_photo_ids
-from grocery_extract.ingest import accept_upload_batch
+from extract_server.db import is_valid_photo_id, new_photo_ids
+from extract_server.extraction.ingest import accept_upload_batch
 
 
 def test_new_photo_ids_returns_unique_uuid_ids():
@@ -20,10 +20,10 @@ def test_new_photo_ids_returns_unique_uuid_ids():
 def test_accept_upload_batch_assigns_distinct_image_ids(tmp_path: Path, monkeypatch):
     monkeypatch.setenv("GROCERY_DATA_DIR", str(tmp_path / "data"))
     monkeypatch.setenv("GROCERY_DB_PATH", str(tmp_path / "grocery.db"))
-    monkeypatch.setattr("grocery_extract.user_paths.ROOT", tmp_path)
-    monkeypatch.setattr("grocery_extract.user_paths.DATA_DIR", tmp_path / "data")
+    monkeypatch.setattr("extract_server.extraction.paths.ROOT", tmp_path)
+    monkeypatch.setattr("extract_server.extraction.paths.DATA_DIR", tmp_path / "data")
 
-    from extract_server.users_db import init_db, register_user
+    from extract_server.db import init_db, register_user
 
     init_db()
     user = register_user("batchuser", "password12345")
@@ -38,16 +38,16 @@ def test_accept_upload_batch_assigns_distinct_image_ids(tmp_path: Path, monkeypa
         uploads.append(path)
 
     monkeypatch.setattr(
-        "grocery_extract.ingest.user_photos_dir",
+        "extract_server.extraction.ingest.user_photos_dir",
         lambda uid, date_folder: user_dir / "photos" / date_folder,
     )
-    monkeypatch.setattr("grocery_extract.ingest.file_content_hash", lambda path: str(path))
-    monkeypatch.setattr("grocery_extract.ingest.find_photo_by_content_hash", lambda *_args: None)
+    monkeypatch.setattr("extract_server.extraction.ingest.file_content_hash", lambda path: str(path))
+    monkeypatch.setattr("extract_server.extraction.ingest.find_photo_by_content_hash", lambda *_args: None)
     monkeypatch.setattr(
-        "grocery_extract.user_stores_db.list_user_stores_as_dicts",
+        "extract_server.db.user_stores.list_user_stores_as_dicts",
         lambda *_args: [],
     )
-    monkeypatch.setattr("grocery_extract.ingest.image_needs_store_label", lambda *_args: False)
+    monkeypatch.setattr("extract_server.extraction.ingest.image_needs_store_label", lambda *_args: False)
 
     results = accept_upload_batch(uploads, user_id=user_id, max_workers=1, enqueue=False)
 
@@ -67,10 +67,10 @@ def test_accept_upload_batch_assigns_distinct_image_ids(tmp_path: Path, monkeypa
 def test_accept_upload_batch_persists_jpeg(tmp_path: Path, monkeypatch):
     monkeypatch.setenv("GROCERY_DATA_DIR", str(tmp_path / "data"))
     monkeypatch.setenv("GROCERY_DB_PATH", str(tmp_path / "grocery.db"))
-    monkeypatch.setattr("grocery_extract.user_paths.ROOT", tmp_path)
-    monkeypatch.setattr("grocery_extract.user_paths.DATA_DIR", tmp_path / "data")
+    monkeypatch.setattr("extract_server.extraction.paths.ROOT", tmp_path)
+    monkeypatch.setattr("extract_server.extraction.paths.DATA_DIR", tmp_path / "data")
 
-    from extract_server.users_db import init_db, register_user
+    from extract_server.db import init_db, register_user
 
     init_db()
     user = register_user("jpegbatch", "password12345")
@@ -82,16 +82,16 @@ def test_accept_upload_batch_persists_jpeg(tmp_path: Path, monkeypatch):
     upload.write_bytes(b"\xff\xd8\xff jpeg-upload")
 
     monkeypatch.setattr(
-        "grocery_extract.ingest.user_photos_dir",
+        "extract_server.extraction.ingest.user_photos_dir",
         lambda uid, date_folder: user_dir / "photos" / date_folder,
     )
-    monkeypatch.setattr("grocery_extract.ingest.file_content_hash", lambda path: str(path))
-    monkeypatch.setattr("grocery_extract.ingest.find_photo_by_content_hash", lambda *_args: None)
+    monkeypatch.setattr("extract_server.extraction.ingest.file_content_hash", lambda path: str(path))
+    monkeypatch.setattr("extract_server.extraction.ingest.find_photo_by_content_hash", lambda *_args: None)
     monkeypatch.setattr(
-        "grocery_extract.user_stores_db.list_user_stores_as_dicts",
+        "extract_server.db.user_stores.list_user_stores_as_dicts",
         lambda *_args: [],
     )
-    monkeypatch.setattr("grocery_extract.ingest.image_needs_store_label", lambda *_args: False)
+    monkeypatch.setattr("extract_server.extraction.ingest.image_needs_store_label", lambda *_args: False)
 
     results = accept_upload_batch([upload], user_id=user_id, max_workers=1, enqueue=False)
 
@@ -128,7 +128,7 @@ def test_bulk_endpoint_passes_distinct_saved_paths(client, monkeypatch):
             for i in range(len(paths))
         ]
 
-    with patch("extract_server.routes.photos.accept_upload_batch", side_effect=fake_batch):
+    with patch("extract_server.api.routes.photos.accept_upload_batch", side_effect=fake_batch):
         resp = client.post(
             "/api/photos/bulk",
             headers={"Authorization": f"Bearer {token}"},

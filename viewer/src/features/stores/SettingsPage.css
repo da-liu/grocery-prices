@@ -1,0 +1,139 @@
+.settings-section {
+  margin-top: 1.5rem;
+}
+
+.settings-section:first-of-type {
+  margin-top: 0;
+}
+
+.settings-section-header h2 {
+  margin: 0;
+  font-size: 1.1rem;
+}
+
+.settings-extract-options {
+  display: grid;
+  gap: 0.65rem;
+  margin-top: 0.85rem;
+}
+
+.settings-extract-option {
+  display: flex;
+  gap: 0.75rem;
+  align-items: flex-start;
+  padding: 0.85rem 1rem;
+  border: 1px solid var(--border-input);
+  border-radius: 12px;
+  cursor: pointer;
+  transition: border-color 0.15s ease, background-color 0.15s ease;
+}
+
+.settings-extract-option:hover {
+  border-color: var(--accent);
+}
+
+.settings-extract-option.is-selected {
+  border-color: var(--accent);
+  background: var(--accent-selection);
+}
+
+.settings-extract-option input {
+  margin-top: 0.2rem;
+}
+
+.settings-extract-option-body {
+  display: grid;
+  gap: 0.2rem;
+}
+
+.settings-extract-option-detail {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  line-height: 1.4;
+}
+
+.store-list {
+  list-style: none;
+  margin: 0 0 1rem;
+  padding: 0;
+  display: grid;
+  gap: 0.75rem;
+}
+
+.store-list-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.85rem 1rem;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--surface);
+}
+
+.store-list-map {
+  flex: 0 0 auto;
+  width: 112px;
+  height: 76px;
+}
+
+.store-list-main {
+  display: grid;
+  flex: 1 1 0;
+  gap: 0.2rem;
+  min-width: 0;
+}
+
+.store-list-main strong {
+  font-size: 1rem;
+}
+
+.store-list-coords {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.store-list-actions {
+  display: flex;
+  flex: 0 0 auto;
+  flex-wrap: nowrap;
+  align-items: center;
+  gap: 0.5rem;
+  margin-left: auto;
+}
+
+.store-list-actions > button:not(.ghost):not(.danger-outline) {
+  padding: 0.65rem 1rem;
+  border: 0;
+  border-radius: 10px;
+  background: var(--accent);
+  color: var(--text-on-accent);
+  font: inherit;
+  cursor: pointer;
+}
+
+.store-list-actions .danger-outline {
+  padding: 0.65rem 1rem;
+}
+
+.store-meta-row {
+  display: flex;
+  align-items: center;
+  gap: 0.2rem;
+  flex-wrap: nowrap;
+  min-width: 0;
+  line-height: 1.35;
+}
+
+.store-meta-name {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.store-delete {
+  color: var(--danger);
+}

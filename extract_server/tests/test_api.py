@@ -65,7 +65,7 @@ def test_upload_with_mocked_ingest(client):
     )
     token = reg.json()["token"]
 
-    with patch("extract_server.routes.photos.accept_upload_batch") as ingest:
+    with patch("extract_server.api.routes.photos.accept_upload_batch") as ingest:
         ingest.return_value = [
             {
                 "image_id": "IMG_0001",
@@ -120,7 +120,7 @@ def test_upload_with_gemini_direct_backend_uses_google_key(client):
             }
         ]
 
-    with patch("extract_server.routes.photos.accept_upload_batch", side_effect=fake_batch):
+    with patch("extract_server.api.routes.photos.accept_upload_batch", side_effect=fake_batch):
         with patch.dict(
             "os.environ",
             {
@@ -153,7 +153,7 @@ def test_rerun_extraction_with_gemini_direct_uses_google_key(client):
     assert settings.status_code == 200, settings.text
 
     with patch(
-        "extract_server.routes.photos.reextract_photo",
+        "extract_server.api.routes.photos.reextract_photo",
         return_value={
             "image_id": "IMG_0001",
             "products": [],
@@ -187,8 +187,8 @@ def test_settings_get_and_patch(client):
 
     get_resp = client.get("/api/settings", headers=headers)
     assert get_resp.status_code == 200
-    assert get_resp.json()["extract_backend"] == "cursor"
-    assert get_resp.json()["extract_model"] == "auto"
+    assert get_resp.json()["extract_backend"] == "gemini_direct"
+    assert get_resp.json()["extract_model"] == "gemini-3.1-flash-lite"
 
     patch_resp = client.patch(
         "/api/settings",

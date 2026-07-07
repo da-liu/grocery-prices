@@ -8,8 +8,8 @@ import shutil
 import sys
 from pathlib import Path
 
-from extract_server.users_db import close_all_connections, get_conn, get_user_by_id
-from grocery_extract.user_paths import user_root
+from extract_server.db import close_all_connections, get_conn, get_user_by_id
+from extract_server.extraction.paths import user_root
 
 
 def remove_registered_user(user_id: str, *, remove_files: bool = True) -> bool:

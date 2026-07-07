@@ -1,0 +1,59 @@
+.price-range-chart {
+  margin-top: 0.15rem;
+  padding-inline: 4px;
+}
+
+.price-range-meta {
+  margin: 0 0 0.35rem;
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+
+.price-range-empty {
+  margin: 0;
+  font-size: 0.85rem;
+  color: var(--text-faint);
+}
+
+.price-range-svg {
+  display: block;
+  width: 100%;
+  height: auto;
+  overflow: visible;
+  touch-action: none;
+  user-select: none;
+}
+
+.price-range-bar {
+  fill: var(--border);
+}
+
+.price-range-bar--in {
+  fill: var(--accent-bar);
+}
+
+.price-range-selection {
+  fill: var(--accent-selection);
+  stroke: var(--accent);
+  stroke-width: 1;
+}
+
+.price-range-thumb {
+  fill: var(--surface);
+  stroke: var(--accent);
+  stroke-width: 2;
+  cursor: grab;
+}
+
+.price-range-thumb:focus {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.price-range-axis {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 0.25rem;
+  font-size: 0.78rem;
+  color: var(--text-muted);
+}

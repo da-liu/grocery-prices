@@ -1,0 +1,23 @@
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 1300;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.25rem;
+  background: var(--scrim-strong);
+}
+
+.modal {
+  width: min(100%, 28rem);
+  padding: 1.25rem;
+  border-radius: 16px;
+  background: var(--surface);
+  box-shadow: 0 20px 50px var(--shadow-3xl);
+}
+
+.modal-header h2 {
+  margin: 0 0 0.35rem;
+  font-size: 1.15rem;
+}

@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-ROOT="$(cd "$(dirname "$0")/.." && pwd)"
-cd "$ROOT/extract_server"
-export PYTHONPATH="$ROOT"
+ROOT="$(cd "$(dirname "$0")" && pwd)"
+cd "$ROOT"
 export PATH="/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin"
-.venv/bin/python -c "import server" || exit 1
-exec .venv/bin/python server.py
+.venv/bin/pip install -q -e .
+.venv/bin/python -c "import extract_server.main" || exit 1
+exec .venv/bin/python -m extract_server.main

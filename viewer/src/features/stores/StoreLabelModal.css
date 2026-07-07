@@ -1,0 +1,196 @@
+.store-label-card {
+  display: flex;
+  flex-direction: column;
+  width: min(100%, 32rem);
+  max-height: min(90vh, 40rem);
+  padding: 0;
+  overflow: hidden;
+}
+
+.store-label-header {
+  padding: 1.25rem 1.25rem 0;
+  flex-shrink: 0;
+}
+
+.store-label-context {
+  --store-label-preview-height: 8.5rem;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 0.75rem;
+  padding: 0 1.25rem;
+  margin-bottom: 0.85rem;
+  flex-shrink: 0;
+  align-items: start;
+}
+
+.store-label-context--solo {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.store-label-content {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: auto;
+  padding: 0 1.25rem;
+}
+
+.store-label-content .status {
+  margin: 0 0 0.75rem;
+}
+
+.store-label-footer {
+  flex-shrink: 0;
+  padding: 0.85rem 1.25rem 1.25rem;
+  border-top: 1px solid var(--border);
+  margin-top: auto;
+  justify-content: flex-end;
+}
+
+.store-label-preview {
+  margin: 0;
+  min-width: 0;
+}
+
+.store-label-preview img,
+.store-label-preview .map-preview.store-label-map {
+  display: block;
+  width: 100%;
+  height: var(--store-label-preview-height);
+  border-radius: 10px;
+  border: 1px solid var(--border);
+}
+
+.store-label-preview img {
+  object-fit: cover;
+}
+
+.store-label-preview .map-preview.store-label-map {
+  overflow: hidden;
+  background: var(--bg-hover);
+}
+
+.store-label-preview figcaption {
+  margin-top: 0.35rem;
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.store-label-actions {
+  display: grid;
+  gap: 0.75rem;
+  padding-bottom: 0.25rem;
+}
+
+.store-label-create-btn {
+  width: 100%;
+}
+
+.store-label-form {
+  padding-bottom: 0.25rem;
+}
+
+.store-label-empty {
+  margin: 0 0 0.75rem;
+  color: var(--text-muted);
+  font-size: 0.9rem;
+}
+
+.store-pick-list {
+  list-style: none;
+  margin: 0 0 0.75rem;
+  padding: 0;
+  display: grid;
+  gap: 0.5rem;
+}
+
+.store-pick-list button {
+  display: grid;
+  gap: 0.15rem;
+  width: 100%;
+  padding: 0.65rem 0.75rem;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--bg-muted);
+  text-align: left;
+  font: inherit;
+  cursor: pointer;
+}
+
+.store-pick-list button:hover:not(:disabled) {
+  border-color: var(--accent);
+  background: var(--accent-bg);
+}
+
+.store-pick-list button span {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.store-label-gps {
+  margin: 0;
+  font-size: 0.85rem;
+  color: var(--text-muted);
+}
+
+.store-form {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.store-form label {
+  display: grid;
+  gap: 0.35rem;
+  min-width: 0;
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+}
+
+.store-form input {
+  width: 100%;
+  min-width: 0;
+  padding: 0.6rem 0.75rem;
+  border: 1px solid var(--border-input);
+  border-radius: 10px;
+  font: inherit;
+}
+
+.store-form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem;
+  min-width: 0;
+}
+
+.store-form-row > label {
+  min-width: 0;
+}
+
+.store-form-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  justify-content: flex-end;
+}
+
+.store-form-actions button[type="submit"] {
+  padding: 0.65rem 1rem;
+  border: 0;
+  border-radius: 10px;
+  background: var(--accent);
+  color: var(--text-on-accent);
+  font: inherit;
+  cursor: pointer;
+}
+
+.map-preview.store-label-map {
+  width: 100%;
+  height: var(--store-label-preview-height, 8.5rem);
+  border-radius: 10px;
+  flex: none;
+}

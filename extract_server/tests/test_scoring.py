@@ -1,4 +1,4 @@
-from grocery_extract.scoring import benchmark, name_similarity, price_match, score_image
+from extract_server.extraction.scoring import benchmark, name_similarity, price_match, score_image
 
 
 def test_name_similarity_exact():

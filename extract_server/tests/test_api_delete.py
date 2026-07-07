@@ -1,7 +1,7 @@
 def _seed_user_products(client, username: str, token: str) -> tuple[str, list[str]]:
-    from extract_server.users_db import get_conn
-    from grocery_extract.catalog_db import save_photo_extraction, list_product_rows, save_photo
-    from grocery_extract.user_paths import user_root
+    from extract_server.db import get_conn
+    from extract_server.db import save_photo_extraction, list_product_rows, save_photo
+    from extract_server.extraction.paths import user_root
 
     user_id = get_conn().execute(
         "SELECT id FROM users WHERE username = ?",
@@ -112,3 +112,29 @@ def test_bulk_delete_products(client):
 
     products = client.get("/api/products", headers=headers).json()
     assert products == []
+
+
+def test_delete_photo(client):
+    reg = client.post(
+        "/api/auth/register",
+        json={"username": "photodeleter", "password": "password123"},
+    )
+    assert reg.status_code == 200, reg.text
+    token = reg.json()["token"]
+    headers = {"Authorization": f"Bearer {token}"}
+
+    _user_id, _product_ids = _seed_user_products(client, "photodeleter", token)
+
+    products = client.get("/api/products", headers=headers).json()
+    assert len(products) == 3
+
+    delete = client.delete("/api/photos/IMG_0001", headers=headers)
+    assert delete.status_code == 204, delete.text
+
+    products = client.get("/api/products", headers=headers).json()
+    assert len(products) == 1
+    assert products[0]["image_id"] == "IMG_0002"
+    assert products[0]["product_name"] == "Eggs"
+
+    media = client.get("/api/media/IMG_0001", headers=headers)
+    assert media.status_code == 404

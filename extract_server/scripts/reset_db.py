@@ -14,8 +14,8 @@ import urllib.error
 import urllib.request
 from pathlib import Path
 
-from extract_server import users_db
-from grocery_extract import user_paths
+from extract_server.db import close_all_connections, db_path, init_db
+from extract_server.extraction import paths as user_paths
 
 LAUNCHD_LABEL = "com.daliu.grocery-prices.api"
 DEFAULT_API_PORT = int(os.environ.get("GROCERY_API_PORT", "8765"))
@@ -25,13 +25,13 @@ _START_SCRIPT = _EXTRACT_SERVER_DIR / "start.sh"
 
 def reset_all() -> dict[str, str | int]:
     """Remove DB + uploaded files and re-init schema. Returns summary counts."""
-    db_path = users_db.db_path().resolve()
+    db_path_val = db_path().resolve()
     users_dir = (user_paths.data_dir() / "users").resolve()
 
-    users_db.close_all_connections()
+    close_all_connections()
 
     removed_db_files = 0
-    for path in (db_path, Path(f"{db_path}-wal"), Path(f"{db_path}-shm")):
+    for path in (db_path_val, Path(f"{db_path_val}-wal"), Path(f"{db_path_val}-shm")):
         if path.exists():
             path.unlink()
             removed_db_files += 1
@@ -46,10 +46,10 @@ def reset_all() -> dict[str, str | int]:
                 child.unlink()
     users_dir.mkdir(parents=True, exist_ok=True)
 
-    users_db.init_db()
+    init_db()
 
     return {
-        "db_path": str(db_path),
+        "db_path": str(db_path_val),
         "users_dir": str(users_dir),
         "removed_db_files": removed_db_files,
         "removed_user_dirs": removed_user_dirs,
@@ -111,7 +111,6 @@ def restart_api(*, port: int = DEFAULT_API_PORT) -> str:
                 os.kill(pid, signal.SIGKILL)
 
         env = os.environ.copy()
-        env["PYTHONPATH"] = str(_EXTRACT_SERVER_DIR.parent)
         subprocess.Popen(
             ["/bin/bash", str(_START_SCRIPT)],
             cwd=_EXTRACT_SERVER_DIR,
@@ -146,12 +145,12 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
 
 def main(argv: list[str] | None = None) -> int:
     args = _parse_args(argv)
-    db_path = users_db.db_path().resolve()
+    db_path_val = db_path().resolve()
     users_dir = (user_paths.data_dir() / "users").resolve()
 
     if not args.yes:
         print("This will permanently delete:", file=sys.stderr)
-        print(f"  database: {db_path}", file=sys.stderr)
+        print(f"  database: {db_path_val}", file=sys.stderr)
         print(f"  uploads:  {users_dir}/*", file=sys.stderr)
         if not args.no_restart:
             print(f"  api:      restart service on port {DEFAULT_API_PORT}", file=sys.stderr)
@@ -161,7 +160,7 @@ def main(argv: list[str] | None = None) -> int:
     try:
         summary = reset_all()
     finally:
-        users_db.close_all_connections()
+        close_all_connections()
 
     print(f"Reset database at {summary['db_path']}")
     print(f"Cleared uploads under {summary['users_dir']}")
