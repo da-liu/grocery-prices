@@ -25,8 +25,8 @@ const STEPS = [
     imageAlt: null,
   },
   {
-    title: "Browse your prices",
-    body: "Your products appear on Browse. Compare the same item across stores over time on Compare.",
+    title: "Your catalog",
+    body: "Your products appear in Catalog. Search, filter, and sort to find what you need.",
     image: null,
     imageAlt: null,
   },

@@ -8,11 +8,11 @@
  * Re-fit coefficients with: python viewer/scripts/calibrate_webp_heuristic.py
  */
 
-export const PROBE_QUALITY = 0.85;
-export const QUALITY_GAMMA = 3.2;
+const PROBE_QUALITY = 0.85;
+const QUALITY_GAMMA = 3.2;
 export const MAX_SCALE_REFINEMENTS = 3;
 
-export function clamp(value: number, min: number, max: number): number {
+function clamp(value: number, min: number, max: number): number {
   return Math.min(max, Math.max(min, value));
 }
 
@@ -63,7 +63,7 @@ export function scaleForTargetSize(
   return currentScale * Math.sqrt(targetBytes / outputBytes) * 0.96;
 }
 
-export interface CompressGuess {
+interface CompressGuess {
   scale: number;
   quality: number;
 }

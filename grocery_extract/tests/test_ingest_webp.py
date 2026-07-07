@@ -19,14 +19,13 @@ def test_persist_image_keeps_webp_without_jpeg_copy(tmp_path: Path, monkeypatch)
     upload = tmp_path / "upload.webp"
     upload.write_bytes(b"RIFF....WEBP")
 
-    key, suffix = _persist_image(
+    key = _persist_image(
         upload,
         image_id,
         date_folder,
         user_id,
     )
 
-    assert suffix == ".webp"
     assert key.endswith("/IMG_0001.webp")
 
     webp_path = tmp_path / "data" / key

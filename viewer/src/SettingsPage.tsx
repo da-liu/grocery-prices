@@ -147,7 +147,7 @@ export function SettingsPage() {
         <div className="settings-section-header">
           <h2>Store locations</h2>
           <p className="subtitle">
-            Saved store labels with map previews. Label photos from Browse with the pin icon.
+            Saved store labels with map previews. Label photos from Catalog with the pin icon.
           </p>
         </div>
 
@@ -224,7 +224,7 @@ export function SettingsPage() {
 
         {!loading && stores.length === 0 && (
           <p className="store-label-empty">
-            No saved stores yet. Label a photo with GPS from Browse using the pin icon.
+            No saved stores yet. Label a photo with GPS from Catalog using the pin icon.
           </p>
         )}
       </section>

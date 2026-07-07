@@ -420,10 +420,6 @@
   cursor: pointer;
 }
 
-.compare-panel {
-  max-width: none;
-}
-
 .header {
   display: flex;
   flex-wrap: wrap;
@@ -912,7 +908,7 @@
 
 .meta {
   display: grid;
-  grid-template-columns: auto 1fr;
+  grid-template-columns: minmax(0, 40%) minmax(0, 1fr);
   gap: 0.2rem 0.75rem;
   margin: 0;
   font-size: 0.78rem;
@@ -921,6 +917,8 @@
 .meta dt {
   color: var(--text-faint);
   font-weight: 500;
+  min-width: 0;
+  overflow-wrap: break-word;
 }
 
 .meta dd {
@@ -1175,8 +1173,7 @@
   color: var(--text-secondary);
 }
 
-.stack input,
-.compare-search {
+.stack input {
   padding: 0.65rem 0.85rem;
   border: 1px solid var(--border-input);
   border-radius: 10px;
@@ -1199,16 +1196,14 @@
   color: var(--text-secondary);
 }
 
-.result-card,
-.compare-card {
+.result-card {
   border: 1px solid var(--border);
   border-radius: 14px;
   padding: 1rem;
   background: var(--surface);
 }
 
-.result-card header,
-.compare-card header {
+.result-card header {
   display: flex;
   justify-content: space-between;
   gap: 1rem;
@@ -1218,77 +1213,6 @@
 .result-card ul {
   margin: 0;
   padding-left: 1.1rem;
-}
-
-.compare-search {
-  width: 100%;
-  margin-bottom: 1rem;
-}
-
-.compare-stats {
-  margin-bottom: 1rem;
-}
-
-.compare-list {
-  display: grid;
-  gap: 1rem;
-}
-
-.compare-card h2 {
-  margin: 0;
-  font-size: 1.05rem;
-}
-
-.compare-best {
-  margin: 0.35rem 0 0;
-  font-size: 0.9rem;
-  color: var(--success);
-  font-weight: 600;
-}
-
-.compare-card table {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: 0.9rem;
-}
-
-.compare-card th,
-.compare-card td {
-  padding: 0.45rem 0.35rem;
-  border-bottom: 1px solid var(--bg-hover);
-  text-align: left;
-}
-
-.compare-card tr.cheapest td {
-  color: var(--success);
-  font-weight: 600;
-}
-
-.compare-actions-col {
-  width: 4.5rem;
-  text-align: right;
-}
-
-.row-delete {
-  padding: 0.25rem 0.45rem;
-  border: 1px solid var(--border-input);
-  border-radius: 6px;
-  background: var(--surface);
-  color: var(--danger);
-  font: inherit;
-  font-size: 0.8rem;
-  font-weight: 400;
-  cursor: pointer;
-}
-
-.row-delete:hover:not(:disabled) {
-  background: var(--danger-bg);
-  border-color: var(--danger);
-}
-
-.row-delete:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
 }
 
 .account-bar {
@@ -2850,60 +2774,6 @@
   border-color: var(--accent-border);
   background: var(--accent-bg);
   color: var(--accent-strong);
-}
-
-.price-insights {
-  margin: 0.75rem 0;
-  padding: 0.65rem 0.75rem;
-  border-radius: 10px;
-  background: var(--accent-bg-soft);
-  border: 1px solid var(--accent-border-soft);
-}
-
-.price-insights h3 {
-  margin: 0 0 0.4rem;
-  font-size: 0.82rem;
-  color: var(--info-text);
-}
-
-.price-insights ul {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 0.35rem;
-}
-
-.price-insights li {
-  display: block;
-}
-
-.price-insights-row {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.35rem 0.6rem;
-  width: 100%;
-  padding: 0.45rem 0.55rem;
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  background: var(--bg-hover);
-  font: inherit;
-  font-size: 0.82rem;
-  text-align: left;
-  cursor: pointer;
-}
-
-.price-insights-row:hover {
-  border-color: var(--accent-border);
-}
-
-.price-insights-value {
-  font-weight: 600;
-}
-
-.price-insights-delta {
-  color: var(--text-muted);
 }
 
 .product-edit-form {

@@ -32,8 +32,6 @@ export const DEFAULT_GRID_COLUMNS: GridColumns = 1;
 
 export type ViewMode = "products" | "photos";
 
-export const DEFAULT_VIEW_MODE: ViewMode = "products";
-
 export interface BrowseQueryState {
   sort: SortOption;
   stores: string[];
@@ -61,7 +59,7 @@ export const EMPTY_BROWSE_QUERY: BrowseQueryState = {
   capturedAfter: null,
   capturedBefore: null,
   gridColumns: DEFAULT_GRID_COLUMNS,
-  viewMode: DEFAULT_VIEW_MODE,
+  viewMode: "products",
 };
 
 export interface PriceExtents {

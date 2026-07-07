@@ -11,6 +11,15 @@ import { compressImageFile, revokeCompressResult } from "./compressImage";
 const mockedCompress = vi.mocked(compressImageFile);
 const mockedRevoke = vi.mocked(revokeCompressResult);
 
+function compressResult(
+  blob: Blob,
+  downloadName: string,
+  compressed: boolean,
+  thumbnailUrl = "blob:thumb",
+) {
+  return { compressed, blob, downloadName, thumbnailUrl };
+}
+
 describe("prepareUploadFile", () => {
   it("passes through small WebP files without re-encoding", async () => {
     mockedCompress.mockClear();
@@ -18,12 +27,31 @@ describe("prepareUploadFile", () => {
     const file = new File([new Uint8Array([1, 2, 3])], "photo.webp", {
       type: "image/webp",
     });
+    mockedCompress.mockResolvedValue(compressResult(file, "photo.webp", false, ""));
 
     const result = await prepareUploadFile(file);
 
+    expect(mockedCompress).toHaveBeenCalledWith(file);
     expect(result.file).toBe(file);
     expect(result.compressed).toBe(false);
-    expect(mockedCompress).not.toHaveBeenCalled();
+  });
+
+  it("compresses large WebP files without re-encoding to a new format", async () => {
+    mockedCompress.mockClear();
+    mockedRevoke.mockClear();
+    const source = new File([new Uint8Array(500_000)], "photo.webp", {
+      type: "image/webp",
+    });
+    const compressedBlob = new Blob([new Uint8Array([1, 2, 3])], { type: "image/webp" });
+    mockedCompress.mockResolvedValue(compressResult(compressedBlob, "photo.webp", true));
+
+    const result = await prepareUploadFile(source);
+
+    expect(mockedCompress).toHaveBeenCalledWith(source);
+    expect(result.compressed).toBe(true);
+    expect(result.file.name).toBe("photo.webp");
+    expect(result.file.type).toBe("image/webp");
+    expect(mockedRevoke).toHaveBeenCalled();
   });
 
   it("encodes small JPEG files to full-resolution WebP", async () => {
@@ -33,45 +61,25 @@ describe("prepareUploadFile", () => {
       type: "image/jpeg",
     });
     const webpBlob = new Blob([new Uint8Array([1, 2, 3])], { type: "image/webp" });
-    mockedCompress.mockResolvedValue({
-      id: "id",
-      fileName: "photo.jpg",
-      originalSize: source.size,
-      compressedSize: webpBlob.size,
-      compressed: true,
-      blob: webpBlob,
-      thumbnailUrl: "blob:thumb",
-      downloadName: "photo.webp",
-      durationMs: 1,
-      encodeSteps: [],
-    });
+    mockedCompress.mockResolvedValue(compressResult(webpBlob, "photo.webp", true));
 
     const result = await prepareUploadFile(source);
 
-    expect(mockedCompress).toHaveBeenCalledWith(source, { encodeWebp: true });
+    expect(mockedCompress).toHaveBeenCalledWith(source);
     expect(result.compressed).toBe(true);
     expect(result.file.name).toBe("photo.webp");
     expect(result.file.type).toBe("image/webp");
     expect(mockedRevoke).toHaveBeenCalled();
   });
 
-  it("throws when WebP encoding fails", async () => {
+  it("throws when compression fails", async () => {
     mockedCompress.mockClear();
     mockedRevoke.mockClear();
     const source = new File([new Uint8Array([0xff, 0xd8, 0xff])], "photo.jpg", {
       type: "image/jpeg",
     });
     mockedCompress.mockResolvedValue({
-      id: "id",
-      fileName: "photo.jpg",
-      originalSize: source.size,
-      compressedSize: source.size,
-      compressed: false,
-      blob: source,
-      thumbnailUrl: "",
-      downloadName: "photo.jpg",
-      durationMs: 1,
-      encodeSteps: [],
+      ...compressResult(source, "photo.jpg", false, ""),
       error: "Could not decode image",
     });
 

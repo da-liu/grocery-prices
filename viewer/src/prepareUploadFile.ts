@@ -3,8 +3,6 @@ import { photoMetadataToClientExif } from "./clientExif";
 import { compressImageFile, revokeCompressResult } from "./compressImage";
 import { parseExifMetadata } from "./exifParse";
 
-export { photoMetadataToClientExif } from "./clientExif";
-
 export async function prepareUploadFile(file: File): Promise<{
   file: File;
   clientExif?: ClientExifPayload;
@@ -13,17 +11,14 @@ export async function prepareUploadFile(file: File): Promise<{
   const buffer = await file.arrayBuffer();
   const clientExif = photoMetadataToClientExif(parseExifMetadata(buffer));
 
-  const alreadyWebp =
-    file.type === "image/webp" || file.name.toLowerCase().endsWith(".webp");
-  if (alreadyWebp) {
-    return { file, clientExif, compressed: false };
+  const result = await compressImageFile(file);
+  if (result.error) {
+    revokeCompressResult(result);
+    throw new Error(result.error);
   }
 
-  const result = await compressImageFile(file, { encodeWebp: true });
-  if (result.error || !result.compressed) {
-    const message = result.error ?? "Could not encode image as WebP";
-    revokeCompressResult(result);
-    throw new Error(message);
+  if (!result.compressed) {
+    return { file, clientExif, compressed: false };
   }
 
   const uploadFile = new File([result.blob], result.downloadName, {

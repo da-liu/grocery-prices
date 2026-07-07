@@ -1,6 +1,6 @@
 import { ProductCard } from "./ProductCard";
 import { PhotoGroupCard } from "./PhotoGroupCard";
-import { productImageUrl } from "./api";
+import { productImageUrl, type ExtractBackend } from "./api";
 import type { ManualProductInput, ProductUpdateInput } from "./api";
 import type { Product } from "./types";
 
@@ -18,6 +18,8 @@ export function BrowsePage({
   onReextractPhoto,
   onAddManualProduct,
   reextractingId,
+  reextractStartedAt,
+  extractBackend,
   savingId,
   selectionMode,
   selectedIds,
@@ -40,6 +42,8 @@ export function BrowsePage({
   onReextractPhoto?: (imageId: string) => Promise<void>;
   onAddManualProduct?: (imageId: string, product: ManualProductInput) => Promise<void>;
   reextractingId?: string | null;
+  reextractStartedAt?: number | null;
+  extractBackend?: ExtractBackend;
   savingId?: string | null;
   selectionMode?: boolean;
   selectedIds?: ReadonlySet<string>;
@@ -99,10 +103,13 @@ export function BrowsePage({
           onEdit={selectionMode ? undefined : onEditProduct}
           onReextract={selectionMode ? undefined : onReextractPhoto}
           onAddManual={selectionMode ? undefined : onAddManualProduct}
-          onNavigateToProduct={onNavigateToProduct}
           onNavigateToPhotoGroup={onNavigateToPhotoGroup}
           photoGroupProductCount={photoGroupSizes?.get(product.image_id) ?? 1}
           reextracting={reextractingId === product.image_id}
+          reextractStartedAt={
+            reextractingId === product.image_id ? reextractStartedAt ?? undefined : undefined
+          }
+          extractBackend={extractBackend}
           saving={savingId === product.id}
           compact={compact}
           selectionMode={selectionMode}

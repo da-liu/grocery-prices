@@ -26,14 +26,14 @@ import {
   shouldNotifyUnknownStoreHint,
   type PendingDuplicate,
   type UploadQueueItem,
-  type UploadSource,
   type UploadToast,
 } from "./uploadQueue";
+import type { ExtractBackend } from "./api";
 
 import type { StoreLabelRequest } from "./types";
 
 interface UploadQueueActions {
-  enqueueFiles: (files: File[], source: UploadSource) => void;
+  enqueueFiles: (files: File[]) => void;
   pendingLabel: StoreLabelRequest | null;
   requestLabel: (request: StoreLabelRequest) => void;
   dismissLabel: () => void;
@@ -50,8 +50,6 @@ interface UploadQueueStatus {
   dismissUnknownStoreHint: () => void;
   clearFinished: () => void;
 }
-
-interface UploadQueueState extends UploadQueueActions, UploadQueueStatus {}
 
 const UploadQueueActionsContext = createContext<UploadQueueActions | null>(null);
 const UploadQueueStatusContext = createContext<UploadQueueStatus | null>(null);
@@ -142,21 +140,17 @@ function claimNextBatch(
       item.id !== pendingDuplicateId,
   );
   if (!queued.length) return null;
-
-  const source = queued[0].source;
-  const sameSource = queued.filter((item) => item.source === source);
-  if (sameSource.length >= 2) {
-    return sameSource.slice(0, MAX_BULK_BATCH);
-  }
-  return [sameSource[0]];
+  return queued.slice(0, MAX_BULK_BATCH);
 }
 
 export function UploadQueueProvider({
   children,
   onUploadSuccess,
+  extractBackend = "cursor",
 }: {
   children: React.ReactNode;
   onUploadSuccess?: () => void | Promise<void>;
+  extractBackend?: ExtractBackend;
 }) {
   const [items, setItems] = useState<UploadQueueItem[]>([]);
   const [toast, setToast] = useState<UploadToast | null>(null);
@@ -168,6 +162,11 @@ export function UploadQueueProvider({
   const processingIdsRef = useRef<Set<string>>(new Set());
   const pendingDuplicateRef = useRef<string | undefined>(undefined);
   const onUploadSuccessRef = useRef(onUploadSuccess);
+  const extractBackendRef = useRef(extractBackend);
+
+  useEffect(() => {
+    extractBackendRef.current = extractBackend;
+  }, [extractBackend]);
 
   useEffect(() => {
     itemsRef.current = items;
@@ -285,7 +284,6 @@ export function UploadQueueProvider({
         updateItem(item.id, { status: "uploading", uploadProgress: 0 });
         const retried = await uploadPhotosWithProgress(
           [item.uploadFile ?? item.file],
-          item.source,
           (percent) => {
             updateItem(item.id, { status: "uploading", uploadProgress: percent });
           },
@@ -307,6 +305,8 @@ export function UploadQueueProvider({
         updateItem(item.id, {
           status: "processing",
           uploadProgress: undefined,
+          processingStartedAt: Date.now(),
+          extractBackend: extractBackendRef.current,
           imageId: result.image_id,
           detectedReceipt: result.detected_receipt,
         });
@@ -351,7 +351,6 @@ export function UploadQueueProvider({
       try {
         const bulk = await uploadPhotosWithProgress(
           prepared.map((entry) => entry.file),
-          batch[0].source,
           setBatchProgress,
           undefined,
           prepared.map((entry) => entry.clientExif),
@@ -434,14 +433,11 @@ export function UploadQueueProvider({
     pumpQueue();
   }, [items, pumpQueue, pendingDuplicate]);
 
-  const enqueueFiles = useCallback(
-    (files: File[], source: UploadSource) => {
-      if (!files.length) return;
-      const added = files.map((file) => createQueueItem(file, source));
-      setItems((prev) => [...prev, ...added]);
-    },
-    [],
-  );
+  const enqueueFiles = useCallback((files: File[]) => {
+    if (!files.length) return;
+    const added = files.map((file) => createQueueItem(file));
+    setItems((prev) => [...prev, ...added]);
+  }, []);
 
   const dismissToast = useCallback(() => setToast(null), []);
 
@@ -568,10 +564,6 @@ export function useUploadQueueStatus() {
   const ctx = useContext(UploadQueueStatusContext);
   if (!ctx) throw new Error("useUploadQueueStatus must be used within UploadQueueProvider");
   return ctx;
-}
-
-export function useUploadQueue(): UploadQueueState {
-  return { ...useUploadQueueActions(), ...useUploadQueueStatus() };
 }
 
 // Exported for unit tests.

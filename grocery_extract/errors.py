@@ -1,17 +1,6 @@
-from __future__ import annotations
+"""Compatibility shim; implementation in extract_server.grocery_extract.errors."""
+import sys
 
+import extract_server.grocery_extract.errors as _impl
 
-class GroceryError(Exception):
-    """Base domain error for grocery-prices backend."""
-
-
-class ConfigError(GroceryError):
-    """Missing or invalid service configuration (maps to HTTP 503)."""
-
-
-class ExtractionError(GroceryError):
-    """Vision LLM or extraction pipeline failure (maps to HTTP 502)."""
-
-
-# Backward-compatible alias used across the codebase and tests.
-CursorExtractError = ExtractionError
+sys.modules[__name__] = _impl

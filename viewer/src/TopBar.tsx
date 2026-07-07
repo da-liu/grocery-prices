@@ -1,23 +1,14 @@
 import { useEffect, useRef, useState, type RefObject } from "react";
-
-type Page = "browse" | "compare" | "settings";
-
-interface BrowseStats {
-  shown: number;
-  total: number;
-  photoCount: number;
-  storeCount: number;
-  avgPriceLabel: string;
-}
+import type { AppPage, BrowseStats } from "./types";
 
 interface TopBarProps {
-  page: Page;
+  page: AppPage;
   search: string;
   onSearchChange: (value: string) => void;
   searchPlaceholder: string;
   user: { username: string };
   onLogout: () => void;
-  onNavigate: (page: Page) => void;
+  onNavigate: (page: AppPage) => void;
   photoInputRef: RefObject<HTMLInputElement | null>;
   onPhotosSelected: (files: File[]) => void;
   showSortFilter?: boolean;
@@ -25,7 +16,6 @@ interface TopBarProps {
   activeChipCount?: number;
   onToggleSortFilter?: () => void;
   browseStats?: BrowseStats;
-  showCompareNav?: boolean;
   onShowOnboarding?: () => void;
 }
 
@@ -74,6 +64,21 @@ function FilterIcon() {
   );
 }
 
+function HomeIcon() {
+  return (
+    <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">
+      <path
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.75"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        d="M4 10.5 12 4l8 6.5V19a1 1 0 0 1-1 1h-5v-6H10v6H5a1 1 0 0 1-1-1v-8.5Z"
+      />
+    </svg>
+  );
+}
+
 export function TopBar({
   page,
   search,
@@ -89,7 +94,6 @@ export function TopBar({
   activeChipCount = 0,
   onToggleSortFilter,
   browseStats,
-  showCompareNav = true,
   onShowOnboarding,
 }: TopBarProps) {
   const [menuOpen, setMenuOpen] = useState(false);
@@ -115,7 +119,7 @@ export function TopBar({
     onPhotosSelected(Array.from(files));
   }
 
-  function pickNav(pageName: Page) {
+  function pickNav(pageName: AppPage) {
     setMenuOpen(false);
     onNavigate(pageName);
   }
@@ -147,14 +151,25 @@ export function TopBar({
             e.target.value = "";
           }}
         />
-        <button
-          type="button"
-          className="top-bar-icon-btn top-bar-icon-btn--primary"
-          aria-label="Take or upload photo"
-          onClick={() => photoInputRef.current?.click()}
-        >
-          <CameraIcon />
-        </button>
+        {page === "settings" ? (
+          <button
+            type="button"
+            className="top-bar-icon-btn top-bar-icon-btn--primary"
+            aria-label="Back to catalog"
+            onClick={() => pickNav("browse")}
+          >
+            <HomeIcon />
+          </button>
+        ) : (
+          <button
+            type="button"
+            className="top-bar-icon-btn top-bar-icon-btn--primary"
+            aria-label="Take or upload photo"
+            onClick={() => photoInputRef.current?.click()}
+          >
+            <CameraIcon />
+          </button>
+        )}
 
         {showSortFilter && (
           <button
@@ -208,18 +223,8 @@ export function TopBar({
                 className={page === "browse" ? "active" : undefined}
                 onClick={() => pickNav("browse")}
               >
-                Browse
+                Catalog
               </button>
-              {showCompareNav && (
-                <button
-                  type="button"
-                  role="menuitem"
-                  className={page === "compare" ? "active" : undefined}
-                  onClick={() => pickNav("compare")}
-                >
-                  Compare
-                </button>
-              )}
               <button
                 type="button"
                 role="menuitem"

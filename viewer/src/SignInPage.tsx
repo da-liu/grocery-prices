@@ -13,8 +13,8 @@ const HERO_FEATURES = [
     body: "Build a private catalog and spot changes across Toronto stores.",
   },
   {
-    title: "Compare stores",
-    body: "See which location has the best deal on items you buy often.",
+    title: "Filter and search",
+    body: "Search your catalog by store, category, and price as your collection grows.",
   },
 ] as const;
 
@@ -62,7 +62,7 @@ export function SignInPage() {
   const title = isRegister ? "Create your account" : "Welcome back";
   const subtitle = isRegister
     ? "Sign up to save shelf photos and build a private price catalog."
-    : "Sign in to browse your prices and upload new photos.";
+    : "Sign in to view your catalog and upload new photos.";
 
   function switchMode(next: Mode) {
     setMode(next);

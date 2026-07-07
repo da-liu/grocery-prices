@@ -7,13 +7,12 @@ import {
 import { shouldNotifyUnknownStoreHint } from "./uploadQueue";
 import type { UploadQueueItem } from "./uploadQueue";
 
-function item(id: string, status: UploadQueueItem["status"], source: UploadQueueItem["source"] = "shelf") {
+function item(id: string, status: UploadQueueItem["status"]) {
   return {
     id,
     label: `${id}.jpg`,
     thumbnailUrl: "blob:test",
     status,
-    source,
     file: new File([], `${id}.jpg`),
   } satisfies UploadQueueItem;
 }
@@ -28,13 +27,13 @@ describe("claimNextBatch", () => {
     expect(batch?.map((entry) => entry.id)).toEqual(["a"]);
   });
 
-  it("batches multiple queued items with the same source", () => {
+  it("batches multiple queued items together", () => {
     const batch = claimNextBatch(
-      [item("a", "queued"), item("b", "queued"), item("c", "queued", "receipt")],
+      [item("a", "queued"), item("b", "queued"), item("c", "queued")],
       new Set(),
       undefined,
     );
-    expect(batch?.map((entry) => entry.id)).toEqual(["a", "b"]);
+    expect(batch?.map((entry) => entry.id)).toEqual(["a", "b", "c"]);
   });
 
   it("skips items already marked in-flight", () => {

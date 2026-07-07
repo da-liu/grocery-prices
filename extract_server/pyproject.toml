@@ -15,5 +15,5 @@ dependencies = [
 ]
 
 [tool.pytest.ini_options]
-testpaths = ["tests"]
+testpaths = ["tests", "../grocery_extract/tests"]
 filterwarnings = ["ignore::DeprecationWarning"]

@@ -1,11 +1,14 @@
 import { useState } from "react";
 import { formatCapturedAgo, formatCapturedAt } from "./formatCapturedAgo";
+import { formatPrice } from "./formatPrice";
 import type { ManualProductInput, ProductUpdateInput } from "./api";
 import { PhotoLightbox } from "./PhotoLightbox";
 import { LocationLabelButton } from "./LocationLabelButton";
 import { StoreLink } from "./StoreLink";
 import { photoGroupLinkLabel } from "./browseQuery";
-import type { PriceInsight, Product } from "./types";
+import { ExtractionProgressBar } from "./ExtractionProgressBar";
+import type { ExtractBackend } from "./api";
+import type { Product } from "./types";
 
 function formatOtherKey(key: string) {
   return key
@@ -41,30 +44,6 @@ function otherNumber(product: Product, key: string) {
 function otherString(product: Product, key: string) {
   const value = product.other?.[key];
   return value == null ? "" : String(value);
-}
-
-function formatPrice(price: number | null | undefined, currency = "CAD") {
-  if (price == null) return "—";
-  return new Intl.NumberFormat("en-CA", {
-    style: "currency",
-    currency,
-  }).format(price);
-}
-
-function formatDelta(delta: number | null | undefined) {
-  if (delta == null || delta === 0) return null;
-  const sign = delta > 0 ? "+" : "";
-  return `${sign}${formatPrice(delta)}`;
-}
-
-function insightLabel(insight: PriceInsight) {
-  if (insight.insight_type === "other_store") {
-    return insight.store ? `At ${insight.store}` : "At another store";
-  }
-  if (insight.insight_type === "same_store_history") {
-    return "Previously at this store";
-  }
-  return "Earlier sighting";
 }
 
 interface ProductEditFormProps {
@@ -191,44 +170,6 @@ function ManualProductForm({ saving, onSave, onCancel }: ManualProductFormProps)
   );
 }
 
-function PriceInsights({
-  insights,
-  onNavigateToProduct,
-}: {
-  insights: PriceInsight[];
-  onNavigateToProduct?: (productId: string) => void;
-}) {
-  if (!insights.length) return null;
-  return (
-    <div className="price-insights">
-      <h3>Price history</h3>
-      <ul>
-        {insights.map((insight) => (
-          <li key={`${insight.product_id}-${insight.captured_at ?? insight.price}`}>
-            <button
-              type="button"
-              className="price-insights-row"
-              onClick={() => onNavigateToProduct?.(insight.product_id)}
-            >
-              <span className="price-insights-label">{insightLabel(insight)}</span>
-              <span className="price-insights-value">{formatPrice(insight.price)}</span>
-              {insight.store && <span className="price-insights-store">{insight.store}</span>}
-              {insight.captured_at && (
-                <span className="price-insights-when" title={formatCapturedAt(insight.captured_at) ?? undefined}>
-                  {formatCapturedAgo(insight.captured_at)}
-                </span>
-              )}
-              {formatDelta(insight.price_delta) && (
-                <span className="price-insights-delta">{formatDelta(insight.price_delta)}</span>
-              )}
-            </button>
-          </li>
-        ))}
-      </ul>
-    </div>
-  );
-}
-
 function EditIcon() {
   return (
     <svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true">
@@ -276,12 +217,13 @@ export function ProductCard({
   onReextract,
   onAddManual,
   reextracting,
+  reextractStartedAt,
+  extractBackend,
   saving,
   compact: compactProp,
   selectionMode,
   selected,
   onToggleSelect,
-  onNavigateToProduct,
   onNavigateToPhotoGroup,
   photoGroupProductCount,
   highlighted,
@@ -295,12 +237,13 @@ export function ProductCard({
   onReextract?: (imageId: string) => Promise<void>;
   onAddManual?: (imageId: string, product: ManualProductInput) => Promise<void>;
   reextracting?: boolean;
+  reextractStartedAt?: number;
+  extractBackend?: ExtractBackend;
   saving?: boolean;
   compact?: boolean;
   selectionMode?: boolean;
   selected?: boolean;
   onToggleSelect?: (productId: string) => void;
-  onNavigateToProduct?: (productId: string) => void;
   onNavigateToPhotoGroup?: (imageId: string, productId: string) => void;
   photoGroupProductCount?: number;
   highlighted?: boolean;
@@ -472,7 +415,7 @@ export function ProductCard({
                   disabled={reextracting}
                   onClick={() => void onReextract(product.image_id)}
                 >
-                  {reextracting ? "Trying again…" : "Try again"}
+                  {reextracting ? "Reading prices…" : "Try again"}
                 </button>
               )}
               {onAddManual && !addingManual && (
@@ -485,6 +428,12 @@ export function ProductCard({
                 </button>
               )}
             </div>
+            {reextracting && reextractStartedAt != null && (
+              <ExtractionProgressBar
+                startedAt={reextractStartedAt}
+                backend={extractBackend}
+              />
+            )}
             {addingManual && onAddManual && (
               <ManualProductForm
                 saving={!!saving}
@@ -519,12 +468,6 @@ export function ProductCard({
                     </span>
                   )}
                 </div>
-                {product.price_insights && product.price_insights.length > 0 && (
-                  <PriceInsights
-                    insights={product.price_insights}
-                    onNavigateToProduct={onNavigateToProduct}
-                  />
-                )}
               </>
             )}
           </>

@@ -14,7 +14,7 @@ import { CapturedDateFilter } from "./CapturedDateFilter";
 import { PriceRangeChart } from "./PriceRangeChart";
 import type { Product } from "./types";
 
-interface BrowseStats {
+interface FilterPanelStats {
   shown: number;
   total: number;
   avgPriceLabel: string;
@@ -29,7 +29,7 @@ interface BrowseSortFilterPanelProps {
   search: string;
   stores: string[];
   categories: string[];
-  stats: BrowseStats;
+  stats: FilterPanelStats;
   selectionMode: boolean;
   onEnterSelection: () => void;
   onExitSelection: () => void;

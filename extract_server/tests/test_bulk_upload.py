@@ -17,7 +17,7 @@ def test_new_photo_ids_returns_unique_uuid_ids():
     assert all(not photo_id.startswith("IMG_") for photo_id in ids)
 
 
-def test_ingest_upload_batch_assigns_distinct_image_ids(tmp_path: Path, monkeypatch):
+def test_accept_upload_batch_assigns_distinct_image_ids(tmp_path: Path, monkeypatch):
     monkeypatch.setenv("GROCERY_DATA_DIR", str(tmp_path / "data"))
     monkeypatch.setenv("GROCERY_DB_PATH", str(tmp_path / "grocery.db"))
     monkeypatch.setattr("grocery_extract.user_paths.ROOT", tmp_path)
@@ -48,7 +48,6 @@ def test_ingest_upload_batch_assigns_distinct_image_ids(tmp_path: Path, monkeypa
         lambda *_args: [],
     )
     monkeypatch.setattr("grocery_extract.ingest.image_needs_store_label", lambda *_args: False)
-    monkeypatch.setattr("grocery_extract.ingest.list_products_for_matching", lambda _user_id: [])
 
     results = accept_upload_batch(uploads, user_id=user_id, max_workers=1, enqueue=False)
 
@@ -84,12 +83,11 @@ def test_bulk_endpoint_passes_distinct_saved_paths(client, monkeypatch):
                 "product_count": 0,
                 "meta": {},
                 "extractor": "cursor_sdk",
-                "source": "upload",
             }
             for i in range(len(paths))
         ]
 
-    with patch("server.accept_upload_batch", side_effect=fake_batch):
+    with patch("extract_server.routes.photos.accept_upload_batch", side_effect=fake_batch):
         resp = client.post(
             "/api/photos/bulk",
             headers={"Authorization": f"Bearer {token}"},
@@ -98,7 +96,6 @@ def test_bulk_endpoint_passes_distinct_saved_paths(client, monkeypatch):
                 ("files", ("image.jpg", b"photo-b", "image/jpeg")),
                 ("files", ("image.jpg", b"photo-c", "image/jpeg")),
             ],
-            data={"source": "upload"},
         )
 
     assert resp.status_code == 202, resp.text

@@ -21,9 +21,13 @@ def test_request_id_header(client):
 
 
 def test_unhandled_exception_returns_generic_500(app):
-    with patch("server._health_payload", side_effect=RuntimeError("boom")):
-        client = TestClient(app, raise_server_exceptions=False)
-        resp = client.get("/health")
+    @app.get("/test-boom")
+    def boom() -> None:
+        raise RuntimeError("boom")
+
+    client = TestClient(app, raise_server_exceptions=False)
+    resp = client.get("/test-boom")
+
     assert resp.status_code == 500
     assert resp.json() == {"detail": "Internal server error"}
     assert "X-Request-ID" in resp.headers
@@ -38,12 +42,11 @@ def test_config_error_returns_safe_503(client):
     token = reg.json()["token"]
     headers = {"Authorization": f"Bearer {token}"}
 
-    with patch("server.configured_api_key", side_effect=ConfigError("CURSOR_API_KEY missing")):
+    with patch("extract_server.extract_config.configured_api_key", side_effect=ConfigError("CURSOR_API_KEY missing")):
         resp = client.post(
             "/api/photos/bulk",
             headers=headers,
             files=[("files", ("x.jpg", b"abc", "image/jpeg"))],
-            data={"source": "upload"},
         )
     assert resp.status_code == 503
     assert resp.json() == {"detail": "Extraction unavailable"}
@@ -60,13 +63,12 @@ def test_extraction_error_returns_safe_502(client):
     token = reg.json()["token"]
     headers = {"Authorization": f"Bearer {token}"}
 
-    with patch("server.configured_api_key", return_value="test-key"):
-        with patch("server.accept_upload_batch", side_effect=ExtractionError("LLM timeout")):
+    with patch("extract_server.extract_config.configured_api_key", return_value="test-key"):
+        with patch("extract_server.routes.photos.accept_upload_batch", side_effect=ExtractionError("LLM timeout")):
             resp = client.post(
                 "/api/photos/bulk",
                 headers=headers,
                 files=[("files", ("x.jpg", b"abc", "image/jpeg"))],
-                data={"source": "upload"},
             )
     assert resp.status_code == 502
     assert resp.json() == {"detail": "Extraction failed"}
@@ -80,7 +82,7 @@ def test_run_extraction_failure_logs(tmp_path, monkeypatch, caplog):
 
     from extract_server.users_db import init_db, register_user
     from grocery_extract.extract_worker import ExtractionJob
-    from grocery_extract.ingest import accept_upload, run_extraction
+    from grocery_extract.ingest import accept_upload_batch, run_extraction
 
     caplog.set_level(logging.ERROR)
 
@@ -96,13 +98,11 @@ def test_run_extraction_failure_logs(tmp_path, monkeypatch, caplog):
         lambda *_args, **_kwargs: (_ for _ in ()).throw(RuntimeError("mock llm failure")),
     )
 
-    accepted = accept_upload(upload, user_id=user.id, source="upload")
+    accepted = accept_upload_batch([upload], user_id=user.id, enqueue=False)[0]
     job = ExtractionJob(
         user_id=user.id,
         image_id=accepted["image_id"],
-        source="upload",
         api_key="test",
-        existing_products=[],
         user_stores=[],
         exif={},
         date_folder=accepted["date_folder"],

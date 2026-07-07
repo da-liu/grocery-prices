@@ -65,7 +65,7 @@ def test_upload_with_mocked_ingest(client):
     )
     token = reg.json()["token"]
 
-    with patch("server.accept_upload_batch") as ingest:
+    with patch("extract_server.routes.photos.accept_upload_batch") as ingest:
         ingest.return_value = [
             {
                 "image_id": "IMG_0001",
@@ -74,7 +74,6 @@ def test_upload_with_mocked_ingest(client):
                 "product_count": 0,
                 "meta": {},
                 "extractor": None,
-                "source": "upload",
                 "extraction_status": "pending",
             }
         ]
@@ -83,7 +82,6 @@ def test_upload_with_mocked_ingest(client):
                 "/api/photos/bulk",
                 headers={"Authorization": f"Bearer {token}"},
                 files=[("files", ("x.jpg", b"abc", "image/jpeg"))],
-                data={"source": "upload"},
             )
     assert resp.status_code == 202
     assert resp.json()["results"][0]["image_id"] == "IMG_0001"
@@ -118,12 +116,11 @@ def test_upload_with_gemini_direct_backend_uses_google_key(client):
                 "product_count": 0,
                 "meta": {},
                 "extractor": None,
-                "source": "upload",
                 "extraction_status": "pending",
             }
         ]
 
-    with patch("server.accept_upload_batch", side_effect=fake_batch):
+    with patch("extract_server.routes.photos.accept_upload_batch", side_effect=fake_batch):
         with patch.dict(
             "os.environ",
             {
@@ -134,7 +131,6 @@ def test_upload_with_gemini_direct_backend_uses_google_key(client):
                 "/api/photos/bulk",
                 headers=headers,
                 files=[("files", ("x.jpg", b"abc", "image/jpeg"))],
-                data={"source": "upload"},
             )
     assert resp.status_code == 202
     assert captured["api_key"] == "google-test-key"
@@ -157,12 +153,11 @@ def test_rerun_extraction_with_gemini_direct_uses_google_key(client):
     assert settings.status_code == 200, settings.text
 
     with patch(
-        "server.reextract_photo",
+        "extract_server.routes.photos.reextract_photo",
         return_value={
             "image_id": "IMG_0001",
             "products": [],
             "product_count": 0,
-            "overlapping_products": [],
             "extraction_empty": True,
         },
     ) as reextract:

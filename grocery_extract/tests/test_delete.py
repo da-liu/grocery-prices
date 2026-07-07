@@ -6,7 +6,7 @@ import uuid
 
 import pytest
 
-from grocery_extract.catalog_db import list_product_rows, save_photo_ingest
+from grocery_extract.catalog_db import save_photo_extraction, list_product_rows, save_photo
 from grocery_extract.delete import delete_product, delete_products_bulk, prune_orphan_photos
 
 
@@ -19,10 +19,6 @@ def user_env(tmp_path: Path, monkeypatch):
     monkeypatch.setattr(
         "grocery_extract.user_stores_db.list_user_stores_as_dicts",
         lambda *_args, **_kwargs: [],
-    )
-    monkeypatch.setattr(
-        "grocery_extract.catalog_db.attach_price_insights",
-        lambda lines: lines,
     )
 
     from extract_server.users_db import init_db, register_user
@@ -55,19 +51,23 @@ def _seed_products(
     products: list[dict],
 ) -> list[str]:
     key = _write_photo(user_dir, user_id, image_id)
-    save_photo_ingest(
+    save_photo(
         user_id,
         photo_id=image_id,
-        photo_type="shelf",
         blob_key=key,
         content_hash=None,
         gps_latitude=None,
         gps_longitude=None,
         captured_at="2026-06-30T19:00:00-04:00",
         store_location_id=None,
+    )
+    save_photo_extraction(
+        user_id,
+        image_id,
         extractor="cursor_sdk",
         raw_response="[]",
         products=products,
+        photo_type="shelf",
     )
     rows = [row for row in list_product_rows(user_id) if row["image_id"] == image_id]
     return [row["id"] for row in rows if not row.get("extraction_empty")]

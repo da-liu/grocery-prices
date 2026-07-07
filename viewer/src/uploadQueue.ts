@@ -1,6 +1,4 @@
-import type { ClientExifPayload, DuplicateAction } from "./api";
-
-export type UploadSource = "shelf" | "receipt";
+import type { ClientExifPayload, DuplicateAction, ExtractBackend } from "./api";
 
 export type UploadQueueStatus =
   | "queued"
@@ -17,11 +15,12 @@ export interface UploadQueueItem {
   label: string;
   thumbnailUrl: string;
   status: UploadQueueStatus;
-  source: UploadSource;
   file: File;
   uploadFile?: File;
   clientExif?: ClientExifPayload;
   uploadProgress?: number;
+  processingStartedAt?: number;
+  extractBackend?: ExtractBackend;
   productCount?: number;
   imageId?: string;
   error?: string;
@@ -60,13 +59,12 @@ function thumbnailUrlForFile(file: File): string {
   return URL.createObjectURL(file);
 }
 
-export function createQueueItem(file: File, source: UploadSource): UploadQueueItem {
+export function createQueueItem(file: File): UploadQueueItem {
   return {
     id: crypto.randomUUID(),
     label: file.name || "Photo",
     thumbnailUrl: thumbnailUrlForFile(file),
     status: "queued",
-    source,
     file,
     uploadFile: file,
   };

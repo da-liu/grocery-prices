@@ -1,13 +1,12 @@
 def _seed_user_products(client, username: str, token: str) -> tuple[str, list[str]]:
-    from extract_server.users_db import _connect
-    from grocery_extract.catalog_db import list_product_rows, save_photo_ingest
+    from extract_server.users_db import get_conn
+    from grocery_extract.catalog_db import save_photo_extraction, list_product_rows, save_photo
     from grocery_extract.user_paths import user_root
 
-    with _connect() as conn:
-        user_id = conn.execute(
-            "SELECT id FROM users WHERE username = ?",
-            (username,),
-        ).fetchone()["id"]
+    user_id = get_conn().execute(
+        "SELECT id FROM users WHERE username = ?",
+        (username,),
+    ).fetchone()["id"]
 
     user_dir = user_root(user_id)
     batch_dir = user_dir / "photos" / "2026_06_30"
@@ -15,36 +14,44 @@ def _seed_user_products(client, username: str, token: str) -> tuple[str, list[st
     (batch_dir / "IMG_0001.webp").write_bytes(b"webp")
     (batch_dir / "IMG_0002.webp").write_bytes(b"webp")
 
-    save_photo_ingest(
+    save_photo(
         user_id,
         photo_id="IMG_0001",
-        photo_type="shelf",
         blob_key=f"users/{user_id}/photos/2026_06_30/IMG_0001.webp",
         content_hash=None,
         gps_latitude=None,
         gps_longitude=None,
         captured_at="2026-06-30T19:00:00-04:00",
         store_location_id=None,
+    )
+    save_photo_extraction(
+        user_id,
+        "IMG_0001",
         extractor="cursor_sdk",
         raw_response="[]",
         products=[
             {"product_name": "Milk", "price": 5.99, "category": "dairy"},
             {"product_name": "Bread", "price": 3.49, "category": "bakery"},
         ],
+        photo_type="shelf",
     )
-    save_photo_ingest(
+    save_photo(
         user_id,
         photo_id="IMG_0002",
-        photo_type="shelf",
         blob_key=f"users/{user_id}/photos/2026_06_30/IMG_0002.webp",
         content_hash=None,
         gps_latitude=None,
         gps_longitude=None,
         captured_at="2026-06-30T20:00:00-04:00",
         store_location_id=None,
+    )
+    save_photo_extraction(
+        user_id,
+        "IMG_0002",
         extractor="cursor_sdk",
         raw_response="[]",
         products=[{"product_name": "Eggs", "price": 4.99, "category": "dairy"}],
+        photo_type="shelf",
     )
 
     headers = {"Authorization": f"Bearer {token}"}

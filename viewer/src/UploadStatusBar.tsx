@@ -1,5 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useUploadQueueStatus } from "./UploadQueueContext";
+import { ExtractionProgressBar } from "./ExtractionProgressBar";
+import { extractionProgressPercent } from "./extractionProgress";
 import type { UploadQueueItem } from "./uploadQueue";
 
 function Spinner() {
@@ -16,10 +18,11 @@ function statusLabel(item: UploadQueueItem): string {
       const percent = item.uploadProgress ?? 0;
       return percent >= 100 ? "Uploaded" : `Uploading… ${percent}%`;
     }
-    case "processing":
-      return item.detectedReceipt
-        ? "Uploaded · reading receipt prices…"
-        : "Uploaded · reading prices…";
+    case "processing": {
+      const percent = extractionProgressPercent(item.processingStartedAt, item.extractBackend);
+      const phase = item.detectedReceipt ? "reading receipt prices" : "reading prices";
+      return percent > 0 ? `Uploaded · ${phase}… ${percent}%` : `Uploaded · ${phase}…`;
+    }
     case "awaiting_duplicate":
       return "Duplicate detected";
     case "done":
@@ -100,7 +103,9 @@ function useUploadStatusDisplay() {
         : "Reading prices from your photo…"
       : queuedCount > 0
         ? `${queuedCount} photo${queuedCount === 1 ? "" : "s"} queued`
-        : "Processing photos…";
+        : activeCount === 0
+          ? "Uploads finished"
+          : "Duplicate detected";
 
   return {
     items,
@@ -170,6 +175,12 @@ export function UploadStatusPanel() {
                       />
                     </div>
                   )}
+                  {item.status === "processing" && item.processingStartedAt != null && (
+                    <ExtractionProgressBar
+                      startedAt={item.processingStartedAt}
+                      backend={item.extractBackend}
+                    />
+                  )}
                 </div>
                 {(item.status === "queued" ||
                   item.status === "compressing" ||
@@ -236,15 +247,6 @@ export function UploadStatusToasts() {
           </button>
         </div>
       )}
-    </>
-  );
-}
-
-export function UploadStatusBar() {
-  return (
-    <>
-      <UploadStatusPanel />
-      <UploadStatusToasts />
     </>
   );
 }

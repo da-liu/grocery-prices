@@ -41,7 +41,7 @@ export function exifDatetimeToCapturedAt(exifDt: string): string | null {
   return formatIsoWithLocalOffset(local);
 }
 
-export function dateFolderFromLocalDate(date: Date): string {
+function dateFolderFromLocalDate(date: Date): string {
   const pad = (n: number) => String(n).padStart(2, "0");
   return `${date.getFullYear()}_${pad(date.getMonth() + 1)}_${pad(date.getDate())}`;
 }

@@ -212,7 +212,6 @@ export interface UploadResult {
   extraction_status?: ExtractionStatus;
   extraction_error?: string;
   extraction_timing?: ExtractionTiming;
-  overlapping_products?: import("./types").OverlappingProduct[];
   photo_type?: "shelf" | "receipt";
   detected_receipt?: boolean;
 }
@@ -223,7 +222,6 @@ export interface ReextractResult {
   product_count: number;
   extraction_empty: boolean;
   extraction_timing?: ExtractionTiming;
-  overlapping_products?: import("./types").OverlappingProduct[];
 }
 
 export type ProductUpdateInput = {
@@ -246,7 +244,6 @@ export type ManualProductInput = {
 
 export function buildUploadForm(
   files: File[],
-  source: "shelf" | "receipt",
   duplicateAction?: DuplicateAction,
   clientExifs?: (ClientExifPayload | undefined)[],
 ): FormData {
@@ -254,7 +251,6 @@ export function buildUploadForm(
   for (const file of files) {
     form.append("files", file);
   }
-  form.append("source", source === "receipt" ? "receipt" : "upload");
   if (duplicateAction) {
     form.append("duplicate_action", duplicateAction);
   }
@@ -279,7 +275,6 @@ async function parseXhrError(xhr: XMLHttpRequest): Promise<string> {
 
 export function uploadPhotosWithProgress(
   files: File[],
-  source: "shelf" | "receipt",
   onProgress: (percent: number) => void,
   duplicateAction?: DuplicateAction,
   clientExifs?: (ClientExifPayload | undefined)[],
@@ -318,17 +313,8 @@ export function uploadPhotosWithProgress(
       reject(new Error("Upload cancelled"));
     });
 
-    xhr.send(buildUploadForm(files, source, duplicateAction, clientExifs));
+    xhr.send(buildUploadForm(files, duplicateAction, clientExifs));
   });
-}
-
-export async function uploadPhotos(
-  files: File[],
-  source: "shelf" | "receipt",
-  duplicateAction?: DuplicateAction,
-  clientExifs?: (ClientExifPayload | undefined)[],
-): Promise<{ results: UploadResult[] }> {
-  return uploadPhotosWithProgress(files, source, () => {}, duplicateAction, clientExifs);
 }
 
 export async function fetchPhotoStatuses(imageIds: string[]): Promise<{ results: UploadResult[] }> {

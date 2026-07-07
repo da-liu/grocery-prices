@@ -34,7 +34,6 @@ describe("buildUploadForm", () => {
     const file = new File(["photo"], "IMG_0001.jpg", { type: "image/jpeg" });
     const form = buildUploadForm(
       [file],
-      "shelf",
       undefined,
       [
         {
@@ -46,7 +45,7 @@ describe("buildUploadForm", () => {
       ],
     );
 
-    expect(form.get("source")).toBe("upload");
+    expect(form.get("source")).toBeNull();
     expect(form.get("exif_json")).toBe(
       JSON.stringify([
         {
@@ -61,7 +60,7 @@ describe("buildUploadForm", () => {
 
   it("omits exif_json when no client metadata is present", () => {
     const file = new File(["photo"], "photo.jpg", { type: "image/jpeg" });
-    const form = buildUploadForm([file], "shelf", undefined, [undefined]);
+    const form = buildUploadForm([file], undefined, [undefined]);
     expect(form.get("exif_json")).toBeNull();
   });
 });

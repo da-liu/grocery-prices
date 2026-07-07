@@ -22,19 +22,18 @@ def test_bulk_upload_accepts_exif_json(client, monkeypatch):
                 "product_count": 0,
                 "meta": {},
                 "extractor": "cursor_sdk",
-                "source": "upload",
                 "extraction_status": "pending",
             }
         ]
 
     exif_payload = '[{"GPSLatitude":43.65,"GPSLongitude":-79.38,"captured_at":"2026-07-04T18:30:00-04:00","date_folder":"2026_07_04"}]'
 
-    with patch("server.accept_upload_batch", side_effect=fake_batch):
+    with patch("extract_server.routes.photos.accept_upload_batch", side_effect=fake_batch):
         resp = client.post(
             "/api/photos/bulk",
             headers={"Authorization": f"Bearer {token}"},
             files=[("files", ("image.jpg", b"photo-a", "image/jpeg"))],
-            data={"source": "upload", "exif_json": exif_payload},
+            data={"exif_json": exif_payload},
         )
 
     assert resp.status_code == 202, resp.text
@@ -64,7 +63,6 @@ def test_bulk_upload_rejects_exif_json_length_mismatch(client, monkeypatch):
             ("files", ("image-b.jpg", b"photo-b", "image/jpeg")),
         ],
         data={
-            "source": "upload",
             "exif_json": '[{"GPSLatitude":43.65,"GPSLongitude":-79.38,"DateTimeOriginal":"2026:07:04 18:30:00"}]',
         },
     )

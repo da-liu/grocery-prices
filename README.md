@@ -51,7 +51,7 @@ Users register with username + password. Each account has a private catalog unde
 | `GET /api/products` | User's products (auth required) |
 | `GET /api/media/{image_id}` | User's photo JPEG (auth required) |
 
-Browse, Compare, and Upload in the viewer require sign-in. New users see an onboarding guide for their first upload.
+Catalog and Upload in the viewer require sign-in. New users see an onboarding guide for their first upload.
 
 ## Viewer
 

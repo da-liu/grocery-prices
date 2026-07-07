@@ -1,16 +1,9 @@
 import { useEffect, useState } from "react";
 import { productImageUrl } from "./api";
 import { formatCapturedAgo, formatCapturedAt } from "./formatCapturedAgo";
+import { formatPrice } from "./formatPrice";
 import { PhotoLightbox } from "./PhotoLightbox";
 import type { PhotoGroup } from "./browseQuery";
-
-function formatPrice(price: number | null | undefined) {
-  if (price == null) return "—";
-  return new Intl.NumberFormat("en-CA", {
-    style: "currency",
-    currency: "CAD",
-  }).format(price);
-}
 
 export function PhotoGroupCard({
   group,
