@@ -156,16 +156,31 @@ export async function deletePhoto(imageId: string): Promise<void> {
 
 export interface BulkDeleteResult {
   deleted: number;
-  photos_removed: number;
   failed: string[];
 }
 
+function parseBulkDeleteResult(body: unknown): BulkDeleteResult {
+  if (!body || typeof body !== "object") {
+    throw new Error("Invalid bulk delete response");
+  }
+  const record = body as Record<string, unknown>;
+  if (typeof record.deleted !== "number" || !Array.isArray(record.failed)) {
+    throw new Error("Invalid bulk delete response");
+  }
+  return {
+    deleted: record.deleted,
+    failed: record.failed.filter((id): id is string => typeof id === "string"),
+  };
+}
+
 export async function deleteProductsBulk(productIds: string[]): Promise<BulkDeleteResult> {
-  return authJson("/api/products/bulk-delete", {
+  const resp = await authFetch("/api/products/bulk-delete", {
     method: "POST",
     headers: JSON_HEADERS,
     body: JSON.stringify({ ids: productIds }),
   });
+  await checkResponse(resp);
+  return parseBulkDeleteResult(await resp.json());
 }
 
 export function productImageUrl(imageId: string): string {
@@ -192,7 +207,7 @@ export type ClientExifPayload = {
   date_folder?: string;
 };
 
-export type ExtractionStatus = "pending" | "processing" | "done" | "failed";
+export type ExtractionStatus = "pending" | "done" | "failed";
 
 export interface ExtractionTiming {
   llm_ms?: number;
@@ -220,7 +235,6 @@ export interface UploadResult {
   extraction_error?: string;
   extraction_timing?: ExtractionTiming;
   photo_type?: "shelf" | "receipt";
-  detected_receipt?: boolean;
 }
 
 export interface ReextractResult {

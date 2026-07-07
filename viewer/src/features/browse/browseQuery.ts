@@ -1,4 +1,5 @@
 import type { Location, Product } from "@/shared/types/types";
+import { formatPrice } from "@/shared/lib/formatPrice";
 
 export type SortOption =
   | "captured_desc"
@@ -125,17 +126,12 @@ export interface DateBin {
 
 export type DatePresetId = "week" | "month" | "quarter" | "year" | "all";
 
-export const DATE_PRESETS: {
-  id: DatePresetId;
-  label: string;
-  after: string | null;
-  before: string | null;
-}[] = [
-  { id: "week", label: "Last 7 days", after: null, before: null },
-  { id: "month", label: "Last 30 days", after: null, before: null },
-  { id: "quarter", label: "Last 3 months", after: null, before: null },
-  { id: "year", label: "This year", after: null, before: null },
-  { id: "all", label: "All time", after: null, before: null },
+export const DATE_PRESETS: { id: DatePresetId; label: string }[] = [
+  { id: "week", label: "Last 7 days" },
+  { id: "month", label: "Last 30 days" },
+  { id: "quarter", label: "Last 3 months" },
+  { id: "year", label: "This year" },
+  { id: "all", label: "All time" },
 ];
 
 function isoDateLocal(date: Date): string {
@@ -187,60 +183,59 @@ function parseISODate(iso: string): Date {
   return new Date(year, month - 1, day);
 }
 
-function addDays(date: Date, days: number): Date {
-  const next = new Date(date);
-  next.setDate(next.getDate() + days);
-  return next;
+const MS_PER_HOUR = 60 * 60 * 1000;
+const MS_PER_DAY = 24 * MS_PER_HOUR;
+
+function timestampToMs(iso: string): number {
+  return new Date(iso).getTime();
 }
 
-function uniquePhotoDates(products: Product[]): string[] {
-  const dateByImage = new Map<string, string>();
+function floorToDayMs(ms: number): number {
+  const date = new Date(ms);
+  date.setHours(0, 0, 0, 0);
+  return date.getTime();
+}
+
+export function photoTimesByImage(products: Product[]): Map<string, number> {
+  const timeByImage = new Map<string, number>();
   for (const product of products) {
-    const day = capturedDateKey(product.captured_at);
-    if (!day) continue;
-    if (!dateByImage.has(product.image_id)) {
-      dateByImage.set(product.image_id, day);
+    if (!product.captured_at) continue;
+    const ms = timestampToMs(product.captured_at);
+    if (Number.isNaN(ms)) continue;
+    if (!timeByImage.has(product.image_id)) {
+      timeByImage.set(product.image_id, ms);
     }
   }
-  return [...dateByImage.values()].sort();
+  return timeByImage;
 }
 
-export function buildCapturedDateHistogram(products: Product[]): DateBin[] {
-  const photoDays = uniquePhotoDates(products);
-  if (photoDays.length === 0) return [];
+export function buildCapturedDateHistogram(timeByImage: Map<string, number>): DateBin[] {
+  if (timeByImage.size === 0) return [];
 
-  const counts = new Map<string, number>();
-  for (const day of photoDays) {
+  const timestamps = [...timeByImage.values()];
+  const minPhotoMs = Math.min(...timestamps);
+  const maxPhotoMs = Math.max(...timestamps);
+  const chartMinMs = floorToDayMs(minPhotoMs);
+  const chartMaxMs = floorToDayMs(maxPhotoMs) + MS_PER_DAY;
+
+  const counts = new Map<number, number>();
+  for (const ms of timestamps) {
+    const day = floorToDayMs(ms);
     counts.set(day, (counts.get(day) ?? 0) + 1);
   }
 
-  const min = photoDays[0];
-  const max = photoDays[photoDays.length - 1];
   const bins: DateBin[] = [];
-
-  for (let cursor = parseISODate(min); cursor <= parseISODate(max); cursor = addDays(cursor, 1)) {
-    const day = isoDateLocal(cursor);
-    bins.push({ from: day, to: day, count: counts.get(day) ?? 0 });
-  }
-
-  if (bins.length <= 60) {
-    return bins;
-  }
-
-  const weekly: DateBin[] = [];
-  for (let i = 0; i < bins.length; i += 7) {
-    const slice = bins.slice(i, i + 7);
-    weekly.push({
-      from: slice[0].from,
-      to: slice[slice.length - 1].to,
-      count: slice.reduce((sum, bin) => sum + bin.count, 0),
+  for (let dayMs = chartMinMs; dayMs < chartMaxMs; dayMs += MS_PER_DAY) {
+    const count = counts.get(dayMs) ?? 0;
+    if (count === 0) continue;
+    bins.push({
+      from: msToISODate(dayMs),
+      to: msToISODate(dayMs + MS_PER_DAY),
+      count,
     });
   }
-  return weekly;
-}
 
-export function countDatedPhotos(products: Product[]): number {
-  return uniquePhotoDates(products).length;
+  return bins;
 }
 
 export interface DateExtents {
@@ -249,12 +244,15 @@ export interface DateExtents {
   datedPhotoCount: number;
 }
 
-export function getDateExtents(bins: DateBin[], datedPhotoCount: number): DateExtents | null {
-  if (bins.length === 0) return null;
+export function getDateExtents(timeByImage: Map<string, number>): DateExtents | null {
+  if (timeByImage.size === 0) return null;
+  const timestamps = [...timeByImage.values()];
+  const minPhotoMs = Math.min(...timestamps);
+  const maxPhotoMs = Math.max(...timestamps);
   return {
-    min: bins[0].from,
-    max: bins[bins.length - 1].to,
-    datedPhotoCount,
+    min: msToISODate(minPhotoMs),
+    max: msToISODate(maxPhotoMs),
+    datedPhotoCount: timeByImage.size,
   };
 }
 
@@ -444,17 +442,14 @@ export function buildPriceHistogram(products: Product[], bucketCount = 24): Pric
 export function formatPriceChip(
   query: BrowseQueryState,
   extents: PriceExtents | null,
-  currency = "CAD",
 ): string | null {
   if (!extents || !isPriceFilterActive(query, extents)) return null;
-  const fmt = (n: number) =>
-    new Intl.NumberFormat("en-CA", { style: "currency", currency }).format(n);
   const { min, max } = effectivePriceBounds(query, extents);
   const atMin = min <= extents.min;
   const atMax = max >= extents.max;
-  if (!atMin && !atMax) return `Price: ${fmt(min)}–${fmt(max)}`;
-  if (!atMin) return `Price ≥ ${fmt(min)}`;
-  if (!atMax) return `Price ≤ ${fmt(max)}`;
+  if (!atMin && !atMax) return `Price: ${formatPrice(min)}–${formatPrice(max)}`;
+  if (!atMin) return `Price ≥ ${formatPrice(min)}`;
+  if (!atMax) return `Price ≤ ${formatPrice(max)}`;
   return null;
 }
 

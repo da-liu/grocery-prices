@@ -1,15 +1,8 @@
 import { useCallback, useId, useRef, useState } from "react";
+import { formatPrice } from "@/shared/lib/formatPrice";
 import type { PriceBin, PriceExtents } from "./browseQuery";
 import { clampPrice, roundPrice } from "./browseQuery";
 import "./PriceRangeChart.css";
-
-function formatAxisPrice(value: number) {
-  return new Intl.NumberFormat("en-CA", {
-    style: "currency",
-    currency: "CAD",
-    maximumFractionDigits: 2,
-  }).format(value);
-}
 
 interface PriceRangeChartProps {
   bins: PriceBin[];
@@ -19,7 +12,7 @@ interface PriceRangeChartProps {
   onChange: (next: { priceMin: number | null; priceMax: number | null }) => void;
 }
 
-type PriceDraft = { priceMin: number | null; priceMax: number | null };
+type PriceDraft = { priceMin: number; priceMax: number };
 
 const THUMB_R = 10;
 const CHART_WIDTH = 320;
@@ -41,11 +34,14 @@ export function PriceRangeChart({
   const draggingRef = useRef<"min" | "max" | null>(null);
   const draftRef = useRef<PriceDraft | null>(null);
   const [draft, setDraft] = useState<PriceDraft | null>(null);
+  const [dragThumbX, setDragThumbX] = useState<{ handle: "min" | "max"; x: number } | null>(
+    null,
+  );
 
   const { min, max } = extents;
   const span = max - min || 1;
-  const activeMin = draft?.priceMin ?? priceMin;
-  const activeMax = draft?.priceMax ?? priceMax;
+  const activeMin = draft !== null ? draft.priceMin : priceMin;
+  const activeMax = draft !== null ? draft.priceMax : priceMax;
   const effectiveMin = activeMin ?? min;
   const effectiveMax = activeMax ?? max;
 
@@ -66,65 +62,75 @@ export function PriceRangeChart({
     [innerW, min, max, span],
   );
 
-  const minX = priceToX(effectiveMin);
-  const maxX = priceToX(effectiveMax);
+  const filterMinX = priceToX(effectiveMin);
+  const filterMaxX = priceToX(effectiveMax);
+  const minX = dragThumbX?.handle === "min" ? dragThumbX.x : filterMinX;
+  const maxX = dragThumbX?.handle === "max" ? dragThumbX.x : filterMaxX;
 
-  function pointerPrice(clientX: number) {
+  function pointerX(clientX: number) {
     const svg = trackRef.current;
-    if (!svg) return effectiveMin;
+    if (!svg) return TRACK_LEFT;
     const rect = svg.getBoundingClientRect();
-    const x = ((clientX - rect.left) / rect.width) * CHART_WIDTH;
-    return roundPrice(xToPrice(x), 0.01);
+    return ((clientX - rect.left) / rect.width) * CHART_WIDTH;
   }
 
   function onPointerDown(handle: "min" | "max") {
     return (e: React.PointerEvent) => {
       e.preventDefault();
       draggingRef.current = handle;
-      const initial = { priceMin, priceMax };
+      const initial = { priceMin: priceMin ?? min, priceMax: priceMax ?? max };
       draftRef.current = initial;
       setDraft(initial);
-      (e.currentTarget as Element).setPointerCapture(e.pointerId);
+      trackRef.current?.setPointerCapture(e.pointerId);
     };
   }
 
   function onPointerMove(e: React.PointerEvent) {
     if (!draggingRef.current) return;
-    const price = pointerPrice(e.clientX);
-    setDraft((current) => {
-      const base = current ?? { priceMin, priceMax };
-      const baseMin = base.priceMin ?? min;
-      const baseMax = base.priceMax ?? max;
-      let next: PriceDraft;
-      if (draggingRef.current === "min") {
-        const nextMin = Math.min(price, baseMax);
-        next = {
-          priceMin: nextMin <= min ? null : nextMin,
-          priceMax: base.priceMax,
-        };
-      } else {
-        const nextMax = Math.max(price, baseMin);
-        next = {
-          priceMin: base.priceMin,
-          priceMax: nextMax >= max ? null : nextMax,
-        };
-      }
-      draftRef.current = next;
-      return next;
-    });
+    const handle = draggingRef.current;
+    const rawX = pointerX(e.clientX);
+    const clampedX = Math.max(TRACK_LEFT, Math.min(TRACK_RIGHT, rawX));
+    const price = roundPrice(xToPrice(clampedX), 0.01);
+
+    const base = draftRef.current ?? { priceMin: priceMin ?? min, priceMax: priceMax ?? max };
+    const baseMin = base.priceMin;
+    const baseMax = base.priceMax;
+
+    let next: PriceDraft;
+    let thumbX: number;
+    if (handle === "min") {
+      const nextMin = Math.min(price, baseMax);
+      next = {
+        priceMin: nextMin <= min ? min : nextMin,
+        priceMax: base.priceMax,
+      };
+      thumbX = Math.min(clampedX, priceToX(baseMax));
+    } else {
+      const nextMax = Math.max(price, baseMin);
+      next = {
+        priceMin: base.priceMin,
+        priceMax: nextMax >= max ? max : nextMax,
+      };
+      thumbX = Math.max(clampedX, priceToX(baseMin));
+    }
+
+    draftRef.current = next;
+    setDraft(next);
+    setDragThumbX({ handle, x: thumbX });
   }
 
   function onPointerUp() {
     if (draggingRef.current && draftRef.current) {
       const { priceMin: draftMin, priceMax: draftMax } = draftRef.current;
       onChange({
-        priceMin: draftMin == null ? null : roundPrice(draftMin),
-        priceMax: draftMax == null ? null : roundPrice(draftMax),
+        priceMin: draftMin <= min ? null : roundPrice(draftMin),
+        priceMax: draftMax >= max ? null : roundPrice(draftMax),
       });
     }
     draggingRef.current = null;
     draftRef.current = null;
     setDraft(null);
+    setDragThumbX(null);
   }
 
   function onKeyDown(handle: "min" | "max") {
@@ -192,9 +198,9 @@ export function PriceRangeChart({
           );
         })}
         <rect
-          x={minX}
+          x={filterMinX}
           y={PAD_Y}
-          width={Math.max(0, maxX - minX)}
+          width={Math.max(0, filterMaxX - filterMinX)}
           height={innerH}
           className="price-range-selection"
           pointerEvents="none"
@@ -229,8 +235,8 @@ export function PriceRangeChart({
         />
       </svg>
       <div className="price-range-axis">
-        <span>{formatAxisPrice(effectiveMin)}</span>
-        <span>{formatAxisPrice(effectiveMax)}</span>
+        <span>{formatPrice(effectiveMin)}</span>
+        <span>{formatPrice(effectiveMax)}</span>
       </div>
     </div>
   );

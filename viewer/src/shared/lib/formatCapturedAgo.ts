@@ -15,7 +15,7 @@ function calendarDaysBetween(earlier: Date, later: Date): number {
 
 function formatShortCaptureDate(captured: Date, now: Date): string {
   const sameYear = captured.getFullYear() === now.getFullYear();
-  return captured.toLocaleDateString("en-CA", {
+  return captured.toLocaleDateString(undefined, {
     month: "short",
     day: "numeric",
     ...(sameYear ? {} : { year: "numeric" }),
@@ -68,7 +68,7 @@ export function formatCapturedAt(capturedAt: string | undefined) {
   if (!capturedAt) return null;
   const captured = new Date(capturedAt);
   if (Number.isNaN(captured.getTime())) return null;
-  return captured.toLocaleString("en-CA", {
+  return captured.toLocaleString(undefined, {
     dateStyle: "medium",
     timeStyle: "short",
   });

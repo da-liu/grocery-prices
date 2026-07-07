@@ -1,9 +1,18 @@
 import type { Product } from "@/shared/types/types";
 
+export interface BulkDeleteImpact {
+  photosRemoved: number;
+  validIds: string[];
+}
+
 export function computeBulkDeleteImpact(
   catalog: Product[],
   selectedIds: ReadonlySet<string>,
-): { productCount: number; photosRemoved: number } {
+): BulkDeleteImpact {
+  const catalogIds = new Set(catalog.map((product) => product.id));
+  const validIds = [...selectedIds].filter((id) => catalogIds.has(id));
+  const validIdSet = new Set(validIds);
+
   const byImage = new Map<string, Product[]>();
   for (const product of catalog) {
     const list = byImage.get(product.image_id) ?? [];
@@ -13,11 +22,10 @@ export function computeBulkDeleteImpact(
 
   let photosRemoved = 0;
   for (const allOnPhoto of byImage.values()) {
-    const selectedOnPhoto = allOnPhoto.filter((product) => selectedIds.has(product.id));
-    if (selectedOnPhoto.length > 0 && selectedOnPhoto.length === allOnPhoto.length) {
+    if (allOnPhoto.length > 0 && allOnPhoto.every((product) => validIdSet.has(product.id))) {
       photosRemoved += 1;
     }
   }
 
-  return { productCount: selectedIds.size, photosRemoved };
+  return { photosRemoved, validIds };
 }

@@ -26,7 +26,6 @@ export interface UploadQueueItem {
   error?: string;
   duplicateOf?: string;
   extractionEmpty?: boolean;
-  detectedReceipt?: boolean;
 }
 
 export interface UploadToast {

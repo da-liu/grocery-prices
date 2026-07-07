@@ -135,10 +135,7 @@ function BrowseRoute() {
         }}
         onDeleteAllProducts={
           catalog.products.length > 0
-            ? () =>
-                void catalog.handleDeleteProducts(
-                  catalog.products.map((product) => product.id),
-                )
+            ? () => catalog.requestBulkDelete(catalog.products.map((product) => product.id))
             : undefined
         }
         deletingAll={catalog.bulkDeleting}
@@ -234,13 +231,12 @@ function AuthenticatedLayout() {
 
       <Outlet context={{ openPhotoPicker }} />
 
-      {catalog.bulkDeletePending && catalog.bulkDeleteImpact && (
+      {catalog.bulkDeleteImpact && (
         <BulkDeleteConfirmModal
-          productCount={catalog.bulkDeleteImpact.productCount}
-          photosRemoved={catalog.bulkDeleteImpact.photosRemoved}
+          impact={catalog.bulkDeleteImpact}
           deleting={catalog.bulkDeleting}
-          onCancel={() => catalog.setBulkDeletePending(null)}
-          onConfirm={() => void catalog.handleDeleteProducts(catalog.bulkDeletePending!)}
+          onCancel={catalog.cancelBulkDelete}
+          onConfirm={catalog.confirmBulkDelete}
         />
       )}
 

@@ -3,6 +3,7 @@ import {
   EMPTY_BROWSE_QUERY,
   browseQueryToSearchParams,
   buildActiveChips,
+  buildCapturedDateHistogram,
   buildPriceHistogram,
   countActiveChips,
   filterProducts,
@@ -10,6 +11,7 @@ import {
   photoGroupLinkLabel,
   photoGroupNeedsStoreLabel,
   photoGroupTitle,
+  photoTimesByImage,
   parseBrowseQueryFromSearch,
   roundPrice,
   removeChip,
@@ -199,6 +201,40 @@ describe("price histogram", () => {
     const total = bins.reduce((sum, b) => sum + b.count, 0);
     expect(total).toBe(3);
     expect(bins.length).toBeGreaterThan(0);
+  });
+});
+
+describe("captured date histogram", () => {
+  it("bins photos by calendar day", () => {
+    const products: Product[] = [
+      makeProduct({
+        id: "a",
+        product_name: "A",
+        image_id: "img-a",
+        captured_at: "2026-07-04T10:15:00-04:00",
+      }),
+      makeProduct({
+        id: "b",
+        product_name: "B",
+        image_id: "img-b",
+        captured_at: "2026-07-04T22:45:00-04:00",
+      }),
+      makeProduct({
+        id: "c",
+        product_name: "C",
+        image_id: "img-c",
+        captured_at: "2026-07-05T11:30:00-04:00",
+      }),
+    ];
+
+    const timeByImage = photoTimesByImage(products);
+    const bins = buildCapturedDateHistogram(timeByImage);
+
+    expect(bins).toHaveLength(2);
+    expect(bins[0].from).toBe("2026-07-04");
+    expect(bins[0].count).toBe(2);
+    expect(bins[1].from).toBe("2026-07-05");
+    expect(bins[1].count).toBe(1);
   });
 });
 

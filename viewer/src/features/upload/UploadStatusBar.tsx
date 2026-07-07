@@ -21,8 +21,9 @@ function statusLabel(item: UploadQueueItem): string {
     }
     case "processing": {
       const percent = extractionProgressPercent(item.processingStartedAt, item.extractBackend);
-      const phase = item.detectedReceipt ? "reading receipt prices" : "reading prices";
-      return percent > 0 ? `Uploaded · ${phase}… ${percent}%` : `Uploaded · ${phase}…`;
+      return percent > 0
+        ? `Uploaded · reading prices… ${percent}%`
+        : "Uploaded · reading prices…";
     }
     case "awaiting_duplicate":
       return "Duplicate detected";

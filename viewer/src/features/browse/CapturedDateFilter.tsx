@@ -3,10 +3,10 @@ import { CapturedDateRangeChart } from "./CapturedDateRangeChart";
 import {
   DATE_PRESETS,
   buildCapturedDateHistogram,
-  countDatedPhotos,
   datePresetRange,
   getDateExtents,
   matchDatePreset,
+  photoTimesByImage,
   type DatePresetId,
 } from "./browseQuery";
 import type { Product } from "@/shared/types/types";
@@ -31,8 +31,9 @@ export function CapturedDateFilter({
       Boolean(capturedAfter || capturedBefore),
   );
 
-  const bins = buildCapturedDateHistogram(products);
-  const extents = getDateExtents(bins, countDatedPhotos(products));
+  const timeByImage = photoTimesByImage(products);
+  const bins = buildCapturedDateHistogram(timeByImage);
+  const extents = getDateExtents(timeByImage);
   const activePreset = matchDatePreset(capturedAfter, capturedBefore);
 
   function applyPreset(id: DatePresetId) {

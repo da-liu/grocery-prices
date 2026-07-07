@@ -124,7 +124,6 @@ function applyUploadResult(result: UploadResult): Partial<UploadQueueItem> {
     productCount,
     imageId: result.image_id,
     extractionEmpty: result.extraction_empty,
-    detectedReceipt: result.detected_receipt,
   };
 }
 
@@ -241,13 +240,7 @@ export function UploadQueueProvider({
             throw new Error(MISSING_STATUS_MESSAGE);
           }
           consecutiveFailures = 0;
-          if (
-            status.extraction_status === "pending" ||
-            status.extraction_status === "processing"
-          ) {
-            if (status.photo_type === "receipt") {
-              updateItem(item.id, { detectedReceipt: true });
-            }
+          if (status.extraction_status === "pending") {
             continue;
           }
           await finishUpload(item, status);
@@ -260,7 +253,7 @@ export function UploadQueueProvider({
         }
       }
     },
-    [finishUpload, updateItem],
+    [finishUpload],
   );
 
   const handleItemResult = useCallback(
@@ -298,17 +291,13 @@ export function UploadQueueProvider({
         return;
       }
 
-      if (
-        result.extraction_status === "pending" ||
-        result.extraction_status === "processing"
-      ) {
+      if (result.extraction_status === "pending") {
         updateItem(item.id, {
           status: "processing",
           uploadProgress: undefined,
           processingStartedAt: Date.now(),
           extractBackend: extractBackendRef.current,
           imageId: result.image_id,
-          detectedReceipt: result.detected_receipt,
         });
         await waitForExtraction(item, result.image_id);
         return;
@@ -383,10 +372,7 @@ export function UploadQueueProvider({
             }
           };
 
-          if (
-            result.extraction_status === "pending" ||
-            result.extraction_status === "processing"
-          ) {
+          if (result.extraction_status === "pending") {
             backgroundTasks.push(runItem());
             continue;
           }

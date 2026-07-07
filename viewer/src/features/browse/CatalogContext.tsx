@@ -36,7 +36,7 @@ import {
   syncBrowseQueryToUrl,
   type BrowseQueryState,
 } from "./browseQuery";
-import { computeBulkDeleteImpact } from "./bulkDelete";
+import { computeBulkDeleteImpact, type BulkDeleteImpact } from "./bulkDelete";
 import { formatPrice } from "@/shared/lib/formatPrice";
 import type { BrowseStats, Product } from "@/shared/types/types";
 
@@ -81,7 +81,6 @@ interface CatalogContextValue {
   reextractStartedAt: number | null;
   handleDeleteProduct: (productId: string) => void;
   handleDeletePhoto: (imageId: string) => void;
-  handleDeleteProducts: (productIds: string[]) => Promise<void>;
   handleEditProduct: (productId: string, updates: ProductUpdateInput) => Promise<void>;
   handleReextractPhoto: (imageId: string) => Promise<void>;
   handleAddManualProduct: (imageId: string, product: ManualProductInput) => Promise<void>;
@@ -91,9 +90,9 @@ interface CatalogContextValue {
   setSelectedIds: (ids: Set<string>) => void;
   toggleProductSelection: (productId: string) => void;
   requestBulkDelete: (ids: string[]) => void;
-  bulkDeletePending: string[] | null;
-  setBulkDeletePending: (ids: string[] | null) => void;
-  bulkDeleteImpact: { productCount: number; photosRemoved: number } | null;
+  confirmBulkDelete: () => void;
+  cancelBulkDelete: () => void;
+  bulkDeleteImpact: BulkDeleteImpact | null;
   bulkDeleting: boolean;
   resetBrowseUi: () => void;
 }
@@ -130,7 +129,7 @@ export function CatalogProvider({ user, refreshAuth, children }: CatalogProvider
   const [extractBackend, setExtractBackend] = useState<ExtractBackend>("cursor");
   const [selectionMode, setSelectionMode] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
-  const [bulkDeletePending, setBulkDeletePending] = useState<string[] | null>(null);
+  const [bulkDeleteImpact, setBulkDeleteImpact] = useState<BulkDeleteImpact | null>(null);
   const [bulkDeleting, setBulkDeleting] = useState(false);
   const [highlightProductId, setHighlightProductId] = useState<string | null>(null);
   const [highlightPhotoGroupId, setHighlightPhotoGroupId] = useState<string | null>(null);
@@ -192,7 +191,7 @@ export function CatalogProvider({ user, refreshAuth, children }: CatalogProvider
     setSortFilterOpen(false);
     setSelectionMode(false);
     setSelectedIds(new Set());
-    setBulkDeletePending(null);
+    setBulkDeleteImpact(null);
   }, []);
 
   const stores = useMemo(
@@ -365,14 +364,16 @@ export function CatalogProvider({ user, refreshAuth, children }: CatalogProvider
     async (productIds: string[]) => {
       if (productIds.length === 0) return;
 
+      const fromModal = bulkDeleteImpact !== null;
       setBulkDeleting(true);
       setError(null);
       const idSet = new Set(productIds);
       const previous = products;
       setProducts((rows) => rows.filter((p) => !idSet.has(p.id)));
-      setSelectedIds(new Set());
-      setSelectionMode(false);
-      setBulkDeletePending(null);
+      if (!fromModal) {
+        setSelectedIds(new Set());
+        setSelectionMode(false);
+      }
 
       try {
         if (productIds.length === 1) {
@@ -380,20 +381,32 @@ export function CatalogProvider({ user, refreshAuth, children }: CatalogProvider
         } else {
           const result = await deleteProductsBulk(productIds);
           if (result.failed.length > 0) {
-            throw new Error(`${result.failed.length} of ${productIds.length} deletes failed`);
+            await refreshProducts({ silent: true });
+            throw new Error(
+              `${result.deleted} deleted, ${result.failed.length} failed. Catalog refreshed.`,
+            );
           }
         }
         await refreshAuth();
         await refreshProducts({ silent: true });
       } catch (err) {
-        setProducts(previous);
+        if (productIds.length > 1) {
+          await refreshProducts({ silent: true });
+        } else {
+          setProducts(previous);
+        }
         setError(err instanceof Error ? err.message : "Delete failed");
       } finally {
         setBulkDeleting(false);
+        setBulkDeleteImpact(null);
+        if (fromModal) {
+          setSelectionMode(false);
+          setSelectedIds(new Set());
+        }
         setDeletingId(null);
       }
     },
-    [products, refreshAuth, refreshProducts],
+    [bulkDeleteImpact, products, refreshAuth, refreshProducts],
   );
 
   const handleDeleteProduct = useCallback(
@@ -437,16 +450,25 @@ export function CatalogProvider({ user, refreshAuth, children }: CatalogProvider
     });
   }, []);
 
-  const requestBulkDelete = useCallback((ids: string[]) => {
-    if (ids.length === 0) return;
-    setSortFilterOpen(false);
-    setBulkDeletePending(ids);
-  }, []);
+  const requestBulkDelete = useCallback(
+    (ids: string[]) => {
+      const impact = computeBulkDeleteImpact(products, new Set(ids));
+      if (impact.validIds.length === 0) return;
+      setSortFilterOpen(false);
+      setBulkDeleteImpact(impact);
+    },
+    [products],
+  );
 
-  const bulkDeleteImpact = useMemo(() => {
-    if (!bulkDeletePending) return null;
-    return computeBulkDeleteImpact(products, new Set(bulkDeletePending));
-  }, [bulkDeletePending, products]);
+  const confirmBulkDelete = useCallback(() => {
+    if (!bulkDeleteImpact || bulkDeleting) return;
+    void handleDeleteProducts(bulkDeleteImpact.validIds);
+  }, [bulkDeleteImpact, bulkDeleting, handleDeleteProducts]);
+
+  const cancelBulkDelete = useCallback(() => {
+    if (bulkDeleting) return;
+    setBulkDeleteImpact(null);
+  }, [bulkDeleting]);
 
   const value = useMemo(
     (): CatalogContextValue => ({
@@ -484,7 +506,6 @@ export function CatalogProvider({ user, refreshAuth, children }: CatalogProvider
       reextractStartedAt,
       handleDeleteProduct,
       handleDeletePhoto,
-      handleDeleteProducts,
       handleEditProduct,
       handleReextractPhoto,
       handleAddManualProduct,
@@ -494,8 +515,8 @@ export function CatalogProvider({ user, refreshAuth, children }: CatalogProvider
       setSelectedIds,
       toggleProductSelection,
       requestBulkDelete,
-      bulkDeletePending,
-      setBulkDeletePending,
+      confirmBulkDelete,
+      cancelBulkDelete,
       bulkDeleteImpact,
       bulkDeleting,
       resetBrowseUi,
@@ -530,7 +551,6 @@ export function CatalogProvider({ user, refreshAuth, children }: CatalogProvider
       reextractStartedAt,
       handleDeleteProduct,
       handleDeletePhoto,
-      handleDeleteProducts,
       handleEditProduct,
       handleReextractPhoto,
       handleAddManualProduct,
@@ -538,7 +558,8 @@ export function CatalogProvider({ user, refreshAuth, children }: CatalogProvider
       selectedIds,
       toggleProductSelection,
       requestBulkDelete,
-      bulkDeletePending,
+      confirmBulkDelete,
+      cancelBulkDelete,
       bulkDeleteImpact,
       bulkDeleting,
       resetBrowseUi,
