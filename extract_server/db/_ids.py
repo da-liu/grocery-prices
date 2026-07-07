@@ -25,5 +25,16 @@ def empty_sighting_id(user_id: str, photo_id: str) -> str:
     return uuid.uuid5(EMPTY_SIGHTING_NS, f"{user_id}/{photo_id}/empty").hex
 
 
-def blob_key(user_id: str, date_folder: str, image_id: str) -> str:
-    return f"users/{user_id}/photos/{date_folder}/{image_id}.webp"
+def normalize_photo_suffix(suffix: str) -> str:
+    """Normalize upload suffix to a stored photo extension (.webp or .jpg)."""
+    normalized = suffix.lower()
+    if normalized == ".jpeg":
+        return ".jpg"
+    if normalized in {".webp", ".jpg"}:
+        return normalized
+    raise ValueError(f"Unsupported image type: {suffix or '(none)'}")
+
+
+def blob_key(user_id: str, date_folder: str, image_id: str, suffix: str = ".webp") -> str:
+    stored_suffix = normalize_photo_suffix(suffix)
+    return f"users/{user_id}/photos/{date_folder}/{image_id}{stored_suffix}"

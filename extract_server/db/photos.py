@@ -205,10 +205,11 @@ def prune_orphan_photo_files(user_id: str) -> int:
         return 0
 
     removed = 0
+    photo_suffixes = {".webp", ".jpg", ".jpeg"}
     for path in photos_root.rglob("*"):
         if not path.is_file():
             continue
-        if path.suffix.lower() != ".webp" or path.parent.name == "jpg":
+        if path.suffix.lower() not in photo_suffixes or path.parent.name == "jpg":
             continue
         image_id = path.stem
         rel = path.relative_to(user_paths.data_dir()).as_posix()

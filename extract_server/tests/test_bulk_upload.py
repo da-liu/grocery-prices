@@ -64,6 +64,47 @@ def test_accept_upload_batch_assigns_distinct_image_ids(tmp_path: Path, monkeypa
         assert webp_path.suffix == ".webp"
 
 
+def test_accept_upload_batch_persists_jpeg(tmp_path: Path, monkeypatch):
+    monkeypatch.setenv("GROCERY_DATA_DIR", str(tmp_path / "data"))
+    monkeypatch.setenv("GROCERY_DB_PATH", str(tmp_path / "grocery.db"))
+    monkeypatch.setattr("grocery_extract.user_paths.ROOT", tmp_path)
+    monkeypatch.setattr("grocery_extract.user_paths.DATA_DIR", tmp_path / "data")
+
+    from extract_server.users_db import init_db, register_user
+
+    init_db()
+    user = register_user("jpegbatch", "password12345")
+    user_id = user.id
+    user_dir = tmp_path / "data" / "users" / user_id
+    user_dir.mkdir(parents=True)
+
+    upload = tmp_path / "image-0.jpg"
+    upload.write_bytes(b"\xff\xd8\xff jpeg-upload")
+
+    monkeypatch.setattr(
+        "grocery_extract.ingest.user_photos_dir",
+        lambda uid, date_folder: user_dir / "photos" / date_folder,
+    )
+    monkeypatch.setattr("grocery_extract.ingest.file_content_hash", lambda path: str(path))
+    monkeypatch.setattr("grocery_extract.ingest.find_photo_by_content_hash", lambda *_args: None)
+    monkeypatch.setattr(
+        "grocery_extract.user_stores_db.list_user_stores_as_dicts",
+        lambda *_args: [],
+    )
+    monkeypatch.setattr("grocery_extract.ingest.image_needs_store_label", lambda *_args: False)
+
+    results = accept_upload_batch([upload], user_id=user_id, max_workers=1, enqueue=False)
+
+    assert len(results) == 1
+    image_id = results[0]["image_id"]
+    assert results[0]["extraction_status"] == "pending"
+
+    photos_root = user_dir / "photos"
+    jpg_path = next(photos_root.glob(f"*/{image_id}.jpg"))
+    assert jpg_path.exists()
+    assert jpg_path.read_bytes() == b"\xff\xd8\xff jpeg-upload"
+
+
 def test_bulk_endpoint_passes_distinct_saved_paths(client, monkeypatch):
     reg = client.post(
         "/api/auth/register",

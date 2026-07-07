@@ -19,6 +19,7 @@ from extract_server.db import (
     save_photo,
     save_photo_extraction,
 )
+from extract_server.db._ids import normalize_photo_suffix
 from extract_server.grocery_extract.delete import delete_photo
 from extract_server.grocery_extract.duplicate import file_content_hash
 from extract_server.grocery_extract.extract_worker import ExtractionJob, enqueue_extraction, record_extraction_failure
@@ -49,12 +50,11 @@ def _persist_image(
     suffix = upload_path.suffix.lower()
     if suffix in {".heic", ".heif"}:
         raise ValueError(f"Unsupported image type: {suffix}")
-    if suffix != ".webp":
-        raise ValueError(f"Only WebP uploads are supported, got: {suffix or '(none)'}")
 
-    dest = batch_dir / f"{image_id}.webp"
+    stored_suffix = normalize_photo_suffix(suffix)
+    dest = batch_dir / f"{image_id}{stored_suffix}"
     shutil.copy2(upload_path, dest)
-    return blob_key(user_id, date_folder, image_id)
+    return blob_key(user_id, date_folder, image_id, stored_suffix)
 
 
 def _duplicate_response(
