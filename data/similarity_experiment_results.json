@@ -1,0 +1,2262 @@
+{
+  "dataset": {
+    "product_count": 215,
+    "unique_normalized_names": 194,
+    "with_barcode": 81,
+    "pair_count": 286,
+    "positive_pairs": 11,
+    "negative_pairs": 275,
+    "pair_reasons": {
+      "same_brand_category_diff_product": 195,
+      "cross_category": 80,
+      "same_barcode_name_variant": 5,
+      "exact_normalized_name": 2,
+      "manual_synear_sesame_variant": 1,
+      "manual_pork_loin_variant": 1,
+      "manual_pearl_river_mushroom_soy": 1,
+      "manual_pearl_river_golden_light": 1
+    }
+  },
+  "scorers": {
+    "sequence_matcher (current)": {
+      "at_threshold_0.55": {
+        "threshold": 0.55,
+        "precision": 0.07,
+        "recall": 0.909,
+        "f1": 0.131,
+        "auc": 0.784,
+        "pos_mean": 0.743,
+        "neg_mean": 0.496,
+        "separation": 0.246,
+        "tp": 10,
+        "fp": 132,
+        "tn": 143,
+        "fn": 1
+      },
+      "best_threshold": 1.0,
+      "at_best_threshold": {
+        "threshold": 1.0,
+        "precision": 1.0,
+        "recall": 0.182,
+        "f1": 0.308,
+        "auc": 0.784,
+        "pos_mean": 0.743,
+        "neg_mean": 0.496,
+        "separation": 0.246,
+        "tp": 2,
+        "fp": 0,
+        "tn": 275,
+        "fn": 9
+      },
+      "text_only_best_f1": 0.4,
+      "top_false_positives": [
+        {
+          "score": 0.972,
+          "reason": "same_brand_category_diff_product",
+          "a": "To Fu Superior Unsweetened Soya Drink",
+          "b": "To Fu Superior Sweetened Soya Drink",
+          "barcodes": [
+            null,
+            null
+          ]
+        },
+        {
+          "score": 0.962,
+          "reason": "same_brand_category_diff_product",
+          "a": "Lactantia PurFiltre 1% Milk",
+          "b": "Lactantia PurFiltre 2% Milk",
+          "barcodes": [
+            null,
+            null
+          ]
+        },
+        {
+          "score": 0.938,
+          "reason": "same_brand_category_diff_product",
+          "a": "Longo's Essentials No Salt Added Crushed Tomatoes",
+          "b": "Longo's Essentials No Salt Added Diced Tomatoes",
+          "barcodes": [
+            null,
+            null
+          ]
+        },
+        {
+          "score": 0.933,
+          "reason": "same_brand_category_diff_product",
+          "a": "Beatrice 1% Milk",
+          "b": "Beatrice 2% Milk",
+          "barcodes": [
+            null,
+            "055300111010"
+          ]
+        },
+        {
+          "score": 0.92,
+          "reason": "same_brand_category_diff_product",
+          "a": "Vitasoy Tofu (Silken)",
+          "b": "Vitasoy Tofu(Silken) (維他山水嫩豆腐)",
+          "barcodes": [
+            null,
+            null
+          ]
+        },
+        {
+          "score": 0.92,
+          "reason": "same_brand_category_diff_product",
+          "a": "Hunt's Tomato Paste",
+          "b": "Tomato Paste",
+          "barcodes": [
+            null,
+            null
+          ]
+        },
+        {
+          "score": 0.92,
+          "reason": "same_brand_category_diff_product",
+          "a": "ItalPasta Spaghetti",
+          "b": "ItalPasta Spaghettini",
+          "barcodes": [
+            "0000000101000027",
+            "0000000101000028"
+          ]
+        },
+        {
+          "score": 0.92,
+          "reason": "same_brand_category_diff_product",
+          "a": "Colgate Optic White Purple",
+          "b": "Colgate Optic White",
+          "barcodes": [
+            null,
+            null
+          ]
+        }
+      ],
+      "top_false_negatives": [
+        {
+          "score": 0.526,
+          "reason": "same_barcode_name_variant",
+          "a": "Lay's XXL Wavy Salt & Vinegar Chips",
+          "b": "Lay's Cheese & Onion Chips",
+          "barcodes": [
+            "15061431",
+            "15061431"
+          ]
+        },
+        {
+          "score": 0.588,
+          "reason": "same_barcode_name_variant",
+          "a": "Lay's XXL All Dressed Chips",
+          "b": "Lay's Cheese & Onion Chips",
+          "barcodes": [
+            "15061431",
+            "15061431"
+          ]
+        },
+        {
+          "score": 0.627,
+          "reason": "same_barcode_name_variant",
+          "a": "Synear Sesame Rice Ball",
+          "b": "Synear Rice Ball With Sesame",
+          "barcodes": [
+            "921065700262",
+            "921065700262"
+          ]
+        },
+        {
+          "score": 0.657,
+          "reason": "manual_synear_sesame_variant",
+          "a": "Synear Rice Ball-BlackSesame",
+          "b": "思念 (Synear) Black Glutinous Rice Ball Sesame",
+          "barcodes": [
+            "006926186573257",
+            null
+          ]
+        },
+        {
+          "score": 0.667,
+          "reason": "same_barcode_name_variant",
+          "a": "Lay's XXL All Dressed Chips",
+          "b": "Lay's XXL Wavy Salt & Vinegar Chips",
+          "barcodes": [
+            "15061431",
+            "15061431"
+          ]
+        },
+        {
+          "score": 0.667,
+          "reason": "manual_pearl_river_golden_light",
+          "a": "Pearl River Golden Soy Sauce",
+          "b": "Pearl River Bridge Golden Label Superior Light Soy Sauce",
+          "barcodes": [
+            null,
+            "72233761834"
+          ]
+        },
+        {
+          "score": 0.805,
+          "reason": "manual_pearl_river_mushroom_soy",
+          "a": "Pearl River Mushroom Dark Soy Sauce",
+          "b": "Pearl River Bridge Mushroom Flavoured Dark Soy Sauce",
+          "barcodes": [
+            null,
+            null
+          ]
+        },
+        {
+          "score": 0.814,
+          "reason": "same_barcode_name_variant",
+          "a": "Sunrise Almond Tofu Dessert",
+          "b": "Sunrise Peach Mango Tofu Dessert",
+          "barcodes": [
+            "063604000000",
+            "063604000000"
+          ]
+        }
+      ]
+    },
+    "token_jaccard": {
+      "at_threshold_0.55": {
+        "threshold": 0.55,
+        "precision": 0.13,
+        "recall": 0.545,
+        "f1": 0.211,
+        "auc": 0.839,
+        "pos_mean": 0.668,
+        "neg_mean": 0.259,
+        "separation": 0.409,
+        "tp": 6,
+        "fp": 40,
+        "tn": 235,
+        "fn": 5
+      },
+      "best_threshold": 0.857,
+      "at_best_threshold": {
+        "threshold": 0.857,
+        "precision": 0.8,
+        "recall": 0.364,
+        "f1": 0.5,
+        "auc": 0.839,
+        "pos_mean": 0.668,
+        "neg_mean": 0.259,
+        "separation": 0.409,
+        "tp": 4,
+        "fp": 1,
+        "tn": 274,
+        "fn": 7
+      },
+      "text_only_best_f1": 0.6,
+      "top_false_positives": [
+        {
+          "score": 1.0,
+          "reason": "same_brand_category_diff_product",
+          "a": "Farm Boy Tomatoes Crushed",
+          "b": "Farm Boy Crushed Tomatoes",
+          "barcodes": [
+            "3471",
+            null
+          ]
+        },
+        {
+          "score": 0.833,
+          "reason": "same_brand_category_diff_product",
+          "a": "Pearl River Bridge Golden Label Superior Light Soy Sauce",
+          "b": "Pearl River Bridge Superior Light Soy Sauce",
+          "barcodes": [
+            "72233761834",
+            null
+          ]
+        },
+        {
+          "score": 0.833,
+          "reason": "same_brand_category_diff_product",
+          "a": "Pearl River Bridge Superior Dark Soy Sauce",
+          "b": "Pearl River Mushroom Dark Soy Sauce",
+          "barcodes": [
+            "72233761732",
+            null
+          ]
+        },
+        {
+          "score": 0.833,
+          "reason": "same_brand_category_diff_product",
+          "a": "Synear Proso Millet & Peanut Rice Ball",
+          "b": "Synear Rice Ball With Proso Millet",
+          "barcodes": [
+            "921065722584",
+            "921065722577"
+          ]
+        },
+        {
+          "score": 0.8,
+          "reason": "same_brand_category_diff_product",
+          "a": "Farm Boy Tomatoes Whole Peeled",
+          "b": "Farm Boy Whole Tomatoes",
+          "barcodes": [
+            "3472",
+            null
+          ]
+        },
+        {
+          "score": 0.778,
+          "reason": "same_brand_category_diff_product",
+          "a": "Longo's Essentials No Salt Added Crushed Tomatoes",
+          "b": "Longo's Essentials No Salt Added Diced Tomatoes",
+          "barcodes": [
+            null,
+            null
+          ]
+        },
+        {
+          "score": 0.778,
+          "reason": "same_brand_category_diff_product",
+          "a": "Longo's Essentials No Salt Added Crushed Tomatoes",
+          "b": "Longo's Essentials No Salt Added Whole Tomatoes",
+          "barcodes": [
+            null,
+            null
+          ]
+        },
+        {
+          "score": 0.778,
+          "reason": "same_brand_category_diff_product",
+          "a": "Longo's Essentials No Salt Added Diced Tomatoes",
+          "b": "Longo's Essentials No Salt Added Whole Tomatoes",
+          "barcodes": [
+            null,
+            null
+          ]
+        }
+      ],
+      "top_false_negatives": [
+        {
+          "score": 0.333,
+          "reason": "same_barcode_name_variant",
+          "a": "Lay's XXL Wavy Salt & Vinegar Chips",
+          "b": "Lay's Cheese & Onion Chips",
+          "barcodes": [
+            "15061431",
+            "15061431"
+          ]
+        },
+        {
+          "score": 0.375,
+          "reason": "same_barcode_name_variant",
+          "a": "Lay's XXL All Dressed Chips",
+          "b": "Lay's Cheese & Onion Chips",
+          "barcodes": [
+            "15061431",
+            "15061431"
+          ]
+        },
+        {
+          "score": 0.375,
+          "reason": "manual_synear_sesame_variant",
+          "a": "Synear Rice Ball-BlackSesame",
+          "b": "思念 (Synear) Black Glutinous Rice Ball Sesame",
+          "barcodes": [
+            "006926186573257",
+            null
+          ]
+        },
+        {
+          "score": 0.444,
+          "reason": "same_barcode_name_variant",
+          "a": "Lay's XXL All Dressed Chips",
+          "b": "Lay's XXL Wavy Salt & Vinegar Chips",
+          "barcodes": [
+            "15061431",
+            "15061431"
+          ]
+        },
+        {
+          "score": 0.5,
+          "reason": "same_barcode_name_variant",
+          "a": "Sunrise Almond Tofu Dessert",
+          "b": "Sunrise Peach Mango Tofu Dessert",
+          "barcodes": [
+            "063604000000",
+            "063604000000"
+          ]
+        },
+        {
+          "score": 0.625,
+          "reason": "manual_pork_loin_variant",
+          "a": "VALUE PACK BONELESS PORK LOIN CENTRE CUT FAST FRY",
+          "b": "Value Pack Boneless Pork Loin Fast Fry Chops",
+          "barcodes": [
+            "208210004584",
+            "2045400000"
+          ]
+        },
+        {
+          "score": 0.833,
+          "reason": "manual_pearl_river_golden_light",
+          "a": "Pearl River Golden Soy Sauce",
+          "b": "Pearl River Bridge Golden Label Superior Light Soy Sauce",
+          "barcodes": [
+            null,
+            "72233761834"
+          ]
+        },
+        {
+          "score": 0.857,
+          "reason": "manual_pearl_river_mushroom_soy",
+          "a": "Pearl River Mushroom Dark Soy Sauce",
+          "b": "Pearl River Bridge Mushroom Flavoured Dark Soy Sauce",
+          "barcodes": [
+            null,
+            null
+          ]
+        }
+      ]
+    },
+    "token_jaccard_no_generic": {
+      "at_threshold_0.55": {
+        "threshold": 0.55,
+        "precision": 0.2,
+        "recall": 0.455,
+        "f1": 0.278,
+        "auc": 0.824,
+        "pos_mean": 0.593,
+        "neg_mean": 0.209,
+        "separation": 0.385,
+        "tp": 5,
+        "fp": 20,
+        "tn": 255,
+        "fn": 6
+      },
+      "best_threshold": 0.8,
+      "at_best_threshold": {
+        "threshold": 0.8,
+        "precision": 0.571,
+        "recall": 0.364,
+        "f1": 0.444,
+        "auc": 0.824,
+        "pos_mean": 0.593,
+        "neg_mean": 0.209,
+        "separation": 0.385,
+        "tp": 4,
+        "fp": 3,
+        "tn": 272,
+        "fn": 7
+      },
+      "text_only_best_f1": 0.444,
+      "top_false_positives": [
+        {
+          "score": 1.0,
+          "reason": "same_brand_category_diff_product",
+          "a": "Farm Boy Tomatoes Crushed",
+          "b": "Farm Boy Crushed Tomatoes",
+          "barcodes": [
+            "3471",
+            null
+          ]
+        },
+        {
+          "score": 0.857,
+          "reason": "same_brand_category_diff_product",
+          "a": "Longo's Essentials No Salt Added Crushed Tomatoes",
+          "b": "Longo's Essentials No Salt Added Whole Tomatoes",
+          "barcodes": [
+            null,
+            null
+          ]
+        },
+        {
+          "score": 0.857,
+          "reason": "same_brand_category_diff_product",
+          "a": "Longo's Essentials No Salt Added Diced Tomatoes",
+          "b": "Longo's Essentials No Salt Added Whole Tomatoes",
+          "barcodes": [
+            null,
+            null
+          ]
+        },
+        {
+          "score": 0.75,
+          "reason": "same_brand_category_diff_product",
+          "a": "Pearl River Bridge Golden Label Superior Light Soy Sauce",
+          "b": "Pearl River Bridge Superior Light Soy Sauce",
+          "barcodes": [
+            "72233761834",
+            null
+          ]
+        },
+        {
+          "score": 0.75,
+          "reason": "same_brand_category_diff_product",
+          "a": "Pearl River Bridge Superior Dark Soy Sauce",
+          "b": "Pearl River Mushroom Dark Soy Sauce",
+          "barcodes": [
+            "72233761732",
+            null
+          ]
+        },
+        {
+          "score": 0.75,
+          "reason": "same_brand_category_diff_product",
+          "a": "Longo's Essentials No Salt Added Crushed Tomatoes",
+          "b": "Longo's Essentials No Salt Added Diced Tomatoes",
+          "barcodes": [
+            null,
+            null
+          ]
+        },
+        {
+          "score": 0.75,
+          "reason": "same_brand_category_diff_product",
+          "a": "Synear Proso Millet & Peanut Rice Ball",
+          "b": "Synear Rice Ball With Proso Millet",
+          "barcodes": [
+            "921065722584",
+            "921065722577"
+          ]
+        },
+        {
+          "score": 0.75,
+          "reason": "same_brand_category_diff_product",
+          "a": "Colgate Optic White Purple",
+          "b": "Colgate Optic White",
+          "barcodes": [
+            null,
+            null
+          ]
+        }
+      ],
+      "top_false_negatives": [
+        {
+          "score": 0.167,
+          "reason": "manual_synear_sesame_variant",
+          "a": "Synear Rice Ball-BlackSesame",
+          "b": "思念 (Synear) Black Glutinous Rice Ball Sesame",
+          "barcodes": [
+            "006926186573257",
+            null
+          ]
+        },
+        {
+          "score": 0.25,
+          "reason": "same_barcode_name_variant",
+          "a": "Lay's XXL Wavy Salt & Vinegar Chips",
+          "b": "Lay's Cheese & Onion Chips",
+          "barcodes": [
+            "15061431",
+            "15061431"
+          ]
+        },
+        {
+          "score": 0.286,
+          "reason": "same_barcode_name_variant",
+          "a": "Lay's XXL All Dressed Chips",
+          "b": "Lay's Cheese & Onion Chips",
+          "barcodes": [
+            "15061431",
+            "15061431"
+          ]
+        },
+        {
+          "score": 0.375,
+          "reason": "same_barcode_name_variant",
+          "a": "Lay's XXL All Dressed Chips",
+          "b": "Lay's XXL Wavy Salt & Vinegar Chips",
+          "barcodes": [
+            "15061431",
+            "15061431"
+          ]
+        },
+        {
+          "score": 0.4,
+          "reason": "same_barcode_name_variant",
+          "a": "Sunrise Almond Tofu Dessert",
+          "b": "Sunrise Peach Mango Tofu Dessert",
+          "barcodes": [
+            "063604000000",
+            "063604000000"
+          ]
+        },
+        {
+          "score": 0.5,
+          "reason": "manual_pork_loin_variant",
+          "a": "VALUE PACK BONELESS PORK LOIN CENTRE CUT FAST FRY",
+          "b": "Value Pack Boneless Pork Loin Fast Fry Chops",
+          "barcodes": [
+            "208210004584",
+            "2045400000"
+          ]
+        },
+        {
+          "score": 0.75,
+          "reason": "manual_pearl_river_golden_light",
+          "a": "Pearl River Golden Soy Sauce",
+          "b": "Pearl River Bridge Golden Label Superior Light Soy Sauce",
+          "barcodes": [
+            null,
+            "72233761834"
+          ]
+        },
+        {
+          "score": 0.8,
+          "reason": "manual_pearl_river_mushroom_soy",
+          "a": "Pearl River Mushroom Dark Soy Sauce",
+          "b": "Pearl River Bridge Mushroom Flavoured Dark Soy Sauce",
+          "barcodes": [
+            null,
+            null
+          ]
+        }
+      ]
+    },
+    "trigram_jaccard": {
+      "at_threshold_0.55": {
+        "threshold": 0.55,
+        "precision": 0.111,
+        "recall": 0.273,
+        "f1": 0.158,
+        "auc": 0.779,
+        "pos_mean": 0.487,
+        "neg_mean": 0.215,
+        "separation": 0.271,
+        "tp": 3,
+        "fp": 24,
+        "tn": 251,
+        "fn": 8
+      },
+      "best_threshold": 1.0,
+      "at_best_threshold": {
+        "threshold": 1.0,
+        "precision": 1.0,
+        "recall": 0.182,
+        "f1": 0.308,
+        "auc": 0.779,
+        "pos_mean": 0.487,
+        "neg_mean": 0.215,
+        "separation": 0.271,
+        "tp": 2,
+        "fp": 0,
+        "tn": 275,
+        "fn": 9
+      },
+      "text_only_best_f1": 0.4,
+      "top_false_positives": [
+        {
+          "score": 0.889,
+          "reason": "same_brand_category_diff_product",
+          "a": "ItalPasta Spaghetti",
+          "b": "ItalPasta Spaghettini",
+          "barcodes": [
+            "0000000101000027",
+            "0000000101000028"
+          ]
+        },
+        {
+          "score": 0.812,
+          "reason": "same_brand_category_diff_product",
+          "a": "To Fu Superior Unsweetened Soya Drink",
+          "b": "To Fu Superior Sweetened Soya Drink",
+          "barcodes": [
+            null,
+            null
+          ]
+        },
+        {
+          "score": 0.75,
+          "reason": "same_brand_category_diff_product",
+          "a": "Lactantia PurFiltre 1% Milk",
+          "b": "Lactantia PurFiltre 2% Milk",
+          "barcodes": [
+            null,
+            null
+          ]
+        },
+        {
+          "score": 0.733,
+          "reason": "same_brand_category_diff_product",
+          "a": "Longo's Essentials No Salt Added Crushed Tomatoes",
+          "b": "Longo's Essentials No Salt Added Diced Tomatoes",
+          "barcodes": [
+            null,
+            null
+          ]
+        },
+        {
+          "score": 0.714,
+          "reason": "same_brand_category_diff_product",
+          "a": "Colgate Optic White Purple",
+          "b": "Colgate Optic White",
+          "barcodes": [
+            null,
+            null
+          ]
+        },
+        {
+          "score": 0.689,
+          "reason": "same_brand_category_diff_product",
+          "a": "Longo's Essentials No Salt Added Diced Tomatoes",
+          "b": "Longo's Essentials No Salt Added Whole Tomatoes",
+          "barcodes": [
+            null,
+            null
+          ]
+        },
+        {
+          "score": 0.688,
+          "reason": "same_brand_category_diff_product",
+          "a": "Pearl River Bridge Golden Label Superior Light Soy Sauce",
+          "b": "Pearl River Bridge Superior Light Soy Sauce",
+          "barcodes": [
+            "72233761834",
+            null
+          ]
+        },
+        {
+          "score": 0.683,
+          "reason": "same_brand_category_diff_product",
+          "a": "Pearl River Bridge Superior Dark Soy Sauce",
+          "b": "Pearl River Bridge Superior Light Soy Sauce",
+          "barcodes": [
+            "72233761732",
+            null
+          ]
+        }
+      ],
+      "top_false_negatives": [
+        {
+          "score": 0.132,
+          "reason": "same_barcode_name_variant",
+          "a": "Lay's XXL Wavy Salt & Vinegar Chips",
+          "b": "Lay's Cheese & Onion Chips",
+          "barcodes": [
+            "15061431",
+            "15061431"
+          ]
+        },
+        {
+          "score": 0.152,
+          "reason": "same_barcode_name_variant",
+          "a": "Lay's XXL All Dressed Chips",
+          "b": "Lay's Cheese & Onion Chips",
+          "barcodes": [
+            "15061431",
+            "15061431"
+          ]
+        },
+        {
+          "score": 0.216,
+          "reason": "same_barcode_name_variant",
+          "a": "Lay's XXL All Dressed Chips",
+          "b": "Lay's XXL Wavy Salt & Vinegar Chips",
+          "barcodes": [
+            "15061431",
+            "15061431"
+          ]
+        },
+        {
+          "score": 0.36,
+          "reason": "manual_pearl_river_golden_light",
+          "a": "Pearl River Golden Soy Sauce",
+          "b": "Pearl River Bridge Golden Label Superior Light Soy Sauce",
+          "barcodes": [
+            null,
+            "72233761834"
+          ]
+        },
+        {
+          "score": 0.412,
+          "reason": "same_barcode_name_variant",
+          "a": "Sunrise Almond Tofu Dessert",
+          "b": "Sunrise Peach Mango Tofu Dessert",
+          "barcodes": [
+            "063604000000",
+            "063604000000"
+          ]
+        },
+        {
+          "score": 0.425,
+          "reason": "manual_synear_sesame_variant",
+          "a": "Synear Rice Ball-BlackSesame",
+          "b": "思念 (Synear) Black Glutinous Rice Ball Sesame",
+          "barcodes": [
+            "006926186573257",
+            null
+          ]
+        },
+        {
+          "score": 0.511,
+          "reason": "manual_pearl_river_mushroom_soy",
+          "a": "Pearl River Mushroom Dark Soy Sauce",
+          "b": "Pearl River Bridge Mushroom Flavoured Dark Soy Sauce",
+          "barcodes": [
+            null,
+            null
+          ]
+        },
+        {
+          "score": 0.538,
+          "reason": "same_barcode_name_variant",
+          "a": "Synear Sesame Rice Ball",
+          "b": "Synear Rice Ball With Sesame",
+          "barcodes": [
+            "921065700262",
+            "921065700262"
+          ]
+        }
+      ]
+    },
+    "lcs_ratio": {
+      "at_threshold_0.55": {
+        "threshold": 0.55,
+        "precision": 0.077,
+        "recall": 0.273,
+        "f1": 0.12,
+        "auc": 0.67,
+        "pos_mean": 0.473,
+        "neg_mean": 0.304,
+        "separation": 0.169,
+        "tp": 3,
+        "fp": 36,
+        "tn": 239,
+        "fn": 8
+      },
+      "best_threshold": 1.0,
+      "at_best_threshold": {
+        "threshold": 1.0,
+        "precision": 1.0,
+        "recall": 0.182,
+        "f1": 0.308,
+        "auc": 0.67,
+        "pos_mean": 0.473,
+        "neg_mean": 0.304,
+        "separation": 0.169,
+        "tp": 2,
+        "fp": 0,
+        "tn": 275,
+        "fn": 9
+      },
+      "text_only_best_f1": 0.4,
+      "top_false_positives": [
+        {
+          "score": 0.95,
+          "reason": "same_brand_category_diff_product",
+          "a": "ItalPasta Spaghetti",
+          "b": "ItalPasta Spaghettini",
+          "barcodes": [
+            "0000000101000027",
+            "0000000101000028"
+          ]
+        },
+        {
+          "score": 0.844,
+          "reason": "same_brand_category_diff_product",
+          "a": "Colgate Optic White Purple",
+          "b": "Colgate Optic White",
+          "barcodes": [
+            null,
+            null
+          ]
+        },
+        {
+          "score": 0.842,
+          "reason": "same_brand_category_diff_product",
+          "a": "Spring Home Glutinous Rice Ball Sesame",
+          "b": "Spring Home Glutinous Rice Ball Peanut",
+          "barcodes": [
+            null,
+            null
+          ]
+        },
+        {
+          "score": 0.826,
+          "reason": "same_brand_category_diff_product",
+          "a": "Vitasoy Tofu (Silken)",
+          "b": "Vitasoy Tofu(Silken) (維他山水嫩豆腐)",
+          "barcodes": [
+            null,
+            null
+          ]
+        },
+        {
+          "score": 0.809,
+          "reason": "same_brand_category_diff_product",
+          "a": "AP Headless Shrimp 8/12",
+          "b": "AP Headless Shrimp 71/90",
+          "barcodes": [
+            "00006139124039",
+            null
+          ]
+        },
+        {
+          "score": 0.786,
+          "reason": "same_brand_category_diff_product",
+          "a": "Synear Rice Ball With Sesame",
+          "b": "Synear Rice Ball With Peanut",
+          "barcodes": [
+            "921065700262",
+            "921065700415"
+          ]
+        },
+        {
+          "score": 0.774,
+          "reason": "same_brand_category_diff_product",
+          "a": "Hunt's Tomato Paste",
+          "b": "Tomato Paste",
+          "barcodes": [
+            null,
+            null
+          ]
+        },
+        {
+          "score": 0.769,
+          "reason": "same_brand_category_diff_product",
+          "a": "Lactantia PurFiltre 1% Milk",
+          "b": "Lactantia PurFiltre 2% Milk",
+          "barcodes": [
+            null,
+            null
+          ]
+        }
+      ],
+      "top_false_negatives": [
+        {
+          "score": 0.211,
+          "reason": "same_barcode_name_variant",
+          "a": "Lay's XXL Wavy Salt & Vinegar Chips",
+          "b": "Lay's Cheese & Onion Chips",
+          "barcodes": [
+            "15061431",
+            "15061431"
+          ]
+        },
+        {
+          "score": 0.235,
+          "reason": "same_barcode_name_variant",
+          "a": "Lay's XXL All Dressed Chips",
+          "b": "Lay's Cheese & Onion Chips",
+          "barcodes": [
+            "15061431",
+            "15061431"
+          ]
+        },
+        {
+          "score": 0.286,
+          "reason": "manual_pearl_river_golden_light",
+          "a": "Pearl River Golden Soy Sauce",
+          "b": "Pearl River Bridge Golden Label Superior Light Soy Sauce",
+          "barcodes": [
+            null,
+            "72233761834"
+          ]
+        },
+        {
+          "score": 0.314,
+          "reason": "manual_synear_sesame_variant",
+          "a": "Synear Rice Ball-BlackSesame",
+          "b": "思念 (Synear) Black Glutinous Rice Ball Sesame",
+          "barcodes": [
+            "006926186573257",
+            null
+          ]
+        },
+        {
+          "score": 0.333,
+          "reason": "same_barcode_name_variant",
+          "a": "Lay's XXL All Dressed Chips",
+          "b": "Lay's XXL Wavy Salt & Vinegar Chips",
+          "barcodes": [
+            "15061431",
+            "15061431"
+          ]
+        },
+        {
+          "score": 0.345,
+          "reason": "manual_pearl_river_mushroom_soy",
+          "a": "Pearl River Mushroom Dark Soy Sauce",
+          "b": "Pearl River Bridge Mushroom Flavoured Dark Soy Sauce",
+          "barcodes": [
+            null,
+            null
+          ]
+        },
+        {
+          "score": 0.392,
+          "reason": "same_barcode_name_variant",
+          "a": "Synear Sesame Rice Ball",
+          "b": "Synear Rice Ball With Sesame",
+          "barcodes": [
+            "921065700262",
+            "921065700262"
+          ]
+        },
+        {
+          "score": 0.441,
+          "reason": "same_barcode_name_variant",
+          "a": "Sunrise Almond Tofu Dessert",
+          "b": "Sunrise Peach Mango Tofu Dessert",
+          "barcodes": [
+            "063604000000",
+            "063604000000"
+          ]
+        }
+      ]
+    },
+    "weighted_token_overlap": {
+      "at_threshold_0.55": {
+        "threshold": 0.55,
+        "precision": 0.194,
+        "recall": 0.545,
+        "f1": 0.286,
+        "auc": 0.839,
+        "pos_mean": 0.627,
+        "neg_mean": 0.232,
+        "separation": 0.395,
+        "tp": 6,
+        "fp": 25,
+        "tn": 250,
+        "fn": 5
+      },
+      "best_threshold": 0.828,
+      "at_best_threshold": {
+        "threshold": 0.828,
+        "precision": 0.8,
+        "recall": 0.364,
+        "f1": 0.5,
+        "auc": 0.839,
+        "pos_mean": 0.627,
+        "neg_mean": 0.232,
+        "separation": 0.395,
+        "tp": 4,
+        "fp": 1,
+        "tn": 274,
+        "fn": 7
+      },
+      "text_only_best_f1": 0.571,
+      "top_false_positives": [
+        {
+          "score": 1.0,
+          "reason": "same_brand_category_diff_product",
+          "a": "Farm Boy Tomatoes Crushed",
+          "b": "Farm Boy Crushed Tomatoes",
+          "barcodes": [
+            "3471",
+            null
+          ]
+        },
+        {
+          "score": 0.821,
+          "reason": "same_brand_category_diff_product",
+          "a": "Longo's Essentials No Salt Added Crushed Tomatoes",
+          "b": "Longo's Essentials No Salt Added Whole Tomatoes",
+          "barcodes": [
+            null,
+            null
+          ]
+        },
+        {
+          "score": 0.821,
+          "reason": "same_brand_category_diff_product",
+          "a": "Longo's Essentials No Salt Added Diced Tomatoes",
+          "b": "Longo's Essentials No Salt Added Whole Tomatoes",
+          "barcodes": [
+            null,
+            null
+          ]
+        },
+        {
+          "score": 0.792,
+          "reason": "same_brand_category_diff_product",
+          "a": "Pearl River Bridge Golden Label Superior Light Soy Sauce",
+          "b": "Pearl River Bridge Superior Light Soy Sauce",
+          "barcodes": [
+            "72233761834",
+            null
+          ]
+        },
+        {
+          "score": 0.792,
+          "reason": "same_brand_category_diff_product",
+          "a": "Pearl River Bridge Superior Dark Soy Sauce",
+          "b": "Pearl River Mushroom Dark Soy Sauce",
+          "barcodes": [
+            "72233761732",
+            null
+          ]
+        },
+        {
+          "score": 0.792,
+          "reason": "same_brand_category_diff_product",
+          "a": "Synear Proso Millet & Peanut Rice Ball",
+          "b": "Synear Rice Ball With Proso Millet",
+          "barcodes": [
+            "921065722584",
+            "921065722577"
+          ]
+        },
+        {
+          "score": 0.762,
+          "reason": "same_brand_category_diff_product",
+          "a": "Longo's Essentials No Salt Added Crushed Tomatoes",
+          "b": "Longo's Essentials No Salt Added Diced Tomatoes",
+          "barcodes": [
+            null,
+            null
+          ]
+        },
+        {
+          "score": 0.75,
+          "reason": "same_brand_category_diff_product",
+          "a": "Colgate Optic White Purple",
+          "b": "Colgate Optic White",
+          "barcodes": [
+            null,
+            null
+          ]
+        }
+      ],
+      "top_false_negatives": [
+        {
+          "score": 0.265,
+          "reason": "manual_synear_sesame_variant",
+          "a": "Synear Rice Ball-BlackSesame",
+          "b": "思念 (Synear) Black Glutinous Rice Ball Sesame",
+          "barcodes": [
+            "006926186573257",
+            null
+          ]
+        },
+        {
+          "score": 0.286,
+          "reason": "same_barcode_name_variant",
+          "a": "Lay's XXL Wavy Salt & Vinegar Chips",
+          "b": "Lay's Cheese & Onion Chips",
+          "barcodes": [
+            "15061431",
+            "15061431"
+          ]
+        },
+        {
+          "score": 0.324,
+          "reason": "same_barcode_name_variant",
+          "a": "Lay's XXL All Dressed Chips",
+          "b": "Lay's Cheese & Onion Chips",
+          "barcodes": [
+            "15061431",
+            "15061431"
+          ]
+        },
+        {
+          "score": 0.405,
+          "reason": "same_barcode_name_variant",
+          "a": "Lay's XXL All Dressed Chips",
+          "b": "Lay's XXL Wavy Salt & Vinegar Chips",
+          "barcodes": [
+            "15061431",
+            "15061431"
+          ]
+        },
+        {
+          "score": 0.444,
+          "reason": "same_barcode_name_variant",
+          "a": "Sunrise Almond Tofu Dessert",
+          "b": "Sunrise Peach Mango Tofu Dessert",
+          "barcodes": [
+            "063604000000",
+            "063604000000"
+          ]
+        },
+        {
+          "score": 0.559,
+          "reason": "manual_pork_loin_variant",
+          "a": "VALUE PACK BONELESS PORK LOIN CENTRE CUT FAST FRY",
+          "b": "Value Pack Boneless Pork Loin Fast Fry Chops",
+          "barcodes": [
+            "208210004584",
+            "2045400000"
+          ]
+        },
+        {
+          "score": 0.792,
+          "reason": "manual_pearl_river_golden_light",
+          "a": "Pearl River Golden Soy Sauce",
+          "b": "Pearl River Bridge Golden Label Superior Light Soy Sauce",
+          "barcodes": [
+            null,
+            "72233761834"
+          ]
+        },
+        {
+          "score": 0.828,
+          "reason": "manual_pearl_river_mushroom_soy",
+          "a": "Pearl River Mushroom Dark Soy Sauce",
+          "b": "Pearl River Bridge Mushroom Flavoured Dark Soy Sauce",
+          "barcodes": [
+            null,
+            null
+          ]
+        }
+      ]
+    },
+    "composite_name_brand_cat": {
+      "at_threshold_0.55": {
+        "threshold": 0.55,
+        "precision": 0.06,
+        "recall": 1.0,
+        "f1": 0.113,
+        "auc": 0.739,
+        "pos_mean": 0.782,
+        "neg_mean": 0.556,
+        "separation": 0.226,
+        "tp": 11,
+        "fp": 172,
+        "tn": 103,
+        "fn": 0
+      },
+      "best_threshold": 1.0,
+      "at_best_threshold": {
+        "threshold": 1.0,
+        "precision": 1.0,
+        "recall": 0.091,
+        "f1": 0.167,
+        "auc": 0.739,
+        "pos_mean": 0.782,
+        "neg_mean": 0.556,
+        "separation": 0.226,
+        "tp": 1,
+        "fp": 0,
+        "tn": 275,
+        "fn": 10
+      },
+      "text_only_best_f1": 0.125,
+      "top_false_positives": [
+        {
+          "score": 0.98,
+          "reason": "same_brand_category_diff_product",
+          "a": "To Fu Superior Unsweetened Soya Drink",
+          "b": "To Fu Superior Sweetened Soya Drink",
+          "barcodes": [
+            null,
+            null
+          ]
+        },
+        {
+          "score": 0.972,
+          "reason": "same_brand_category_diff_product",
+          "a": "Lactantia PurFiltre 1% Milk",
+          "b": "Lactantia PurFiltre 2% Milk",
+          "barcodes": [
+            null,
+            null
+          ]
+        },
+        {
+          "score": 0.955,
+          "reason": "same_brand_category_diff_product",
+          "a": "Longo's Essentials No Salt Added Crushed Tomatoes",
+          "b": "Longo's Essentials No Salt Added Diced Tomatoes",
+          "barcodes": [
+            null,
+            null
+          ]
+        },
+        {
+          "score": 0.952,
+          "reason": "same_brand_category_diff_product",
+          "a": "Beatrice 1% Milk",
+          "b": "Beatrice 2% Milk",
+          "barcodes": [
+            null,
+            "055300111010"
+          ]
+        },
+        {
+          "score": 0.942,
+          "reason": "same_brand_category_diff_product",
+          "a": "Vitasoy Tofu (Silken)",
+          "b": "Vitasoy Tofu(Silken) (維他山水嫩豆腐)",
+          "barcodes": [
+            null,
+            null
+          ]
+        },
+        {
+          "score": 0.942,
+          "reason": "same_brand_category_diff_product",
+          "a": "Hunt's Tomato Paste",
+          "b": "Tomato Paste",
+          "barcodes": [
+            null,
+            null
+          ]
+        },
+        {
+          "score": 0.942,
+          "reason": "same_brand_category_diff_product",
+          "a": "ItalPasta Spaghetti",
+          "b": "ItalPasta Spaghettini",
+          "barcodes": [
+            "0000000101000027",
+            "0000000101000028"
+          ]
+        },
+        {
+          "score": 0.942,
+          "reason": "same_brand_category_diff_product",
+          "a": "Colgate Optic White Purple",
+          "b": "Colgate Optic White",
+          "barcodes": [
+            null,
+            null
+          ]
+        }
+      ],
+      "top_false_negatives": [
+        {
+          "score": 0.659,
+          "reason": "same_barcode_name_variant",
+          "a": "Lay's XXL Wavy Salt & Vinegar Chips",
+          "b": "Lay's Cheese & Onion Chips",
+          "barcodes": [
+            "15061431",
+            "15061431"
+          ]
+        },
+        {
+          "score": 0.688,
+          "reason": "manual_pork_loin_variant",
+          "a": "VALUE PACK BONELESS PORK LOIN CENTRE CUT FAST FRY",
+          "b": "Value Pack Boneless Pork Loin Fast Fry Chops",
+          "barcodes": [
+            "208210004584",
+            "2045400000"
+          ]
+        },
+        {
+          "score": 0.704,
+          "reason": "same_barcode_name_variant",
+          "a": "Lay's XXL All Dressed Chips",
+          "b": "Lay's Cheese & Onion Chips",
+          "barcodes": [
+            "15061431",
+            "15061431"
+          ]
+        },
+        {
+          "score": 0.732,
+          "reason": "same_barcode_name_variant",
+          "a": "Synear Sesame Rice Ball",
+          "b": "Synear Rice Ball With Sesame",
+          "barcodes": [
+            "921065700262",
+            "921065700262"
+          ]
+        },
+        {
+          "score": 0.753,
+          "reason": "manual_synear_sesame_variant",
+          "a": "Synear Rice Ball-BlackSesame",
+          "b": "思念 (Synear) Black Glutinous Rice Ball Sesame",
+          "barcodes": [
+            "006926186573257",
+            null
+          ]
+        },
+        {
+          "score": 0.76,
+          "reason": "same_barcode_name_variant",
+          "a": "Lay's XXL All Dressed Chips",
+          "b": "Lay's XXL Wavy Salt & Vinegar Chips",
+          "barcodes": [
+            "15061431",
+            "15061431"
+          ]
+        },
+        {
+          "score": 0.76,
+          "reason": "manual_pearl_river_golden_light",
+          "a": "Pearl River Golden Soy Sauce",
+          "b": "Pearl River Bridge Golden Label Superior Light Soy Sauce",
+          "barcodes": [
+            null,
+            "72233761834"
+          ]
+        },
+        {
+          "score": 0.82,
+          "reason": "exact_normalized_name",
+          "a": "LH GRAY EGGS LRG WHT",
+          "b": "LH GRAY EGGS LRG WHT",
+          "barcodes": [
+            null,
+            null
+          ]
+        }
+      ]
+    },
+    "composite_barcode_boost": {
+      "at_threshold_0.55": {
+        "threshold": 0.55,
+        "precision": 0.06,
+        "recall": 1.0,
+        "f1": 0.113,
+        "auc": 0.879,
+        "pos_mean": 0.876,
+        "neg_mean": 0.556,
+        "separation": 0.32,
+        "tp": 11,
+        "fp": 172,
+        "tn": 103,
+        "fn": 0
+      },
+      "best_threshold": 0.95,
+      "at_best_threshold": {
+        "threshold": 0.95,
+        "precision": 0.6,
+        "recall": 0.545,
+        "f1": 0.571,
+        "auc": 0.879,
+        "pos_mean": 0.876,
+        "neg_mean": 0.556,
+        "separation": 0.32,
+        "tp": 6,
+        "fp": 4,
+        "tn": 271,
+        "fn": 5
+      },
+      "text_only_best_f1": 0.125,
+      "top_false_positives": [
+        {
+          "score": 0.98,
+          "reason": "same_brand_category_diff_product",
+          "a": "To Fu Superior Unsweetened Soya Drink",
+          "b": "To Fu Superior Sweetened Soya Drink",
+          "barcodes": [
+            null,
+            null
+          ]
+        },
+        {
+          "score": 0.972,
+          "reason": "same_brand_category_diff_product",
+          "a": "Lactantia PurFiltre 1% Milk",
+          "b": "Lactantia PurFiltre 2% Milk",
+          "barcodes": [
+            null,
+            null
+          ]
+        },
+        {
+          "score": 0.955,
+          "reason": "same_brand_category_diff_product",
+          "a": "Longo's Essentials No Salt Added Crushed Tomatoes",
+          "b": "Longo's Essentials No Salt Added Diced Tomatoes",
+          "barcodes": [
+            null,
+            null
+          ]
+        },
+        {
+          "score": 0.952,
+          "reason": "same_brand_category_diff_product",
+          "a": "Beatrice 1% Milk",
+          "b": "Beatrice 2% Milk",
+          "barcodes": [
+            null,
+            "055300111010"
+          ]
+        },
+        {
+          "score": 0.942,
+          "reason": "same_brand_category_diff_product",
+          "a": "Vitasoy Tofu (Silken)",
+          "b": "Vitasoy Tofu(Silken) (維他山水嫩豆腐)",
+          "barcodes": [
+            null,
+            null
+          ]
+        },
+        {
+          "score": 0.942,
+          "reason": "same_brand_category_diff_product",
+          "a": "Hunt's Tomato Paste",
+          "b": "Tomato Paste",
+          "barcodes": [
+            null,
+            null
+          ]
+        },
+        {
+          "score": 0.942,
+          "reason": "same_brand_category_diff_product",
+          "a": "ItalPasta Spaghetti",
+          "b": "ItalPasta Spaghettini",
+          "barcodes": [
+            "0000000101000027",
+            "0000000101000028"
+          ]
+        },
+        {
+          "score": 0.942,
+          "reason": "same_brand_category_diff_product",
+          "a": "Colgate Optic White Purple",
+          "b": "Colgate Optic White",
+          "barcodes": [
+            null,
+            null
+          ]
+        }
+      ],
+      "top_false_negatives": [
+        {
+          "score": 0.688,
+          "reason": "manual_pork_loin_variant",
+          "a": "VALUE PACK BONELESS PORK LOIN CENTRE CUT FAST FRY",
+          "b": "Value Pack Boneless Pork Loin Fast Fry Chops",
+          "barcodes": [
+            "208210004584",
+            "2045400000"
+          ]
+        },
+        {
+          "score": 0.753,
+          "reason": "manual_synear_sesame_variant",
+          "a": "Synear Rice Ball-BlackSesame",
+          "b": "思念 (Synear) Black Glutinous Rice Ball Sesame",
+          "barcodes": [
+            "006926186573257",
+            null
+          ]
+        },
+        {
+          "score": 0.76,
+          "reason": "manual_pearl_river_golden_light",
+          "a": "Pearl River Golden Soy Sauce",
+          "b": "Pearl River Bridge Golden Label Superior Light Soy Sauce",
+          "barcodes": [
+            null,
+            "72233761834"
+          ]
+        },
+        {
+          "score": 0.82,
+          "reason": "exact_normalized_name",
+          "a": "LH GRAY EGGS LRG WHT",
+          "b": "LH GRAY EGGS LRG WHT",
+          "barcodes": [
+            null,
+            null
+          ]
+        },
+        {
+          "score": 0.859,
+          "reason": "manual_pearl_river_mushroom_soy",
+          "a": "Pearl River Mushroom Dark Soy Sauce",
+          "b": "Pearl River Bridge Mushroom Flavoured Dark Soy Sauce",
+          "barcodes": [
+            null,
+            null
+          ]
+        },
+        {
+          "score": 0.95,
+          "reason": "same_barcode_name_variant",
+          "a": "Sunrise Almond Tofu Dessert",
+          "b": "Sunrise Peach Mango Tofu Dessert",
+          "barcodes": [
+            "063604000000",
+            "063604000000"
+          ]
+        },
+        {
+          "score": 0.95,
+          "reason": "same_barcode_name_variant",
+          "a": "Lay's XXL All Dressed Chips",
+          "b": "Lay's XXL Wavy Salt & Vinegar Chips",
+          "barcodes": [
+            "15061431",
+            "15061431"
+          ]
+        },
+        {
+          "score": 0.95,
+          "reason": "same_barcode_name_variant",
+          "a": "Lay's XXL All Dressed Chips",
+          "b": "Lay's Cheese & Onion Chips",
+          "barcodes": [
+            "15061431",
+            "15061431"
+          ]
+        }
+      ]
+    },
+    "barcode_only": {
+      "at_threshold_0.55": {
+        "threshold": 0.55,
+        "precision": 1.0,
+        "recall": 0.545,
+        "f1": 0.706,
+        "auc": 0.545,
+        "pos_mean": 0.545,
+        "neg_mean": 0.0,
+        "separation": 0.545,
+        "tp": 6,
+        "fp": 0,
+        "tn": 275,
+        "fn": 5
+      },
+      "best_threshold": 1.0,
+      "at_best_threshold": {
+        "threshold": 1.0,
+        "precision": 1.0,
+        "recall": 0.545,
+        "f1": 0.706,
+        "auc": 0.545,
+        "pos_mean": 0.545,
+        "neg_mean": 0.0,
+        "separation": 0.545,
+        "tp": 6,
+        "fp": 0,
+        "tn": 275,
+        "fn": 5
+      },
+      "text_only_best_f1": 0.035,
+      "top_false_positives": [
+        {
+          "score": 0.0,
+          "reason": "same_brand_category_diff_product",
+          "a": "Pearl River Bridge Golden Label Superior Light Soy Sauce",
+          "b": "Pearl River Bridge Superior Dark Soy Sauce",
+          "barcodes": [
+            "72233761834",
+            "72233761732"
+          ]
+        },
+        {
+          "score": 0.0,
+          "reason": "same_brand_category_diff_product",
+          "a": "Pearl River Bridge Golden Label Superior Light Soy Sauce",
+          "b": "Pearl River Bridge Mushroom Flavoured Dark Soy Sauce",
+          "barcodes": [
+            "72233761834",
+            null
+          ]
+        },
+        {
+          "score": 0.0,
+          "reason": "same_brand_category_diff_product",
+          "a": "Pearl River Bridge Golden Label Superior Light Soy Sauce",
+          "b": "Pearl River Bridge Superior Light Soy Sauce",
+          "barcodes": [
+            "72233761834",
+            null
+          ]
+        },
+        {
+          "score": 0.0,
+          "reason": "same_brand_category_diff_product",
+          "a": "Pearl River Bridge Golden Label Superior Light Soy Sauce",
+          "b": "Pearl River Mushroom Dark Soy Sauce",
+          "barcodes": [
+            "72233761834",
+            null
+          ]
+        },
+        {
+          "score": 0.0,
+          "reason": "same_brand_category_diff_product",
+          "a": "Pearl River Bridge Golden Label Superior Light Soy Sauce",
+          "b": "Pearl River Bridge Dark S (珠江橋牌老抽王)",
+          "barcodes": [
+            "72233761834",
+            null
+          ]
+        },
+        {
+          "score": 0.0,
+          "reason": "same_brand_category_diff_product",
+          "a": "Pearl River Bridge Superior Dark Soy Sauce",
+          "b": "Pearl River Bridge Mushroom Flavoured Dark Soy Sauce",
+          "barcodes": [
+            "72233761732",
+            null
+          ]
+        },
+        {
+          "score": 0.0,
+          "reason": "same_brand_category_diff_product",
+          "a": "Pearl River Bridge Superior Dark Soy Sauce",
+          "b": "Pearl River Bridge Superior Light Soy Sauce",
+          "barcodes": [
+            "72233761732",
+            null
+          ]
+        },
+        {
+          "score": 0.0,
+          "reason": "same_brand_category_diff_product",
+          "a": "Pearl River Bridge Superior Dark Soy Sauce",
+          "b": "Pearl River Mushroom Dark Soy Sauce",
+          "barcodes": [
+            "72233761732",
+            null
+          ]
+        }
+      ],
+      "top_false_negatives": [
+        {
+          "score": 0.0,
+          "reason": "exact_normalized_name",
+          "a": "LH GRAY EGGS LRG WHT",
+          "b": "LH GRAY EGGS LRG WHT",
+          "barcodes": [
+            null,
+            null
+          ]
+        },
+        {
+          "score": 0.0,
+          "reason": "manual_synear_sesame_variant",
+          "a": "Synear Rice Ball-BlackSesame",
+          "b": "思念 (Synear) Black Glutinous Rice Ball Sesame",
+          "barcodes": [
+            "006926186573257",
+            null
+          ]
+        },
+        {
+          "score": 0.0,
+          "reason": "manual_pork_loin_variant",
+          "a": "VALUE PACK BONELESS PORK LOIN CENTRE CUT FAST FRY",
+          "b": "Value Pack Boneless Pork Loin Fast Fry Chops",
+          "barcodes": [
+            "208210004584",
+            "2045400000"
+          ]
+        },
+        {
+          "score": 0.0,
+          "reason": "manual_pearl_river_mushroom_soy",
+          "a": "Pearl River Mushroom Dark Soy Sauce",
+          "b": "Pearl River Bridge Mushroom Flavoured Dark Soy Sauce",
+          "barcodes": [
+            null,
+            null
+          ]
+        },
+        {
+          "score": 0.0,
+          "reason": "manual_pearl_river_golden_light",
+          "a": "Pearl River Golden Soy Sauce",
+          "b": "Pearl River Bridge Golden Label Superior Light Soy Sauce",
+          "barcodes": [
+            null,
+            "72233761834"
+          ]
+        },
+        {
+          "score": 1.0,
+          "reason": "exact_normalized_name",
+          "a": "Thyme",
+          "b": "Thyme",
+          "barcodes": [
+            "220341001997",
+            "220341001997"
+          ]
+        },
+        {
+          "score": 1.0,
+          "reason": "same_barcode_name_variant",
+          "a": "Sunrise Almond Tofu Dessert",
+          "b": "Sunrise Peach Mango Tofu Dessert",
+          "barcodes": [
+            "063604000000",
+            "063604000000"
+          ]
+        },
+        {
+          "score": 1.0,
+          "reason": "same_barcode_name_variant",
+          "a": "Lay's XXL All Dressed Chips",
+          "b": "Lay's XXL Wavy Salt & Vinegar Chips",
+          "barcodes": [
+            "15061431",
+            "15061431"
+          ]
+        }
+      ]
+    },
+    "rapidfuzz_token_sort": {
+      "at_threshold_0.55": {
+        "threshold": 0.55,
+        "precision": 0.048,
+        "recall": 0.545,
+        "f1": 0.089,
+        "auc": 0.712,
+        "pos_mean": 0.676,
+        "neg_mean": 0.481,
+        "separation": 0.195,
+        "tp": 6,
+        "fp": 118,
+        "tn": 157,
+        "fn": 5
+      },
+      "best_threshold": 0.902,
+      "at_best_threshold": {
+        "threshold": 0.902,
+        "precision": 0.375,
+        "recall": 0.273,
+        "f1": 0.316,
+        "auc": 0.712,
+        "pos_mean": 0.676,
+        "neg_mean": 0.481,
+        "separation": 0.195,
+        "tp": 3,
+        "fp": 5,
+        "tn": 270,
+        "fn": 8
+      },
+      "text_only_best_f1": 0.333,
+      "top_false_positives": [
+        {
+          "score": 1.0,
+          "reason": "same_brand_category_diff_product",
+          "a": "Farm Boy Tomatoes Crushed",
+          "b": "Farm Boy Crushed Tomatoes",
+          "barcodes": [
+            "3471",
+            null
+          ]
+        },
+        {
+          "score": 0.963,
+          "reason": "same_brand_category_diff_product",
+          "a": "Lactantia PurFiltre 1% Milk",
+          "b": "Lactantia PurFiltre 2% Milk",
+          "barcodes": [
+            null,
+            null
+          ]
+        },
+        {
+          "score": 0.95,
+          "reason": "same_brand_category_diff_product",
+          "a": "ItalPasta Spaghetti",
+          "b": "ItalPasta Spaghettini",
+          "barcodes": [
+            "0000000101000027",
+            "0000000101000028"
+          ]
+        },
+        {
+          "score": 0.938,
+          "reason": "same_brand_category_diff_product",
+          "a": "Beatrice 1% Milk",
+          "b": "Beatrice 2% Milk",
+          "barcodes": [
+            null,
+            "055300111010"
+          ]
+        },
+        {
+          "score": 0.917,
+          "reason": "same_brand_category_diff_product",
+          "a": "Longo's Essentials No Salt Added Crushed Tomatoes",
+          "b": "Longo's Essentials No Salt Added Diced Tomatoes",
+          "barcodes": [
+            null,
+            null
+          ]
+        },
+        {
+          "score": 0.894,
+          "reason": "same_brand_category_diff_product",
+          "a": "Pearl River Bridge Superior Dark Soy Sauce",
+          "b": "Pearl River Bridge Superior Light Soy Sauce",
+          "barcodes": [
+            "72233761732",
+            null
+          ]
+        },
+        {
+          "score": 0.872,
+          "reason": "same_brand_category_diff_product",
+          "a": "Longo's Essentials No Salt Added Diced Tomatoes",
+          "b": "Longo's Essentials No Salt Added Whole Tomatoes",
+          "barcodes": [
+            null,
+            null
+          ]
+        },
+        {
+          "score": 0.869,
+          "reason": "same_brand_category_diff_product",
+          "a": "Pearl River Bridge Golden Label Superior Light Soy Sauce",
+          "b": "Pearl River Bridge Superior Light Soy Sauce",
+          "barcodes": [
+            "72233761834",
+            null
+          ]
+        }
+      ],
+      "top_false_negatives": [
+        {
+          "score": 0.323,
+          "reason": "manual_pork_loin_variant",
+          "a": "VALUE PACK BONELESS PORK LOIN CENTRE CUT FAST FRY",
+          "b": "Value Pack Boneless Pork Loin Fast Fry Chops",
+          "barcodes": [
+            "208210004584",
+            "2045400000"
+          ]
+        },
+        {
+          "score": 0.491,
+          "reason": "same_barcode_name_variant",
+          "a": "Lay's XXL All Dressed Chips",
+          "b": "Lay's Cheese & Onion Chips",
+          "barcodes": [
+            "15061431",
+            "15061431"
+          ]
+        },
+        {
+          "score": 0.516,
+          "reason": "same_barcode_name_variant",
+          "a": "Lay's XXL All Dressed Chips",
+          "b": "Lay's XXL Wavy Salt & Vinegar Chips",
+          "barcodes": [
+            "15061431",
+            "15061431"
+          ]
+        },
+        {
+          "score": 0.525,
+          "reason": "same_barcode_name_variant",
+          "a": "Lay's XXL Wavy Salt & Vinegar Chips",
+          "b": "Lay's Cheese & Onion Chips",
+          "barcodes": [
+            "15061431",
+            "15061431"
+          ]
+        },
+        {
+          "score": 0.528,
+          "reason": "manual_synear_sesame_variant",
+          "a": "Synear Rice Ball-BlackSesame",
+          "b": "思念 (Synear) Black Glutinous Rice Ball Sesame",
+          "barcodes": [
+            "006926186573257",
+            null
+          ]
+        },
+        {
+          "score": 0.667,
+          "reason": "manual_pearl_river_golden_light",
+          "a": "Pearl River Golden Soy Sauce",
+          "b": "Pearl River Bridge Golden Label Superior Light Soy Sauce",
+          "barcodes": [
+            null,
+            "72233761834"
+          ]
+        },
+        {
+          "score": 0.678,
+          "reason": "same_barcode_name_variant",
+          "a": "Sunrise Almond Tofu Dessert",
+          "b": "Sunrise Peach Mango Tofu Dessert",
+          "barcodes": [
+            "063604000000",
+            "063604000000"
+          ]
+        },
+        {
+          "score": 0.805,
+          "reason": "manual_pearl_river_mushroom_soy",
+          "a": "Pearl River Mushroom Dark Soy Sauce",
+          "b": "Pearl River Bridge Mushroom Flavoured Dark Soy Sauce",
+          "barcodes": [
+            null,
+            null
+          ]
+        }
+      ]
+    },
+    "rapidfuzz_wratio": {
+      "at_threshold_0.55": {
+        "threshold": 0.55,
+        "precision": 0.06,
+        "recall": 0.909,
+        "f1": 0.112,
+        "auc": 0.718,
+        "pos_mean": 0.786,
+        "neg_mean": 0.581,
+        "separation": 0.205,
+        "tp": 10,
+        "fp": 158,
+        "tn": 117,
+        "fn": 1
+      },
+      "best_threshold": 0.95,
+      "at_best_threshold": {
+        "threshold": 0.95,
+        "precision": 0.364,
+        "recall": 0.364,
+        "f1": 0.364,
+        "auc": 0.718,
+        "pos_mean": 0.786,
+        "neg_mean": 0.581,
+        "separation": 0.205,
+        "tp": 4,
+        "fp": 7,
+        "tn": 268,
+        "fn": 7
+      },
+      "text_only_best_f1": 0.4,
+      "top_false_positives": [
+        {
+          "score": 0.963,
+          "reason": "same_brand_category_diff_product",
+          "a": "Lactantia PurFiltre 1% Milk",
+          "b": "Lactantia PurFiltre 2% Milk",
+          "barcodes": [
+            null,
+            null
+          ]
+        },
+        {
+          "score": 0.95,
+          "reason": "same_brand_category_diff_product",
+          "a": "Pearl River Bridge Golden Label Superior Light Soy Sauce",
+          "b": "Pearl River Bridge Superior Light Soy Sauce",
+          "barcodes": [
+            "72233761834",
+            null
+          ]
+        },
+        {
+          "score": 0.95,
+          "reason": "same_brand_category_diff_product",
+          "a": "Sunrise Medium Firm Tofu",
+          "b": "Sunrise Firm Tofu",
+          "barcodes": [
+            null,
+            null
+          ]
+        },
+        {
+          "score": 0.95,
+          "reason": "same_brand_category_diff_product",
+          "a": "Farm Boy Tomatoes Crushed",
+          "b": "Farm Boy Crushed Tomatoes",
+          "barcodes": [
+            "3471",
+            null
+          ]
+        },
+        {
+          "score": 0.95,
+          "reason": "same_brand_category_diff_product",
+          "a": "Farm Boy Tomatoes Whole Peeled",
+          "b": "Farm Boy Whole Tomatoes",
+          "barcodes": [
+            "3472",
+            null
+          ]
+        },
+        {
+          "score": 0.95,
+          "reason": "same_brand_category_diff_product",
+          "a": "ItalPasta Spaghetti",
+          "b": "ItalPasta Spaghettini",
+          "barcodes": [
+            "0000000101000027",
+            "0000000101000028"
+          ]
+        },
+        {
+          "score": 0.95,
+          "reason": "same_brand_category_diff_product",
+          "a": "Colgate Optic White Purple",
+          "b": "Colgate Optic White",
+          "barcodes": [
+            null,
+            null
+          ]
+        },
+        {
+          "score": 0.944,
+          "reason": "same_brand_category_diff_product",
+          "a": "To Fu Superior Unsweetened Soya Drink",
+          "b": "To Fu Superior Sweetened Soya Drink",
+          "barcodes": [
+            null,
+            null
+          ]
+        }
+      ],
+      "top_false_negatives": [
+        {
+          "score": 0.306,
+          "reason": "manual_pork_loin_variant",
+          "a": "VALUE PACK BONELESS PORK LOIN CENTRE CUT FAST FRY",
+          "b": "Value Pack Boneless Pork Loin Fast Fry Chops",
+          "barcodes": [
+            "208210004584",
+            "2045400000"
+          ]
+        },
+        {
+          "score": 0.609,
+          "reason": "same_barcode_name_variant",
+          "a": "Lay's XXL All Dressed Chips",
+          "b": "Lay's Cheese & Onion Chips",
+          "barcodes": [
+            "15061431",
+            "15061431"
+          ]
+        },
+        {
+          "score": 0.633,
+          "reason": "same_barcode_name_variant",
+          "a": "Lay's XXL Wavy Salt & Vinegar Chips",
+          "b": "Lay's Cheese & Onion Chips",
+          "barcodes": [
+            "15061431",
+            "15061431"
+          ]
+        },
+        {
+          "score": 0.679,
+          "reason": "same_barcode_name_variant",
+          "a": "Lay's XXL All Dressed Chips",
+          "b": "Lay's XXL Wavy Salt & Vinegar Chips",
+          "barcodes": [
+            "15061431",
+            "15061431"
+          ]
+        },
+        {
+          "score": 0.809,
+          "reason": "same_barcode_name_variant",
+          "a": "Sunrise Almond Tofu Dessert",
+          "b": "Sunrise Peach Mango Tofu Dessert",
+          "barcodes": [
+            "063604000000",
+            "063604000000"
+          ]
+        },
+        {
+          "score": 0.855,
+          "reason": "manual_synear_sesame_variant",
+          "a": "Synear Rice Ball-BlackSesame",
+          "b": "思念 (Synear) Black Glutinous Rice Ball Sesame",
+          "barcodes": [
+            "006926186573257",
+            null
+          ]
+        },
+        {
+          "score": 0.855,
+          "reason": "manual_pearl_river_golden_light",
+          "a": "Pearl River Golden Soy Sauce",
+          "b": "Pearl River Bridge Golden Label Superior Light Soy Sauce",
+          "barcodes": [
+            null,
+            "72233761834"
+          ]
+        },
+        {
+          "score": 0.95,
+          "reason": "same_barcode_name_variant",
+          "a": "Synear Sesame Rice Ball",
+          "b": "Synear Rice Ball With Sesame",
+          "barcodes": [
+            "921065700262",
+            "921065700262"
+          ]
+        }
+      ]
+    }
+  },
+  "text_only_subset": {
+    "pair_count": 226,
+    "positive_pairs": 4,
+    "negative_pairs": 222
+  },
+  "ranking_by_best_f1": [
+    {
+      "scorer": "barcode_only",
+      "best_f1": 0.706,
+      "best_threshold": 1.0,
+      "auc": 0.545,
+      "separation": 0.545
+    },
+    {
+      "scorer": "composite_barcode_boost",
+      "best_f1": 0.571,
+      "best_threshold": 0.95,
+      "auc": 0.879,
+      "separation": 0.32
+    },
+    {
+      "scorer": "token_jaccard",
+      "best_f1": 0.5,
+      "best_threshold": 0.857,
+      "auc": 0.839,
+      "separation": 0.409
+    },
+    {
+      "scorer": "weighted_token_overlap",
+      "best_f1": 0.5,
+      "best_threshold": 0.828,
+      "auc": 0.839,
+      "separation": 0.395
+    },
+    {
+      "scorer": "token_jaccard_no_generic",
+      "best_f1": 0.444,
+      "best_threshold": 0.8,
+      "auc": 0.824,
+      "separation": 0.385
+    },
+    {
+      "scorer": "rapidfuzz_wratio",
+      "best_f1": 0.364,
+      "best_threshold": 0.95,
+      "auc": 0.718,
+      "separation": 0.205
+    },
+    {
+      "scorer": "rapidfuzz_token_sort",
+      "best_f1": 0.316,
+      "best_threshold": 0.902,
+      "auc": 0.712,
+      "separation": 0.195
+    },
+    {
+      "scorer": "trigram_jaccard",
+      "best_f1": 0.308,
+      "best_threshold": 1.0,
+      "auc": 0.779,
+      "separation": 0.271
+    },
+    {
+      "scorer": "sequence_matcher (current)",
+      "best_f1": 0.308,
+      "best_threshold": 1.0,
+      "auc": 0.784,
+      "separation": 0.246
+    },
+    {
+      "scorer": "lcs_ratio",
+      "best_f1": 0.308,
+      "best_threshold": 1.0,
+      "auc": 0.67,
+      "separation": 0.169
+    },
+    {
+      "scorer": "composite_name_brand_cat",
+      "best_f1": 0.167,
+      "best_threshold": 1.0,
+      "auc": 0.739,
+      "separation": 0.226
+    }
+  ]
+}

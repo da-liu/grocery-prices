@@ -6,6 +6,9 @@ __pycache__/
 target/
 viewer/node_modules/
 viewer/dist/
+experiments/match-explorer/node_modules/
+experiments/match-explorer/dist/
+experiments/match-explorer/public/data/manifest.json
 viewer/.env.local
 extract_server/.venv/
 *.egg-info/
@@ -13,3 +16,4 @@ extract_server/.env
 extract_server/data/
 extract_server/.extract_cache/
 extract_server/benchmark_*.json
+data/embedding_cache.json

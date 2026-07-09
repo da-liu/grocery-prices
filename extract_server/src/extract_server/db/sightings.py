@@ -175,7 +175,23 @@ def update_sighting(user_id: str, sighting_id: str, updates: dict[str, Any]) -> 
     from extract_server.db.queries import build_product_row
 
     mark_manually_edited(conn, user_id, row["photo_id"])
+    from extract_server.extraction.embeddings import invalidate_embedding_if_needed
+    from extract_server.extraction.match_catalog import match_sightings
+
+    other = json.loads(row["other"] or "{}")
+    barcode = other.get("barcode") if isinstance(other.get("barcode"), str) else None
+    invalidate_embedding_if_needed(
+        conn,
+        user_id,
+        sighting_id,
+        product_name=product_name,
+        barcode=barcode,
+    )
     conn.commit()
+    try:
+        match_sightings(user_id, [sighting_id])
+    except Exception:
+        pass
     return build_product_row(user_id, sighting_id)
 
 
@@ -203,6 +219,12 @@ def add_sighting(user_id: str, photo_id: str, product: dict[str, Any]) -> dict[s
         now=now,
     )
     conn.commit()
+    try:
+        from extract_server.extraction.match_catalog import match_sightings
+
+        match_sightings(user_id, [sighting_id])
+    except Exception:
+        pass
     return build_product_row(user_id, sighting_id)
 
 
@@ -252,15 +274,34 @@ def _maybe_delete_empty_photo(user_id: str, photo_id: str) -> bool:
 
 
 def delete_sighting(user_id: str, sighting_id: str) -> bool:
+    from extract_server.db.similarity import list_peer_sighting_ids
+
+    conn = get_conn()
+    peer_ids: list[str] | None = None
+    row = one(
+        conn,
+        "SELECT 1 FROM product_sightings WHERE user_id = ? AND id = ?",
+        (user_id, sighting_id),
+    )
+    if row is not None:
+        peer_ids = list_peer_sighting_ids(conn, user_id, sighting_id)
+
     empty_photo_id = photo_id_for_empty_sighting(user_id, sighting_id)
     if empty_photo_id is not None:
         return delete_photo(user_id, empty_photo_id)
 
-    conn = get_conn()
     photo_id = _delete_sighting_row(conn, user_id, sighting_id)
     if photo_id is None:
         return False
-    return _maybe_delete_empty_photo(user_id, photo_id)
+    deleted = _maybe_delete_empty_photo(user_id, photo_id)
+    if peer_ids:
+        try:
+            from extract_server.extraction.match_catalog import recompute_relations_for_peers
+
+            recompute_relations_for_peers(user_id, peer_ids)
+        except Exception:
+            pass
+    return deleted
 
 
 def delete_sightings_bulk(user_id: str, sighting_ids: list[str]) -> dict[str, Any]:

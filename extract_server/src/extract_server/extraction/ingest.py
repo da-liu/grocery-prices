@@ -18,6 +18,7 @@ from extract_server.db import (
     record_photo_extraction_failure,
     save_photo,
     save_photo_extraction,
+    set_extraction_pipeline_status,
 )
 from extract_server.db._ids import normalize_photo_suffix
 from extract_server.extraction.delete import delete_photo
@@ -219,9 +220,25 @@ def run_extraction(job: ExtractionJob) -> dict:
             model=timing.model if timing else None,
             photo_type=photo_type,
         )
+        pipeline_status = "matched"
+        if product_count > 0:
+            try:
+                from extract_server.extraction.match_catalog import match_photo
+
+                match_photo(job.user_id, job.image_id, api_key=job.api_key)
+                set_extraction_pipeline_status(job.user_id, job.image_id, "matched")
+            except Exception as match_err:
+                logger.exception(
+                    "matching_failed photo_id=%s user_id=%s request_id=%s",
+                    job.image_id,
+                    job.user_id,
+                    request_id,
+                )
+                set_extraction_pipeline_status(job.user_id, job.image_id, "match_failed")
+                pipeline_status = "match_failed"
         logger.info(
             "extraction_complete photo_id=%s user_id=%s request_id=%s llm_ms=%s other_ms=%s "
-            "photo_type=%s model=%s products=%s",
+            "photo_type=%s model=%s products=%s pipeline_status=%s",
             job.image_id,
             job.user_id,
             request_id,
@@ -230,6 +247,7 @@ def run_extraction(job: ExtractionJob) -> dict:
             photo_type,
             timing.model if timing else None,
             product_count,
+            pipeline_status,
         )
 
         needs_store_label = image_needs_store_label(
@@ -256,6 +274,7 @@ def run_extraction(job: ExtractionJob) -> dict:
             "extraction_empty": len(products) == 0,
             "duplicate": False,
             "extraction_status": "done",
+            "status": pipeline_status,
             "detected_receipt": photo_type == "receipt",
         }
     except Exception as err:
@@ -271,6 +290,7 @@ def run_extraction(job: ExtractionJob) -> dict:
         return {
             "image_id": job.image_id,
             "extraction_status": "failed",
+            "status": "failed",
             "extraction_error": str(err),
             "product_count": 0,
             "products": [],

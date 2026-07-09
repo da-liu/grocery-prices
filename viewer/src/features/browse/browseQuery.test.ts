@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
   EMPTY_BROWSE_QUERY,
   browseQueryToSearchParams,
@@ -8,6 +8,8 @@ import {
   countActiveChips,
   filterProducts,
   getPriceExtents,
+  loadBrowseViewPrefsFromStorage,
+  mergeBrowseQuery,
   photoGroupLinkLabel,
   photoGroupNeedsStoreLabel,
   photoGroupTitle,
@@ -15,6 +17,7 @@ import {
   parseBrowseQueryFromSearch,
   roundPrice,
   removeChip,
+  saveBrowseViewPrefsToStorage,
   sortProducts,
   type PhotoGroup,
 } from "./browseQuery";
@@ -235,6 +238,53 @@ describe("captured date histogram", () => {
     expect(bins[0].count).toBe(2);
     expect(bins[1].from).toBe("2026-07-05");
     expect(bins[1].count).toBe(1);
+  });
+});
+
+describe("view prefs storage", () => {
+  const storageKey = "grocery-prices-browse-view-prefs";
+  const storage = new Map<string, string>();
+
+  beforeEach(() => {
+    storage.clear();
+    vi.stubGlobal("localStorage", {
+      getItem: (key: string) => storage.get(key) ?? null,
+      setItem: (key: string, value: string) => {
+        storage.set(key, value);
+      },
+      removeItem: (key: string) => {
+        storage.delete(key);
+      },
+      clear: () => {
+        storage.clear();
+      },
+    });
+  });
+
+  it("persists view mode and grid columns on the device", () => {
+    saveBrowseViewPrefsToStorage({
+      ...EMPTY_BROWSE_QUERY,
+      viewMode: "products",
+      gridColumns: 3,
+    });
+
+    expect(loadBrowseViewPrefsFromStorage()).toEqual({
+      viewMode: "products",
+      gridColumns: 3,
+    });
+    expect(localStorage.getItem(storageKey)).toBeTruthy();
+  });
+
+  it("restores saved view prefs when starting a new session", () => {
+    saveBrowseViewPrefsToStorage({
+      ...EMPTY_BROWSE_QUERY,
+      viewMode: "products",
+      gridColumns: 2,
+    });
+
+    const query = mergeBrowseQuery(EMPTY_BROWSE_QUERY, loadBrowseViewPrefsFromStorage() ?? {});
+    expect(query.viewMode).toBe("products");
+    expect(query.gridColumns).toBe(2);
   });
 });
 

@@ -1,3 +1,4 @@
+import { Trash2 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { productImageUrl } from "@/shared/api/api";
 import {
@@ -11,20 +12,6 @@ import { LocationLabelButton } from "./LocationLabelButton";
 import { PhotoLightbox } from "./PhotoLightbox";
 import type { Product } from "@/shared/types/types";
 import "./PhotoGroupCard.css";
-
-function CloseIcon() {
-  return (
-    <svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true">
-      <path
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="2"
-        strokeLinecap="round"
-        d="M7 7l10 10M17 7 7 17"
-      />
-    </svg>
-  );
-}
 
 export function PhotoGroupCard({
   group,
@@ -136,7 +123,7 @@ export function PhotoGroupCard({
                     disabled={deleting}
                     onClick={handleDeleteClick}
                   >
-                    <CloseIcon />
+                    <Trash2 size={14} aria-hidden />
                   </button>
                 )}
               </div>

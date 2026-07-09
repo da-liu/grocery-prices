@@ -91,14 +91,17 @@ def test_run_extraction_completes_photo(tmp_path: Path, monkeypatch):
         )
 
     monkeypatch.setattr("extract_server.extraction.ingest.extract_from_upload", fake_extract)
+    monkeypatch.setattr("extract_server.extraction.match_catalog.match_photo", lambda *_args, **_kwargs: None)
 
     result = run_extraction(job)
     assert result["extraction_status"] == "done"
+    assert result.get("status") == "matched"
     assert result["product_count"] == 1
 
     extraction = get_extraction(user.id, accepted["image_id"])
     assert extraction is not None
     assert extraction.get("extraction_error") is None
+    assert extraction.get("status") == "matched"
     assert extraction["llm_ms"] == 2000
     assert extraction["other_ms"] == 50
     assert extraction["model"] == "auto"

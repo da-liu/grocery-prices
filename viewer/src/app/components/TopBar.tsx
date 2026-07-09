@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState, type RefObject } from "react";
+import { Camera, Home, ListFilter, Menu } from "lucide-react";
 import { NavLink, useLocation, useNavigate } from "react-router";
 import { useCatalog } from "@/features/browse/CatalogContext";
 import type { BrowseStats } from "@/shared/types/types";
@@ -19,66 +20,6 @@ interface TopBarProps {
   browseStats?: BrowseStats;
   onShowOnboarding?: () => void;
   showSettings?: boolean;
-}
-
-function CameraIcon() {
-  return (
-    <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">
-      <path
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="1.75"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        d="M4 8.5h2.2L7.5 6.5h9l1.3 2h2.2a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1v-9a1 1 0 0 1 1-1Z"
-      />
-      <circle cx="12" cy="13" r="3.25" fill="none" stroke="currentColor" strokeWidth="1.75" />
-    </svg>
-  );
-}
-
-function MenuIcon() {
-  return (
-    <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">
-      <path
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="1.75"
-        strokeLinecap="round"
-        d="M5 7h14M5 12h14M5 17h14"
-      />
-    </svg>
-  );
-}
-
-function FilterIcon() {
-  return (
-    <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">
-      <path
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="1.75"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        d="M4 6h16M7 12h10M10 18h4"
-      />
-    </svg>
-  );
-}
-
-function HomeIcon() {
-  return (
-    <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">
-      <path
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="1.75"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        d="M4 10.5 12 4l8 6.5V19a1 1 0 0 1-1 1h-5v-6H10v6H5a1 1 0 0 1-1-1v-8.5Z"
-      />
-    </svg>
-  );
 }
 
 export function TopBar({
@@ -163,7 +104,7 @@ export function TopBar({
             aria-label="Back to catalog"
             onClick={goToCatalog}
           >
-            <HomeIcon />
+            <Home size={20} aria-hidden />
           </button>
         ) : (
           <button
@@ -172,7 +113,7 @@ export function TopBar({
             aria-label="Take or upload photo"
             onClick={() => photoInputRef.current?.click()}
           >
-            <CameraIcon />
+            <Camera size={20} aria-hidden />
           </button>
         )}
 
@@ -187,7 +128,7 @@ export function TopBar({
               setMenuOpen(false);
             }}
           >
-            <FilterIcon />
+            <ListFilter size={20} aria-hidden />
             {activeChipCount > 0 && (
               <span className="top-bar-filter-badge" aria-hidden="true">
                 {activeChipCount}
@@ -206,7 +147,7 @@ export function TopBar({
               setMenuOpen((open) => !open);
             }}
           >
-            <MenuIcon />
+            <Menu size={20} aria-hidden />
           </button>
           {menuOpen && (
             <div className="top-bar-dropdown top-bar-dropdown--wide" role="menu">

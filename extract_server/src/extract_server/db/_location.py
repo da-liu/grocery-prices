@@ -72,4 +72,18 @@ def extraction_status(extraction: dict[str, Any] | None) -> str:
         return "pending"
     if extraction.get("extraction_error"):
         return "failed"
+    pipeline = pipeline_status(extraction)
+    if pipeline in {"extracted", "matched", "match_failed"}:
+        return "done"
     return "done"
+
+
+def pipeline_status(extraction: dict[str, Any] | None) -> str:
+    if extraction is None:
+        return "pending"
+    if extraction.get("extraction_error"):
+        return "failed"
+    status = extraction.get("status")
+    if status in {"extracted", "matched", "failed", "match_failed"}:
+        return status
+    return "matched"

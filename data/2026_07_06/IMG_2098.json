@@ -1,0 +1,49 @@
+{
+  "image_id": "IMG_2098",
+  "date_folder": "2026_07_06",
+  "source_file": "data/2026_07_06/IMG_2098.jpeg",
+  "photo_type": "shelf",
+  "meta": {
+    "image_id": "IMG_2098",
+    "source_file": "data/2026_07_06/IMG_2098.jpeg",
+    "gps_latitude": 43.6536027777778,
+    "gps_longitude": -79.3943944444444,
+    "captured_at": "2026-07-05 21:40:30",
+    "date_folder": "2026_07_06"
+  },
+  "products": [
+    {
+      "product_name": "SQ Giutinous Rice Balls-Pear",
+      "price": 2.99,
+      "unit": "EA",
+      "category": "frozen",
+      "brand": "SQ",
+      "barcode": "00690879100091"
+    },
+    {
+      "product_name": "RBQ CHN Pork Sausage w/ Li",
+      "price": 12.99,
+      "unit": "EA",
+      "category": "meat",
+      "brand": "RBQ",
+      "barcode": "00062619983802"
+    },
+    {
+      "product_name": "Synear Rice Ball-BlackSesame",
+      "price": 3.99,
+      "unit": "EA",
+      "category": "frozen",
+      "brand": "Synear",
+      "barcode": "006926186573257"
+    }
+  ],
+  "raw_response": "{\n  \"type\": \"shelf\",\n  \"products\": [\n    {\n      \"product_name\": \"SQ Giutinous Rice Balls-Pear\",\n      \"price\": 2.99,\n      \"unit\": \"EA\",\n      \"unit_price\": null,\n      \"category\": \"frozen\",\n      \"other\": {\n        \"brand\": \"SQ\",\n        \"barcode\": \"00690879100091\",\n        \"is_special\": false\n      }\n    },\n    {\n      \"product_name\": \"RBQ CHN Pork Sausage w/ Li\",\n      \"price\": 12.99,\n      \"unit\": \"EA\",\n      \"unit_price\": null,\n      \"category\": \"meat\",\n      \"other\": {\n        \"brand\": \"RBQ\",\n        \"barcode\": \"00062619983802\",\n        \"is_special\": false\n      }\n    },\n    {\n      \"product_name\": \"Synear Rice Ball-BlackSesame\",\n      \"price\": 3.99,\n      \"unit\": \"EA\",\n      \"unit_price\": null,\n      \"category\": \"frozen\",\n      \"other\": {\n        \"brand\": \"Synear\",\n        \"barcode\": \"006926186573257\",\n        \"is_special\": false\n      }\n    }\n  ]\n}",
+  "extractor": "gemini_direct",
+  "timing": {
+    "prep_ms": 82,
+    "llm_ms": 6668,
+    "duration_ms": 6750,
+    "model": "gemini-3.1-flash-lite",
+    "classify_ms": null
+  }
+}

@@ -209,6 +209,13 @@ export type ClientExifPayload = {
 
 export type ExtractionStatus = "pending" | "done" | "failed";
 
+export type PhotoPipelineStatus =
+  | "pending"
+  | "extracted"
+  | "matched"
+  | "failed"
+  | "match_failed";
+
 export interface ExtractionTiming {
   llm_ms?: number;
   other_ms?: number;
@@ -232,6 +239,7 @@ export interface UploadResult {
   skipped?: boolean;
   extraction_empty?: boolean;
   extraction_status?: ExtractionStatus;
+  status?: PhotoPipelineStatus;
   extraction_error?: string;
   extraction_timing?: ExtractionTiming;
   photo_type?: "shelf" | "receipt";

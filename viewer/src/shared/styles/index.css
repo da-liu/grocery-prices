@@ -44,6 +44,8 @@
 
   --danger: #b91c1c;
   --danger-bg: #fef2f2;
+  --alert-danger-bg: #fef2f2;
+  --toast-hint-bg: #dbeafe;
 
   --success: #047857;
 
@@ -112,6 +114,8 @@
 
     --danger: #f87171;
     --danger-bg: rgb(127 29 29 / 35%);
+    --alert-danger-bg: #3d1f1f;
+    --toast-hint-bg: #1e3a5f;
 
     --success: #34d399;
 

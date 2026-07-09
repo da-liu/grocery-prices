@@ -35,6 +35,11 @@ export interface BrowseStats {
   avgPriceLabel: string;
 }
 
+export interface RelatedProductRef {
+  product_id: string;
+  score: number;
+}
+
 export interface Product {
   id: string;
   image_id: string;
@@ -49,4 +54,5 @@ export interface Product {
   location: Location;
   extraction_empty?: boolean;
   photo_type?: "shelf" | "receipt";
+  related_products?: RelatedProductRef[];
 }

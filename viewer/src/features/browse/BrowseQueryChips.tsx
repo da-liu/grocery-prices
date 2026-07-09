@@ -1,3 +1,4 @@
+import { X } from "lucide-react";
 import type { BrowseChip, BrowseQueryState, PriceExtents } from "./browseQuery";
 import {
   EMPTY_BROWSE_QUERY,
@@ -38,7 +39,7 @@ export function BrowseQueryChips({ query, extents, onChange }: BrowseQueryChipsP
             aria-label={`Remove ${chip.label}`}
             onClick={() => handleRemove(chip)}
           >
-            ×
+            <X size={14} aria-hidden />
           </button>
         </span>
       ))}

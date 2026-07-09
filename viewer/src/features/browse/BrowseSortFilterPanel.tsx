@@ -1,3 +1,4 @@
+import { X } from "lucide-react";
 import { useEffect, useId } from "react";
 import {
   EMPTY_BROWSE_QUERY,
@@ -165,7 +166,7 @@ export function BrowseSortFilterPanel({
         <header className="browse-filter-header">
           <h2 id={titleId}>Sort &amp; filter</h2>
           <button type="button" className="browse-filter-close" onClick={onClose} aria-label="Close">
-            ×
+            <X size={20} aria-hidden />
           </button>
         </header>
 

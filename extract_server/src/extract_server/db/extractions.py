@@ -8,8 +8,16 @@ from extract_server.db.connection import get_conn
 from extract_server.db.photos import set_photo_type
 
 _EXTRACTION_TIMING_SET = (
-    "llm_ms = ?, other_ms = ?, model = ?, product_count = ?, extraction_error = NULL"
+    "llm_ms = ?, other_ms = ?, model = ?, product_count = ?, extraction_error = NULL, status = ?"
 )
+
+_PIPELINE_STATUSES = frozenset({"extracted", "matched", "failed", "match_failed"})
+
+
+def _ensure_extractions_status_column(conn: sqlite3.Connection) -> None:
+    columns = {row[1] for row in conn.execute("PRAGMA table_info(extractions)").fetchall()}
+    if "status" not in columns:
+        conn.execute("ALTER TABLE extractions ADD COLUMN status TEXT")
 
 
 def init_extractions_table() -> None:
@@ -29,11 +37,13 @@ def init_extractions_table() -> None:
             model TEXT,
             product_count INTEGER,
             extraction_error TEXT,
+            status TEXT,
             PRIMARY KEY (user_id, photo_id),
             FOREIGN KEY (user_id, photo_id) REFERENCES photos(user_id, id) ON DELETE CASCADE
         )
         """
     )
+    _ensure_extractions_status_column(conn)
 
 
 def extraction_timing_payload(row: dict[str, Any]) -> dict[str, Any] | None:
@@ -59,13 +69,14 @@ def record_photo_extraction_failure(user_id: str, photo_id: str, error: str) -> 
     conn.execute(
         """
         INSERT INTO extractions (
-            user_id, photo_id, extractor, extracted_at, extraction_error, product_count
-        ) VALUES (?, ?, '_failed', ?, ?, 0)
+            user_id, photo_id, extractor, extracted_at, extraction_error, product_count, status
+        ) VALUES (?, ?, '_failed', ?, ?, 0, 'failed')
         ON CONFLICT(user_id, photo_id) DO UPDATE SET
             extractor = excluded.extractor,
             extracted_at = excluded.extracted_at,
             extraction_error = excluded.extraction_error,
-            product_count = 0
+            product_count = 0,
+            status = 'failed'
         """,
         (user_id, photo_id, toronto_now(), error),
     )
@@ -78,7 +89,7 @@ def get_extraction(user_id: str, photo_id: str) -> dict[str, Any] | None:
         """
         SELECT user_id, photo_id, extractor, extracted_at, reextracted_at,
                manually_edited_at, raw_response, llm_ms, other_ms, model,
-               product_count, extraction_error
+               product_count, extraction_error, status
         FROM extractions
         WHERE user_id = ? AND photo_id = ?
         """,
@@ -101,7 +112,8 @@ def _write_extraction(
     reextracted: bool,
 ) -> None:
     extracted_at = toronto_now()
-    timing = (llm_ms, other_ms, model, len(products))
+    pipeline_status = "matched" if len(products) == 0 else "extracted"
+    timing = (llm_ms, other_ms, model, len(products), pipeline_status)
     if replace:
         if reextracted:
             conn.execute(
@@ -128,10 +140,24 @@ def _write_extraction(
         """
         INSERT INTO extractions (
             user_id, photo_id, extractor, extracted_at, raw_response,
-            llm_ms, other_ms, model, product_count, extraction_error
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, NULL)
+            llm_ms, other_ms, model, product_count, extraction_error, status
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, NULL, ?)
         """,
-        (user_id, photo_id, extractor, extracted_at, raw_response, *timing),
+        (user_id, photo_id, extractor, extracted_at, raw_response, llm_ms, other_ms, model, len(products), pipeline_status),
+    )
+
+
+def set_extraction_pipeline_status(user_id: str, photo_id: str, status: str) -> None:
+    if status not in _PIPELINE_STATUSES:
+        raise ValueError(f"Invalid pipeline status: {status}")
+    conn = get_conn()
+    conn.execute(
+        """
+        UPDATE extractions
+        SET status = ?
+        WHERE user_id = ? AND photo_id = ?
+        """,
+        (status, user_id, photo_id),
     )
 
 

@@ -4,7 +4,7 @@ import sqlite3
 from typing import Any
 
 from extract_server.db._helpers import one
-from extract_server.db._location import extraction_status, location_for_photo, product_line
+from extract_server.db._location import extraction_status, location_for_photo, pipeline_status, product_line
 from extract_server.db._product_fields import merge_sighting_row
 from extract_server.db.connection import get_conn
 from extract_server.db.extractions import extraction_timing_payload
@@ -19,6 +19,10 @@ def list_product_rows(
     db = conn or get_conn()
     user_stores = list_user_stores_as_dicts(user_id, conn=db)
     user_store_by_id = {store["id"]: store for store in user_stores}
+
+    from extract_server.db.similarity import load_relations_by_source
+
+    relations_by_source = load_relations_by_source(user_id, conn=db)
 
     photos = db.execute(
         """
@@ -58,7 +62,11 @@ def list_product_rows(
             lines.append(product_line(user_id, photo_dict, None, location))
             continue
         for row in photo_sightings:
-            lines.append(product_line(user_id, photo_dict, dict(row), location))
+            line = product_line(user_id, photo_dict, dict(row), location)
+            related = relations_by_source.get(row["id"])
+            if related:
+                line["related_products"] = related
+            lines.append(line)
 
     return lines
 
@@ -93,7 +101,7 @@ def get_photos_extraction_status(
     ).fetchall()
     extractions = db.execute(
         f"""
-        SELECT photo_id, llm_ms, other_ms, model, extraction_error
+        SELECT photo_id, llm_ms, other_ms, model, extraction_error, status
         FROM extractions
         WHERE user_id = ? AND photo_id IN ({placeholders})
         """,
@@ -114,11 +122,13 @@ def get_photos_extraction_status(
             continue
         extraction = extraction_by_photo.get(image_id)
         status = extraction_status(extraction)
+        pipeline = pipeline_status(extraction)
         products = sightings_by_photo.get(image_id, [])
         product_count = len(products)
         payload: dict[str, Any] = {
             "image_id": image_id,
             "image_path": f"api/media/{image_id}",
+            "status": pipeline,
             "extraction_status": status,
             "detected_receipt": False,
             "product_count": product_count,
@@ -181,4 +191,10 @@ def build_product_row(user_id: str, sighting_id: str) -> dict[str, Any] | None:
         user_stores=user_stores,
         user_store_by_id=user_store_by_id,
     )
-    return product_line(user_id, photo, sighting, location)
+    line = product_line(user_id, photo, sighting, location)
+    from extract_server.db.similarity import load_relations_by_source
+
+    related = load_relations_by_source(user_id, conn=conn).get(sighting_id)
+    if related:
+        line["related_products"] = related
+    return line

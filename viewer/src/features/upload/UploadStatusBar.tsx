@@ -1,3 +1,4 @@
+import { ChevronDown, Loader2, X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { useUploadQueueStatus } from "./UploadQueueContext";
 import { ExtractionProgressBar } from "./ExtractionProgressBar";
@@ -6,7 +7,7 @@ import type { UploadQueueItem } from "./uploadQueue";
 import "./UploadStatusBar.css";
 
 function Spinner() {
-  return <span className="upload-spinner" aria-hidden="true" />;
+  return <Loader2 size={16} className="upload-spinner" aria-hidden />;
 }
 
 function statusLabel(item: UploadQueueItem): string {
@@ -38,27 +39,6 @@ function statusLabel(item: UploadQueueItem): string {
     case "failed":
       return item.error ?? "Failed";
   }
-}
-
-function ChevronIcon({ expanded }: { expanded: boolean }) {
-  return (
-    <svg
-      className={`upload-status-chevron${expanded ? "" : " upload-status-chevron--collapsed"}`}
-      viewBox="0 0 24 24"
-      width="20"
-      height="20"
-      aria-hidden="true"
-    >
-      <path
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="2"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        d="M6 9l6 6 6-6"
-      />
-    </svg>
-  );
 }
 
 function useUploadStatusDisplay() {
@@ -141,7 +121,11 @@ export function UploadStatusPanel() {
       >
         {activeCount > 0 && <Spinner />}
         <span>{pillLabel}</span>
-        <ChevronIcon expanded={expanded} />
+        <ChevronDown
+          size={20}
+          className={`upload-status-chevron${expanded ? "" : " upload-status-chevron--collapsed"}`}
+          aria-hidden
+        />
       </button>
 
       <div className="upload-status-sheet" hidden={!expanded}>
@@ -226,7 +210,7 @@ export function UploadStatusToasts() {
             aria-label="Dismiss"
             onClick={dismissUnknownStoreHint}
           >
-            ×
+            <X size={18} aria-hidden />
           </button>
         </div>
       )}
@@ -245,7 +229,7 @@ export function UploadStatusToasts() {
             aria-label="Dismiss"
             onClick={dismissToast}
           >
-            ×
+            <X size={18} aria-hidden />
           </button>
         </div>
       )}

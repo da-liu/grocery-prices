@@ -82,6 +82,16 @@ export interface BrowseChip {
 }
 
 const BROWSE_QUERY_STORAGE_KEY = "grocery-prices-browse-query";
+const BROWSE_VIEW_PREFS_STORAGE_KEY = "grocery-prices-browse-view-prefs";
+
+export interface BrowseViewPrefs {
+  viewMode: ViewMode;
+  gridColumns: GridColumns;
+}
+
+export function browseViewPrefsFromQuery(query: BrowseQueryState): BrowseViewPrefs {
+  return { viewMode: query.viewMode, gridColumns: query.gridColumns };
+}
 
 export function isDefaultSort(sort: SortOption): boolean {
   return sort === DEFAULT_SORT;
@@ -636,6 +646,27 @@ export function syncBrowseQueryToUrl(query: BrowseQueryState) {
   window.history.replaceState(null, "", url.toString());
 }
 
+export function loadBrowseViewPrefsFromStorage(): Partial<BrowseViewPrefs> | null {
+  try {
+    const raw = localStorage.getItem(BROWSE_VIEW_PREFS_STORAGE_KEY);
+    if (!raw) return null;
+    return JSON.parse(raw) as Partial<BrowseViewPrefs>;
+  } catch {
+    return null;
+  }
+}
+
+export function saveBrowseViewPrefsToStorage(query: BrowseQueryState) {
+  try {
+    localStorage.setItem(
+      BROWSE_VIEW_PREFS_STORAGE_KEY,
+      JSON.stringify(browseViewPrefsFromQuery(query)),
+    );
+  } catch {
+    // ignore quota errors
+  }
+}
+
 export function loadBrowseQueryFromStorage(): Partial<BrowseQueryState> | null {
   try {
     const raw = sessionStorage.getItem(BROWSE_QUERY_STORAGE_KEY);
@@ -648,6 +679,7 @@ export function loadBrowseQueryFromStorage(): Partial<BrowseQueryState> | null {
 }
 
 export function saveBrowseQueryToStorage(query: BrowseQueryState) {
+  saveBrowseViewPrefsToStorage(query);
   try {
     sessionStorage.setItem(BROWSE_QUERY_STORAGE_KEY, JSON.stringify(query));
   } catch {
@@ -745,4 +777,16 @@ export function roundPrice(value: number, step = 0.01): number {
   const units = Math.round(value / step);
   const inv = Math.round(1 / step);
   return units / inv;
+}
+
+export function resolveRelatedProducts(
+  product: Product,
+  productsById: Map<string, Product>,
+): Array<{ product: Product; score: number }> {
+  return (product.related_products ?? [])
+    .map((ref) => {
+      const related = productsById.get(ref.product_id);
+      return related ? { product: related, score: ref.score } : null;
+    })
+    .filter((entry): entry is { product: Product; score: number } => entry !== null);
 }

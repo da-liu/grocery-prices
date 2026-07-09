@@ -1,0 +1,79 @@
+{
+  "image_id": "IMG_2105",
+  "date_folder": "2026_07_06",
+  "source_file": "data/2026_07_06/IMG_2105.jpeg",
+  "photo_type": "shelf",
+  "meta": {
+    "image_id": "IMG_2105",
+    "source_file": "data/2026_07_06/IMG_2105.jpeg",
+    "gps_latitude": 43.6474805555556,
+    "gps_longitude": -79.3931277777778,
+    "captured_at": "2026-07-05 21:59:50",
+    "date_folder": "2026_07_06"
+  },
+  "products": [
+    {
+      "product_name": "Synear Proso Millet & Peanut Rice Ball",
+      "price": 4.99,
+      "unit": "EA",
+      "category": "frozen",
+      "brand": "Synear",
+      "net_weight": "454g",
+      "barcode": "921065722584"
+    },
+    {
+      "product_name": "Synear Rice Ball With Proso Millet",
+      "price": 4.99,
+      "unit": "EA",
+      "category": "frozen",
+      "brand": "Synear",
+      "net_weight": "454g",
+      "barcode": "921065722577"
+    },
+    {
+      "product_name": "Synear Sesame Rice Ball",
+      "price": 3.99,
+      "unit": "EA",
+      "category": "frozen",
+      "brand": "Synear",
+      "net_weight": "400g",
+      "barcode": "921065700262"
+    },
+    {
+      "product_name": "Synear Rice Ball With Sesame",
+      "price": 3.99,
+      "unit": "EA",
+      "category": "frozen",
+      "brand": "Synear",
+      "net_weight": "400g",
+      "barcode": "921065700262"
+    },
+    {
+      "product_name": "Synear White Pearl Sesame Rice Ball",
+      "price": 2.99,
+      "unit": "EA",
+      "category": "frozen",
+      "brand": "Synear",
+      "net_weight": "300g",
+      "barcode": "921065700910"
+    },
+    {
+      "product_name": "Synear Rice Ball With Peanut",
+      "price": 3.99,
+      "unit": "EA",
+      "category": "frozen",
+      "brand": "Synear",
+      "net_weight": "400g",
+      "barcode": "921065700415"
+    }
+  ],
+  "raw_response": "{\n  \"type\": \"shelf\",\n  \"products\": [\n    {\n      \"product_name\": \"Synear Proso Millet & Peanut Rice Ball\",\n      \"price\": 4.99,\n      \"unit\": \"EA\",\n      \"unit_price\": null,\n      \"category\": \"frozen\",\n      \"other\": {\n        \"brand\": \"Synear\",\n        \"net_weight\": \"454g\",\n        \"is_special\": false,\n        \"barcode\": \"921065722584\"\n      }\n    },\n    {\n      \"product_name\": \"Synear Rice Ball With Proso Millet\",\n      \"price\": 4.99,\n      \"unit\": \"EA\",\n      \"unit_price\": null,\n      \"category\": \"frozen\",\n      \"other\": {\n        \"brand\": \"Synear\",\n        \"net_weight\": \"454g\",\n        \"is_special\": false,\n        \"barcode\": \"921065722577\"\n      }\n    },\n    {\n      \"product_name\": \"Synear Sesame Rice Ball\",\n      \"price\": 3.99,\n      \"unit\": \"EA\",\n      \"unit_price\": null,\n      \"category\": \"frozen\",\n      \"other\": {\n        \"brand\": \"Synear\",\n        \"net_weight\": \"400g\",\n        \"is_special\": false,\n        \"barcode\": \"921065700262\"\n      }\n    },\n    {\n      \"product_name\": \"Synear Rice Ball With Sesame\",\n      \"price\": 3.99,\n      \"unit\": \"EA\",\n      \"unit_price\": null,\n      \"category\": \"frozen\",\n      \"other\": {\n        \"brand\": \"Synear\",\n        \"net_weight\": \"400g\",\n        \"is_special\": false,\n        \"barcode\": \"921065700262\"\n      }\n    },\n    {\n      \"product_name\": \"Synear White Pearl Sesame Rice Ball\",\n      \"price\": 2.99,\n      \"unit\": \"EA\",\n      \"unit_price\": null,\n      \"category\": \"frozen\",\n      \"other\": {\n        \"brand\": \"Synear\",\n        \"net_weight\": \"300g\",\n        \"is_special\": false,\n        \"barcode\": \"921065700910\"\n      }\n    },\n    {\n      \"product_name\": \"Synear Rice Ball With Peanut\",\n      \"price\": 3.99,\n      \"unit\": \"EA\",\n      \"unit_price\": null,\n      \"category\": \"frozen\",\n      \"other\": {\n        \"brand\": \"Synear\",\n        \"net_weight\": \"400g\",\n        \"is_special\": false,\n        \"barcode\": \"921065700415\"\n      }\n    }\n  ]\n}",
+  "extractor": "gemini_direct",
+  "timing": {
+    "prep_ms": 115,
+    "llm_ms": 8405,
+    "duration_ms": 8521,
+    "model": "gemini-3.1-flash-lite",
+    "classify_ms": null
+  }
+}

@@ -48,6 +48,9 @@
 }
 
 .photo-lightbox-close {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   position: fixed;
   right: max(1rem, env(safe-area-inset-right, 0px));
   bottom: max(1rem, env(safe-area-inset-bottom, 0px));

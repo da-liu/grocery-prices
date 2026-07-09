@@ -1,0 +1,53 @@
+{
+  "image_id": "IMG_2099",
+  "date_folder": "2026_07_06",
+  "source_file": "data/2026_07_06/IMG_2099.jpeg",
+  "photo_type": "shelf",
+  "meta": {
+    "image_id": "IMG_2099",
+    "source_file": "data/2026_07_06/IMG_2099.jpeg",
+    "gps_latitude": 43.6536111111111,
+    "gps_longitude": -79.3943777777778,
+    "captured_at": "2026-07-05 21:41:29",
+    "date_folder": "2026_07_06"
+  },
+  "products": [
+    {
+      "product_name": "Spring Home Glutinous Rice Ball Red Bean Paste",
+      "unit": "200g",
+      "category": "frozen",
+      "brand": "Spring Home",
+      "net_weight": "200g"
+    },
+    {
+      "product_name": "Spring Home Glutinous Rice Ball Sesame",
+      "unit": "200g",
+      "category": "frozen",
+      "brand": "Spring Home",
+      "net_weight": "200g"
+    },
+    {
+      "product_name": "Spring Home Glutinous Rice Ball Peanut",
+      "unit": "200g",
+      "category": "frozen",
+      "brand": "Spring Home",
+      "net_weight": "200g"
+    },
+    {
+      "product_name": "思念 (Synear) Black Glutinous Rice Ball Sesame",
+      "unit": "455g",
+      "category": "frozen",
+      "brand": "Synear",
+      "net_weight": "455g"
+    }
+  ],
+  "raw_response": "{\n  \"type\": \"shelf\",\n  \"products\": [\n    {\n      \"product_name\": \"Spring Home Glutinous Rice Ball Red Bean Paste\",\n      \"price\": null,\n      \"unit\": \"200g\",\n      \"unit_price\": null,\n      \"category\": \"frozen\",\n      \"other\": {\n        \"brand\": \"Spring Home\",\n        \"net_weight\": \"200g\",\n        \"is_special\": false\n      }\n    },\n    {\n      \"product_name\": \"Spring Home Glutinous Rice Ball Sesame\",\n      \"price\": null,\n      \"unit\": \"200g\",\n      \"unit_price\": null,\n      \"category\": \"frozen\",\n      \"other\": {\n        \"brand\": \"Spring Home\",\n        \"net_weight\": \"200g\",\n        \"is_special\": false\n      }\n    },\n    {\n      \"product_name\": \"Spring Home Glutinous Rice Ball Peanut\",\n      \"price\": null,\n      \"unit\": \"200g\",\n      \"unit_price\": null,\n      \"category\": \"frozen\",\n      \"other\": {\n        \"brand\": \"Spring Home\",\n        \"net_weight\": \"200g\",\n        \"is_special\": false\n      }\n    },\n    {\n      \"product_name\": \"思念 (Synear) Black Glutinous Rice Ball Sesame\",\n      \"price\": null,\n      \"unit\": \"455g\",\n      \"unit_price\": null,\n      \"category\": \"frozen\",\n      \"other\": {\n        \"brand\": \"Synear\",\n        \"net_weight\": \"455g\",\n        \"is_special\": false\n      }\n    }\n  ]\n}",
+  "extractor": "gemini_direct",
+  "timing": {
+    "prep_ms": 120,
+    "llm_ms": 9043,
+    "duration_ms": 9163,
+    "model": "gemini-3.1-flash-lite",
+    "classify_ms": null
+  }
+}

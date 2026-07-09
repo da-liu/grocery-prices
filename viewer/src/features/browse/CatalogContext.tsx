@@ -28,6 +28,7 @@ import {
   filterProducts,
   getPriceExtents,
   loadBrowseQueryFromStorage,
+  loadBrowseViewPrefsFromStorage,
   mergeBrowseQuery,
   parseBrowseQueryFromSearch,
   productsForPriceHistogram,
@@ -41,9 +42,10 @@ import { formatPrice } from "@/shared/lib/formatPrice";
 import type { BrowseStats, Product } from "@/shared/types/types";
 
 function initialBrowseQuery(): BrowseQueryState {
+  const fromViewPrefs = loadBrowseViewPrefsFromStorage() ?? {};
   const fromStorage = loadBrowseQueryFromStorage() ?? {};
   const fromUrl = parseBrowseQueryFromSearch(window.location.search);
-  return mergeBrowseQuery(EMPTY_BROWSE_QUERY, { ...fromStorage, ...fromUrl });
+  return mergeBrowseQuery(EMPTY_BROWSE_QUERY, { ...fromViewPrefs, ...fromStorage, ...fromUrl });
 }
 
 interface CatalogContextValue {
@@ -70,6 +72,7 @@ interface CatalogContextValue {
   browseDisplayed: Product[];
   browseStats: BrowseStats;
   photoGroupSizes: Map<string, number>;
+  productsById: Map<string, Product>;
   navigateToProduct: (productId: string) => void;
   navigateToPhotoGroup: (imageId: string, productId: string) => void;
   highlightProductId: string | null;
@@ -285,6 +288,11 @@ export function CatalogProvider({ user, refreshAuth, children }: CatalogProvider
     return counts;
   }, [products]);
 
+  const productsById = useMemo(
+    () => new Map(products.map((product) => [product.id, product])),
+    [products],
+  );
+
   const browseStats = useMemo((): BrowseStats => {
     const priced = browseDisplayed.filter((p) => p.price != null);
     const avgPrice =
@@ -495,6 +503,7 @@ export function CatalogProvider({ user, refreshAuth, children }: CatalogProvider
       browseDisplayed,
       browseStats,
       photoGroupSizes,
+      productsById,
       navigateToProduct,
       navigateToPhotoGroup,
       highlightProductId,
@@ -540,6 +549,7 @@ export function CatalogProvider({ user, refreshAuth, children }: CatalogProvider
       browseDisplayed,
       browseStats,
       photoGroupSizes,
+      productsById,
       navigateToProduct,
       navigateToPhotoGroup,
       highlightProductId,

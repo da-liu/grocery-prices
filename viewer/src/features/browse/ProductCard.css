@@ -59,6 +59,7 @@
 
 .card-body {
   padding: 1rem 1rem 1.1rem;
+  min-width: 0;
 }
 
 .card-body h2 {
@@ -207,6 +208,83 @@
   text-decoration: underline;
 }
 
+.related-products-section {
+  margin-top: 0.85rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid var(--border);
+}
+
+.related-products-heading {
+  margin: 0 0 0.5rem;
+  padding-left: 0.5rem;
+  padding-right: 0.5rem;
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+}
+
+.related-products-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.related-product-item {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0.15rem;
+  width: 100%;
+  padding: 0.45rem 0.5rem;
+  border: 0;
+  border-radius: 8px;
+  background: none;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.related-product-item:hover {
+  background: var(--bg-hover);
+}
+
+.related-product-item:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
+.related-product-main {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.5rem;
+  min-width: 0;
+}
+
+.related-product-name {
+  font-size: 0.82rem;
+  font-weight: 500;
+  color: var(--text-primary);
+  min-width: 0;
+}
+
+.related-product-price {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--success);
+  flex-shrink: 0;
+}
+
+.related-product-meta {
+  font-size: 0.72rem;
+  color: var(--text-muted);
+}
+
 .result-card {
   border: 1px solid var(--border);
   border-radius: 14px;
@@ -319,6 +397,7 @@
   display: grid;
   gap: 0.5rem;
   margin: 0.5rem 0 0.75rem;
+  min-width: 0;
 }
 
 .product-edit-form label {
@@ -326,6 +405,17 @@
   gap: 0.2rem;
   font-size: 0.82rem;
   color: var(--text-secondary);
+}
+
+.product-edit-form label.product-edit-checkbox {
+  grid-template-columns: 1fr auto;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.product-edit-form label.product-edit-checkbox input[type="checkbox"] {
+  width: 1.05rem;
+  height: 1.05rem;
 }
 
 .product-edit-form input {
@@ -336,12 +426,20 @@
   font: inherit;
   background: var(--surface);
   color: var(--text-primary);
+  transition: border-color 160ms ease, box-shadow 160ms ease;
 }
 
 .product-edit-form input:focus {
   outline: 2px solid var(--accent);
-  outline-offset: 1px;
-  border-color: var(--accent);
+  outline-offset: 0;
+}
+
+.product-edit-form input.input--invalid {
+  border-color: var(--danger);
+}
+
+.product-edit-form input.input--invalid:focus {
+  outline-color: var(--danger);
 }
 
 .product-edit-actions {
@@ -350,8 +448,262 @@
   gap: 0.5rem;
 }
 
+.product-edit-other {
+  border: 0;
+  padding: 0;
+  margin: 0.5rem 0 0.25rem;
+  border-top: 1px solid var(--border);
+  padding-top: 0.65rem;
+}
+
+.product-edit-other legend {
+  padding: 0;
+  margin: 0 0 0.35rem;
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+}
+
+.product-edit-other .other-editor {
+  font-size: 0.78rem;
+}
+
+.other-editor {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.other-row {
+  display: flex;
+  flex-wrap: nowrap;
+  gap: 0.35rem;
+  align-items: center;
+  width: 100%;
+  min-width: 0;
+  position: relative;
+}
+
+.other-row--removed {
+  opacity: 0.6;
+}
+
+.other-kv-composite {
+  display: flex;
+  align-items: stretch;
+  flex: 1 1 0;
+  min-width: 0;
+  max-width: 100%;
+  border: 1px solid var(--border-input);
+  border-radius: 8px;
+  overflow: hidden;
+  background: var(--surface);
+  box-shadow: inset 0 1px 2px var(--shadow-sm);
+  transition: border-color 160ms ease, box-shadow 160ms ease;
+}
+
+.other-kv-composite:focus-within {
+  outline: 2px solid var(--accent);
+  outline-offset: 0;
+  box-shadow: none;
+}
+
+.other-kv-composite--invalid {
+  border-color: var(--danger) !important;
+}
+
+.other-kv-composite--invalid:focus-within {
+  outline-color: var(--danger) !important;
+}
+
+.product-edit-form .other-key,
+.product-edit-form .other-value {
+  min-height: 2.15rem;
+  padding: 0.35rem 0.6rem;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+  font: inherit;
+  font-size: 0.78rem;
+  line-height: 1.25;
+  background: transparent;
+  color: var(--text-primary);
+  min-width: 0;
+  width: 0;
+}
+
+.product-edit-form .other-key {
+  flex: 0 1 36%;
+  color: var(--text-secondary);
+  background: color-mix(in srgb, var(--bg-muted) 88%, var(--surface));
+}
+
+.product-edit-form .other-value {
+  flex: 1 1 auto;
+}
+
+.other-kv-divider {
+  width: 1px;
+  align-self: stretch;
+  flex-shrink: 0;
+  background: var(--border-input);
+  opacity: 0.9;
+}
+
+.product-edit-form .other-key:focus,
+.product-edit-form .other-value:focus {
+  outline: none;
+  border: none;
+  box-shadow: none;
+}
+
+.product-edit-form .other-key:disabled,
+.product-edit-form .other-value:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+
+.other-type-suffix {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  flex: 0 0 2.15rem;
+  width: 2.15rem;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  cursor: pointer;
+  background: transparent;
+  transition: color 160ms ease;
+  align-self: stretch;
+}
+
+.other-type-suffix svg,
+.other-type-suffix .other-type-label {
+  display: block;
+  flex-shrink: 0;
+}
+
+.other-type-suffix .other-type-label {
+  font-size: 0.58rem;
+  font-weight: 700;
+  letter-spacing: -0.04em;
+  line-height: 1;
+}
+
+.other-type-suffix--auto {
+  color: var(--text-muted);
+}
+
+.other-type-suffix--auto:hover:not(:disabled) {
+  color: var(--accent-strong);
+}
+
+.other-type-suffix--override {
+  color: var(--accent-strong);
+}
+
+.other-type-suffix--override:hover:not(:disabled) {
+  color: var(--accent-strong);
+}
+
+.other-type-suffix:focus-visible {
+  outline: none;
+}
+
+.other-type-suffix:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+
+.other-remove-btn {
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.25rem;
+  height: 1.25rem;
+  padding: 0;
+  border: 1px solid var(--border-input);
+  border-radius: 999px;
+  background: var(--surface);
+  color: var(--text-muted);
+  cursor: pointer;
+  box-shadow: 0 1px 3px var(--shadow-sm);
+  z-index: 10;
+  transition: background-color 160ms ease, border-color 160ms ease, color 160ms ease;
+}
+
+.other-remove-btn:hover:not(:disabled) {
+  background: var(--bg-muted);
+  border-color: var(--border-input);
+  color: var(--text-secondary-emphasis);
+}
+
+.other-row--removed .other-remove-btn {
+  border-color: var(--accent-border);
+  color: var(--accent);
+}
+
+.other-row--removed .other-remove-btn:hover:not(:disabled) {
+  background: var(--accent-bg);
+  border-color: var(--accent);
+  color: var(--accent-strong);
+}
+
+.other-remove-btn:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 0;
+}
+
+.other-remove-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.other-add {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  min-height: 2.1rem;
+  padding: 0.4rem 0.75rem;
+  border-radius: 8px;
+  border: 1px dashed var(--border-input);
+  background: var(--surface);
+  color: var(--text-secondary);
+  font: inherit;
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+  justify-self: start;
+  transition: border-color 160ms ease, background-color 160ms ease, color 160ms ease;
+}
+
+.other-add:hover:not(:disabled) {
+  border-color: var(--accent-border);
+  background: var(--accent-bg);
+  color: var(--accent-strong);
+}
+
+.other-add:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 0;
+}
+
 .product-edit-actions .product-form-btn {
   flex: 1 1 0;
+  min-height: 2.1rem;
+  padding: 0.4rem 0.75rem;
+  font-size: 0.78rem;
+  border-radius: 8px;
+}
+
+.product-edit-actions .product-form-btn:focus-visible {
+  outline-offset: 0;
 }
 
 .card.card--compact {

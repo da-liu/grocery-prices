@@ -1,3 +1,4 @@
+import { X } from "lucide-react";
 import { useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
 import "./PhotoLightbox.css";
@@ -207,15 +208,17 @@ export function PhotoLightbox({ src, alt, onClose }: PhotoLightboxProps) {
           position: "absolute",
           top: "20px",
           right: "20px",
+          display: "inline-flex",
+          alignItems: "center",
+          justifyContent: "center",
           background: "none",
           border: "none",
           color: "white",
-          fontSize: "30px",
           cursor: "pointer",
           zIndex: 10000
         }}
       >
-        ×
+        <X size={28} aria-hidden />
       </button>
       <div 
         ref={viewportRef} 

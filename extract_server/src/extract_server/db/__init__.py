@@ -20,6 +20,7 @@ from extract_server.db.extractions import (
     record_photo_extraction_failure,
     replace_photo_extraction,
     save_photo_extraction,
+    set_extraction_pipeline_status,
 )
 from extract_server.db.photos import (
     delete_photo,
@@ -78,10 +79,13 @@ def init_catalog_tables() -> None:
     from extract_server.db.extractions import init_extractions_table
     from extract_server.db.photos import init_photos_table
     from extract_server.db.sightings import init_sightings_table
+    from extract_server.db.similarity import init_embeddings_table, init_relations_table
 
     init_photos_table()
     init_extractions_table()
     init_sightings_table()
+    init_embeddings_table()
+    init_relations_table()
 
 
 def init_user_store_tables() -> None:
@@ -153,6 +157,7 @@ __all__ = [
     "replace_photo_extraction",
     "save_photo",
     "save_photo_extraction",
+    "set_extraction_pipeline_status",
     "set_photo_store_location_id",
     "set_user_extract_backend",
     "store_as_match_dict",

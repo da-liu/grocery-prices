@@ -1,3 +1,13 @@
+import {
+  Check,
+  Hash,
+  Pencil,
+  Plus,
+  SquareCheck,
+  Trash2,
+  Undo2,
+  X,
+} from "lucide-react";
 import { useState } from "react";
 import { formatCapturedAgo, formatCapturedAt } from "@/shared/lib/formatCapturedAgo";
 import { formatPrice } from "@/shared/lib/formatPrice";
@@ -5,11 +15,22 @@ import type { ManualProductInput, ProductUpdateInput } from "@/shared/api/api";
 import { PhotoLightbox } from "./PhotoLightbox";
 import { LocationLabelButton } from "./LocationLabelButton";
 import { StoreLink } from "@/features/stores/StoreLink";
-import { photoGroupLinkLabel } from "./browseQuery";
+import { photoGroupLinkLabel, resolveRelatedProducts } from "./browseQuery";
+import { useCatalog } from "./CatalogContext";
 import { ExtractionProgressBar } from "@/features/upload/ExtractionProgressBar";
 import type { ExtractBackend } from "@/shared/api/api";
 import type { Product } from "@/shared/types/types";
 import "./ProductCard.css";
+
+type OtherValue = string | number | boolean | null;
+type OtherValueType = "string" | "number" | "boolean";
+type OtherRow = {
+  id: string;
+  key: string;
+  valueText: string;
+  typeOverride: "auto" | OtherValueType;
+  removed?: boolean;
+};
 
 function formatOtherKey(key: string) {
   return key
@@ -47,34 +68,177 @@ function otherString(product: Product, key: string) {
   return value == null ? "" : String(value);
 }
 
+function safeParseNumber(text: string): { ok: true; value: number } | { ok: false } {
+  const trimmed = text.trim();
+  if (!trimmed) return { ok: false };
+  const num = Number(trimmed);
+  return Number.isFinite(num) ? { ok: true, value: num } : { ok: false };
+}
+
+function safeParseBoolean(text: string): { ok: true; value: boolean } | { ok: false } {
+  const trimmed = text.trim().toLowerCase();
+  if (trimmed === "true") return { ok: true, value: true };
+  if (trimmed === "false") return { ok: true, value: false };
+  return { ok: false };
+}
+
+function inferOtherValueType(valueText: string): OtherValueType {
+  const trimmed = valueText.trim();
+  if (!trimmed) return "string";
+  if (safeParseBoolean(trimmed).ok) return "boolean";
+  if (safeParseNumber(trimmed).ok) return "number";
+  return "string";
+}
+
+function effectiveOtherType(row: OtherRow): OtherValueType {
+  return row.typeOverride === "auto" ? inferOtherValueType(row.valueText) : row.typeOverride;
+}
+
+function nextTypeOverride(current: OtherRow["typeOverride"]): OtherRow["typeOverride"] {
+  const sequence: OtherRow["typeOverride"][] = ["auto", "string", "number", "boolean"];
+  const idx = sequence.indexOf(current);
+  return sequence[(idx + 1) % sequence.length];
+}
+
+function typeLabel(type: OtherValueType) {
+  if (type === "string") return "String";
+  if (type === "number") return "Number";
+  return "Boolean";
+}
+
+function toOtherRow(key: string, value: OtherValue, id: string): OtherRow {
+  const valueText = value == null ? "" : String(value);
+  return { id, key, valueText, typeOverride: "auto" };
+}
+
+function normalizeOtherKey(raw: string) {
+  return raw.trim();
+}
+
+function buildOtherPatchFromRows(rows: OtherRow[]): { patch: Record<string, OtherValue>; hasErrors: boolean } {
+  const patch: Record<string, OtherValue> = {};
+  let hasErrors = false;
+  const seenKeys = new Set<string>();
+
+  for (const row of rows) {
+    const key = normalizeOtherKey(row.key);
+    if (!key) {
+      hasErrors = true;
+      continue;
+    }
+    if (seenKeys.has(key)) {
+      hasErrors = true;
+      continue;
+    }
+    seenKeys.add(key);
+    if (row.removed) {
+      patch[key] = null;
+      continue;
+    }
+
+    const text = row.valueText;
+    if (!text.trim()) {
+      patch[key] = null;
+      continue;
+    }
+
+    const type = effectiveOtherType(row);
+    if (type === "boolean") {
+      const parsed = safeParseBoolean(text);
+      if (!parsed.ok) {
+        hasErrors = true;
+        continue;
+      }
+      patch[key] = parsed.value;
+      continue;
+    }
+
+    if (type === "number") {
+      const parsed = safeParseNumber(text);
+      if (!parsed.ok) {
+        hasErrors = true;
+        continue;
+      }
+      patch[key] = parsed.value;
+      continue;
+    }
+
+    patch[key] = text.trim();
+  }
+
+  return { patch, hasErrors };
+}
+
 interface ProductEditFormProps {
   product: Product;
   saving: boolean;
+  formId: string;
   onSave: (updates: ProductUpdateInput) => void;
   onCancel: () => void;
 }
 
-function ProductEditForm({ product, saving, onSave, onCancel }: ProductEditFormProps) {
+function ProductEditForm({ product, saving, formId, onSave, onCancel }: ProductEditFormProps) {
+  const reservedOtherKeys = new Set(["barcode", "is_special", "regular_price"]);
   const [name, setName] = useState(product.product_name);
   const [price, setPrice] = useState(product.price?.toString() ?? "");
   const [unit, setUnit] = useState(product.unit ?? "");
   const [unitPrice, setUnitPrice] = useState(product.unit_price?.toString() ?? "");
   const [barcode, setBarcode] = useState(otherString(product, "barcode"));
+  const [category, setCategory] = useState(product.category ?? "");
+  const [isSpecial, setIsSpecial] = useState(otherFlag(product, "is_special"));
+  const [regularPrice, setRegularPrice] = useState(
+    otherNumber(product, "regular_price")?.toString() ?? "",
+  );
+  const [otherRows, setOtherRows] = useState<OtherRow[]>(() => {
+    const entries = Object.entries(product.other ?? {}).filter(([key]) => !reservedOtherKeys.has(key));
+    return entries.map(([key, value], idx) => toOtherRow(key, value as OtherValue, `seed-${idx}`));
+  });
+
+  const priceInvalid = price.trim() !== "" && !safeParseNumber(price).ok;
+  const unitPriceInvalid = unitPrice.trim() !== "" && !safeParseNumber(unitPrice).ok;
+  const regularPriceInvalid = regularPrice.trim() !== "" && !safeParseNumber(regularPrice).ok;
+  const otherPatch = buildOtherPatchFromRows(otherRows);
+
+  const hasNumberErrors =
+    priceInvalid || unitPriceInvalid || regularPriceInvalid || otherPatch.hasErrors;
+  const saveDisabled = saving || !name.trim() || hasNumberErrors;
+
+  const seenKeys = new Set<string>();
+  const duplicateKeys = new Set<string>();
+  otherRows.forEach((row) => {
+    if (row.removed) return;
+    const key = normalizeOtherKey(row.key);
+    if (!key) return;
+    if (seenKeys.has(key)) {
+      duplicateKeys.add(key);
+    } else {
+      seenKeys.add(key);
+    }
+  });
 
   return (
     <form
+      id={formId}
       className="product-edit-form"
       onSubmit={(event) => {
         event.preventDefault();
+        if (hasNumberErrors) return;
+
+        const nextOther: Record<string, OtherValue> = {
+          ...(product.other ?? {}),
+          ...otherPatch.patch,
+          barcode: barcode.trim() ? barcode.trim() : null,
+          is_special: isSpecial,
+          regular_price: regularPrice.trim() ? Number(regularPrice.trim()) : null,
+        };
+
         onSave({
           product_name: name.trim(),
-          price: price.trim() ? Number(price) : null,
-          unit: unit.trim() || undefined,
-          unit_price: unitPrice.trim() ? Number(unitPrice) : null,
-          other: {
-            ...product.other,
-            ...(barcode.trim() ? { barcode: barcode.trim() } : {}),
-          },
+          price: price.trim() ? Number(price.trim()) : null,
+          unit: unit.trim() ? unit.trim() : null,
+          unit_price: unitPrice.trim() ? Number(unitPrice.trim()) : null,
+          category: category.trim() ? category.trim() : null,
+          other: nextOther,
         });
       }}
     >
@@ -84,7 +248,12 @@ function ProductEditForm({ product, saving, onSave, onCancel }: ProductEditFormP
       </label>
       <label>
         Price
-        <input value={price} onChange={(e) => setPrice(e.target.value)} inputMode="decimal" />
+        <input
+          className={priceInvalid ? "input--invalid" : ""}
+          value={price}
+          onChange={(e) => setPrice(e.target.value)}
+          inputMode="decimal"
+        />
       </label>
       <label>
         Unit
@@ -92,12 +261,139 @@ function ProductEditForm({ product, saving, onSave, onCancel }: ProductEditFormP
       </label>
       <label>
         Unit price
-        <input value={unitPrice} onChange={(e) => setUnitPrice(e.target.value)} inputMode="decimal" />
+        <input
+          className={unitPriceInvalid ? "input--invalid" : ""}
+          value={unitPrice}
+          onChange={(e) => setUnitPrice(e.target.value)}
+          inputMode="decimal"
+        />
+      </label>
+      <label>
+        Category
+        <input value={category} onChange={(e) => setCategory(e.target.value)} placeholder="Produce, Snacks, ..." />
+      </label>
+      <label className="product-edit-checkbox">
+        <span>Special</span>
+        <input type="checkbox" checked={isSpecial} onChange={(e) => setIsSpecial(e.target.checked)} />
+      </label>
+      <label>
+        Regular price
+        <input
+          className={regularPriceInvalid ? "input--invalid" : ""}
+          value={regularPrice}
+          onChange={(e) => setRegularPrice(e.target.value)}
+          inputMode="decimal"
+          placeholder="Used when Special is on"
+        />
       </label>
       <label>
         Barcode
-        <input value={barcode} onChange={(e) => setBarcode(e.target.value)} />
+        <input value={barcode} onChange={(e) => setBarcode(e.target.value)} placeholder="Leave blank to clear" />
       </label>
+
+      <fieldset className="product-edit-other">
+        <legend>Other fields</legend>
+        <div className="other-editor">
+          {otherRows.map((row) => {
+            const rowType = effectiveOtherType(row);
+            const typeSuffixTitle =
+              row.typeOverride === "auto"
+                ? `${typeLabel(rowType)} (inferred, click to override)`
+                : `${typeLabel(rowType)} (override, click to change)`;
+
+            const keyInvalid = (!row.key.trim() && row.valueText.trim() !== "") || duplicateKeys.has(normalizeOtherKey(row.key));
+            const valueInvalid =
+              row.valueText.trim() !== "" &&
+              ((rowType === "number" && !safeParseNumber(row.valueText).ok) ||
+                (rowType === "boolean" && !safeParseBoolean(row.valueText).ok));
+            const rowInvalid = keyInvalid || valueInvalid;
+
+            return (
+            <div key={row.id} className={`other-row${row.removed ? " other-row--removed" : ""}`}>
+              <div className={`other-kv-composite${rowInvalid && !row.removed ? " other-kv-composite--invalid" : ""}`}>
+                <input
+                  className="other-key"
+                  value={row.key}
+                  onChange={(e) =>
+                    setOtherRows((rows) => rows.map((r) => (r.id === row.id ? { ...r, key: e.target.value } : r)))
+                  }
+                  placeholder="key"
+                  disabled={row.removed}
+                  aria-label="Key"
+                />
+                <span className="other-kv-divider" aria-hidden="true" />
+                <input
+                  className="other-value"
+                  value={row.valueText}
+                  onChange={(e) =>
+                    setOtherRows((rows) =>
+                      rows.map((r) => (r.id === row.id ? { ...r, valueText: e.target.value } : r)),
+                    )
+                  }
+                  placeholder={
+                    rowType === "number"
+                      ? "123.45"
+                      : rowType === "boolean"
+                        ? "true / false"
+                        : "value"
+                  }
+                  inputMode={rowType === "number" ? "decimal" : undefined}
+                  disabled={row.removed}
+                  aria-label="Value"
+                />
+                <button
+                  type="button"
+                  className={`other-type-suffix ${row.typeOverride === "auto" ? "other-type-suffix--auto" : "other-type-suffix--override"}`}
+                  onClick={() =>
+                    setOtherRows((rows) =>
+                      rows.map((r) =>
+                        r.id === row.id ? { ...r, typeOverride: nextTypeOverride(r.typeOverride) } : r,
+                      ),
+                    )
+                  }
+                  disabled={row.removed}
+                  title={typeSuffixTitle}
+                  aria-label={typeSuffixTitle}
+                >
+                  <OtherTypeIcon type={rowType} />
+                </button>
+              </div>
+              <button
+                type="button"
+                className="other-remove-btn"
+                onClick={() =>
+                  setOtherRows((rows) =>
+                    rows.map((r) => (r.id === row.id ? { ...r, removed: !r.removed } : r)),
+                  )
+                }
+                aria-label={row.removed ? "Undo remove" : "Remove field"}
+                title={row.removed ? "Undo" : "Remove"}
+              >
+                {row.removed ? <Undo2 size={11} aria-hidden /> : <X size={11} aria-hidden />}
+              </button>
+            </div>
+            );
+          })}
+          <button
+            type="button"
+            className="other-add"
+            onClick={() =>
+              setOtherRows((rows) =>
+                rows.concat({
+                  id: `new-${rows.length}-${Date.now()}`,
+                  key: "",
+                  valueText: "",
+                  typeOverride: "auto",
+                }),
+              )
+            }
+          >
+            <Plus size={12} aria-hidden />
+            <span>Add field</span>
+          </button>
+        </div>
+      </fieldset>
+
       <div className="product-edit-actions">
         <button
           type="button"
@@ -107,7 +403,11 @@ function ProductEditForm({ product, saving, onSave, onCancel }: ProductEditFormP
         >
           Cancel
         </button>
-        <button type="submit" className="product-form-btn product-form-btn--primary" disabled={saving}>
+        <button
+          type="submit"
+          className="product-form-btn product-form-btn--primary"
+          disabled={saveDisabled}
+        >
           {saving ? "Saving…" : "Save"}
         </button>
       </div>
@@ -171,40 +471,13 @@ function ManualProductForm({ saving, onSave, onCancel }: ManualProductFormProps)
   );
 }
 
-function EditIcon() {
+function OtherTypeIcon({ type }: { type: OtherValueType }) {
+  if (type === "number") return <Hash size={14} aria-hidden />;
+  if (type === "boolean") return <SquareCheck size={14} aria-hidden />;
   return (
-    <svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true">
-      <path
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="1.8"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        d="M12 20h9"
-      />
-      <path
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="1.8"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        d="M16.5 3.5a2.1 2.1 0 1 1 3 3L7 19l-4 1 1-4L16.5 3.5Z"
-      />
-    </svg>
-  );
-}
-
-function CloseIcon() {
-  return (
-    <svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true">
-      <path
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="2"
-        strokeLinecap="round"
-        d="M7 7l10 10M17 7 7 17"
-      />
-    </svg>
+    <span className="other-type-label" aria-hidden>
+      Az
+    </span>
   );
 }
 
@@ -258,6 +531,9 @@ export function ProductCard({
   const [addingManual, setAddingManual] = useState(false);
   const capturedAgo = formatCapturedAgo(product.captured_at);
   const capturedLabel = formatCapturedAt(product.captured_at);
+  const catalog = useCatalog();
+  const relatedProducts = resolveRelatedProducts(product, catalog.productsById);
+  const editFormId = `product-edit-form-${product.id}`;
 
   function handleDeleteClick(e: React.MouseEvent) {
     e.stopPropagation();
@@ -348,20 +624,54 @@ export function ProductCard({
           <>
         <div className="card-title-row">
           <h2>{isEmpty ? "No products extracted" : product.product_name}</h2>
-          {(onDelete || (!isEmpty && onEdit && !editing)) && (
+          {(onDelete || (!isEmpty && onEdit)) && (
             <div className="card-actions">
-              {!isEmpty && onEdit && !editing && !confirming && (
-                <button
-                  type="button"
-                  className="card-icon-btn card-icon-btn--edit"
-                  aria-label={`Edit ${product.product_name}`}
-                  title="Edit"
-                  onClick={handleEditClick}
-                >
-                  <EditIcon />
-                </button>
+              {!isEmpty && onEdit && !confirming && (
+                <>
+                  {editing ? (
+                    <>
+                      <button
+                        type="button"
+                        className="card-icon-btn card-icon-btn--edit"
+                        aria-label={`Cancel editing ${product.product_name}`}
+                        title="Cancel"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          e.preventDefault();
+                          setEditing(false);
+                        }}
+                        disabled={!!saving}
+                      >
+                        <X size={14} aria-hidden />
+                      </button>
+                      <button
+                        type="submit"
+                        form={editFormId}
+                        className="card-icon-btn card-icon-btn--edit"
+                        aria-label={`Save ${product.product_name}`}
+                        title="Save"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                        }}
+                        disabled={!!saving}
+                      >
+                        <Check size={14} aria-hidden />
+                      </button>
+                    </>
+                  ) : (
+                    <button
+                      type="button"
+                      className="card-icon-btn card-icon-btn--edit"
+                      aria-label={`Edit ${product.product_name}`}
+                      title="Edit"
+                      onClick={handleEditClick}
+                    >
+                      <Pencil size={14} aria-hidden />
+                    </button>
+                  )}
+                </>
               )}
-              {onDelete && (
+              {onDelete && !editing && (
                 <div className="card-delete-wrap">
                   {confirming ? (
                     <>
@@ -394,7 +704,7 @@ export function ProductCard({
                       disabled={deleting}
                       onClick={handleDeleteClick}
                     >
-                      <CloseIcon />
+                      <Trash2 size={14} aria-hidden />
                     </button>
                   )}
                 </div>
@@ -452,6 +762,7 @@ export function ProductCard({
               <ProductEditForm
                 product={product}
                 saving={!!saving}
+                formId={editFormId}
                 onCancel={() => setEditing(false)}
                 onSave={async (updates) => {
                   await onEdit(product.id, updates);
@@ -530,6 +841,37 @@ export function ProductCard({
             </>
           )}
         </dl>
+        {relatedProducts.length > 0 && (
+          <section className="related-products-section">
+            <h3 className="related-products-heading">Related products</h3>
+            <ul className="related-products-list">
+              {relatedProducts.map(({ product: related, score }) => (
+                <li key={related.id}>
+                  <button
+                    type="button"
+                    className="related-product-item"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      catalog.navigateToProduct(related.id);
+                    }}
+                  >
+                    <span className="related-product-main">
+                      <span className="related-product-name">{related.product_name}</span>
+                      {related.price != null && (
+                        <span className="related-product-price">{formatPrice(related.price)}</span>
+                      )}
+                    </span>
+                    <span className="related-product-meta">
+                      {related.location.store}
+                      {related.captured_at ? ` · ${formatCapturedAgo(related.captured_at)}` : ""}
+                      {` · ${Math.round(score * 100)}% match`}
+                    </span>
+                  </button>
+                </li>
+              ))}
+            </ul>
+          </section>
+        )}
           </>
         )}
       </div>

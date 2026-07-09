@@ -12,6 +12,7 @@ import {
   fetchPhotoStatuses,
   uploadPhotosWithProgress,
   type DuplicateAction,
+  type PhotoPipelineStatus,
   type UploadResult,
 } from "@/shared/api/api";
 import { DuplicatePhotoModal } from "./DuplicatePhotoModal";
@@ -57,6 +58,7 @@ const UploadQueueStatusContext = createContext<UploadQueueStatus | null>(null);
 const POLL_INTERVAL_MS = 1500;
 const STATUS_POLL_MAX_FAILURES = 4;
 const STATUS_POLL_MAX_DELAY_MS = 10000;
+const MATCH_TIMEOUT_MS = 30000;
 const MISSING_STATUS_MESSAGE =
   "Upload progress was temporarily unavailable. Your photo may still finish processing; refresh in a moment.";
 
@@ -94,6 +96,13 @@ function markUnknownStoreHintShown(): void {
   }
 }
 
+function pipelineStatusFromResult(result: UploadResult): PhotoPipelineStatus {
+  if (result.status) return result.status;
+  if (result.extraction_status === "pending") return "pending";
+  if (result.extraction_status === "failed") return "failed";
+  return "matched";
+}
+
 function applyUploadResult(result: UploadResult): Partial<UploadQueueItem> {
   if (result.action_required) {
     return {
@@ -110,11 +119,22 @@ function applyUploadResult(result: UploadResult): Partial<UploadQueueItem> {
     };
   }
 
-  if (result.extraction_status === "failed") {
+  if (result.extraction_status === "failed" || pipelineStatusFromResult(result) === "failed") {
     return {
       status: "failed",
       imageId: result.image_id,
       error: result.extraction_error ?? "Extraction failed",
+    };
+  }
+
+  const pipeline = pipelineStatusFromResult(result);
+  if (pipeline === "pending" || pipeline === "extracted") {
+    const productCount = productCountFromResult(result);
+    return {
+      status: "processing",
+      productCount,
+      imageId: result.image_id,
+      extractionEmpty: result.extraction_empty,
     };
   }
 
@@ -231,6 +251,9 @@ export function UploadQueueProvider({
   const waitForExtraction = useCallback(
     async (item: UploadQueueItem, imageId: string) => {
       let consecutiveFailures = 0;
+      let fetchedExtracted = false;
+      let extractedAt: number | null = null;
+
       for (;;) {
         await sleep(statusPollRetryDelayMs(consecutiveFailures));
         try {
@@ -240,9 +263,49 @@ export function UploadQueueProvider({
             throw new Error(MISSING_STATUS_MESSAGE);
           }
           consecutiveFailures = 0;
-          if (status.extraction_status === "pending") {
+          const pipeline = pipelineStatusFromResult(status);
+
+          if (pipeline === "pending") {
             continue;
           }
+
+          if (pipeline === "extracted") {
+            if (!fetchedExtracted) {
+              await onUploadSuccessRef.current?.();
+              fetchedExtracted = true;
+              extractedAt = Date.now();
+            }
+            updateItem(item.id, applyUploadResult(status));
+            if (extractedAt != null && Date.now() - extractedAt > MATCH_TIMEOUT_MS) {
+              await finishUpload(item, status);
+              return;
+            }
+            continue;
+          }
+
+          if (pipeline === "matched") {
+            if (!fetchedExtracted) {
+              await onUploadSuccessRef.current?.();
+            } else {
+              await onUploadSuccessRef.current?.();
+            }
+            await finishUpload(item, status);
+            return;
+          }
+
+          if (pipeline === "match_failed") {
+            if (!fetchedExtracted) {
+              await onUploadSuccessRef.current?.();
+            }
+            await finishUpload(item, status);
+            return;
+          }
+
+          if (pipeline === "failed") {
+            await finishUpload(item, status);
+            return;
+          }
+
           await finishUpload(item, status);
           return;
         } catch (err) {
@@ -253,7 +316,7 @@ export function UploadQueueProvider({
         }
       }
     },
-    [finishUpload],
+    [finishUpload, updateItem],
   );
 
   const handleItemResult = useCallback(

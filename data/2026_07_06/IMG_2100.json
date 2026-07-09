@@ -1,0 +1,115 @@
+{
+  "image_id": "IMG_2100",
+  "date_folder": "2026_07_06",
+  "source_file": "data/2026_07_06/IMG_2100.jpeg",
+  "photo_type": "shelf",
+  "meta": {
+    "image_id": "IMG_2100",
+    "source_file": "data/2026_07_06/IMG_2100.jpeg",
+    "gps_latitude": 43.653625,
+    "gps_longitude": -79.3943944444444,
+    "captured_at": "2026-07-05 21:41:41",
+    "date_folder": "2026_07_06"
+  },
+  "products": [
+    {
+      "product_name": "Paldo Soy Flavor Noodle (5)",
+      "price": 6.99,
+      "unit": "EA",
+      "category": "pantry",
+      "brand": "Paldo",
+      "barcode": "00880112850474"
+    },
+    {
+      "product_name": "Paldo Noodle Soup-Lobster Fla",
+      "price": 6.99,
+      "unit": "EA",
+      "category": "pantry",
+      "brand": "Paldo",
+      "barcode": "000648483631008"
+    },
+    {
+      "product_name": "Primo Pasta-Capellini",
+      "price": 2.59,
+      "unit": "EA",
+      "category": "pantry",
+      "brand": "Primo",
+      "barcode": "00005590000100"
+    },
+    {
+      "product_name": "Primo Pasta-Spaghetti",
+      "price": 2.59,
+      "unit": "EA",
+      "category": "pantry",
+      "brand": "Primo",
+      "barcode": "00005590000102"
+    },
+    {
+      "product_name": "Primo Pasta-Fettuccine",
+      "price": 2.59,
+      "unit": "EA",
+      "category": "pantry",
+      "brand": "Primo"
+    },
+    {
+      "product_name": "RBBQ CHN Duck Leg (2P)",
+      "price": 24.99,
+      "unit": "Bag",
+      "category": "meat",
+      "barcode": "00062619893831"
+    },
+    {
+      "product_name": "Flavor Meat Blue Dumpling-Egg",
+      "price": 6.99,
+      "unit": "Bag",
+      "category": "frozen",
+      "barcode": "00062784302710",
+      "is_special": true
+    },
+    {
+      "product_name": "Frooan Peeled Chinese Yam",
+      "price": 4.99,
+      "unit": "Bag",
+      "category": "produce",
+      "barcode": "000696692710036"
+    },
+    {
+      "product_name": "Sticky Rice Dumpling/Dried Scall",
+      "price": 6.99,
+      "unit": "EA",
+      "category": "frozen",
+      "barcode": "0000000010009"
+    },
+    {
+      "product_name": "Sticky Rice Dumpling/Pork Sticky",
+      "price": 4.49,
+      "unit": "EA",
+      "category": "frozen",
+      "barcode": "0000000010000"
+    },
+    {
+      "product_name": "Sticky Rice Dumpling/Egg Yolk",
+      "price": 4.99,
+      "unit": "EA",
+      "category": "frozen",
+      "barcode": "0000000010002"
+    },
+    {
+      "product_name": "WFZ Rice Dumpling-Red Bean Pa",
+      "price": 3.99,
+      "unit": "Bag",
+      "category": "frozen",
+      "barcode": "1690761966245",
+      "is_special": true
+    }
+  ],
+  "raw_response": "{\n  \"type\": \"shelf\",\n  \"products\": [\n    {\n      \"product_name\": \"Paldo Soy Flavor Noodle (5)\",\n      \"price\": 6.99,\n      \"unit\": \"EA\",\n      \"unit_price\": null,\n      \"category\": \"pantry\",\n      \"other\": {\n        \"brand\": \"Paldo\",\n        \"barcode\": \"00880112850474\",\n        \"is_special\": false\n      }\n    },\n    {\n      \"product_name\": \"Paldo Noodle Soup-Lobster Fla\",\n      \"price\": 6.99,\n      \"unit\": \"EA\",\n      \"unit_price\": null,\n      \"category\": \"pantry\",\n      \"other\": {\n        \"brand\": \"Paldo\",\n        \"barcode\": \"000648483631008\",\n        \"is_special\": false\n      }\n    },\n    {\n      \"product_name\": \"Primo Pasta-Capellini\",\n      \"price\": 2.59,\n      \"unit\": \"EA\",\n      \"unit_price\": null,\n      \"category\": \"pantry\",\n      \"other\": {\n        \"brand\": \"Primo\",\n        \"barcode\": \"00005590000100\",\n        \"is_special\": false\n      }\n    },\n    {\n      \"product_name\": \"Primo Pasta-Spaghetti\",\n      \"price\": 2.59,\n      \"unit\": \"EA\",\n      \"unit_price\": null,\n      \"category\": \"pantry\",\n      \"other\": {\n        \"brand\": \"Primo\",\n        \"barcode\": \"00005590000102\",\n        \"is_special\": false\n      }\n    },\n    {\n      \"product_name\": \"Primo Pasta-Fettuccine\",\n      \"price\": 2.59,\n      \"unit\": \"EA\",\n      \"unit_price\": null,\n      \"category\": \"pantry\",\n      \"other\": {\n        \"brand\": \"Primo\",\n        \"is_special\": false\n      }\n    },\n    {\n      \"product_name\": \"RBBQ CHN Duck Leg (2P)\",\n      \"price\": 24.99,\n      \"unit\": \"Bag\",\n      \"unit_price\": null,\n      \"category\": \"meat\",\n      \"other\": {\n        \"barcode\": \"00062619893831\",\n        \"is_special\": false\n      }\n    },\n    {\n      \"product_name\": \"Flavor Meat Blue Dumpling-Egg\",\n      \"price\": 6.99,\n      \"unit\": \"Bag\",\n      \"unit_price\": null,\n      \"category\": \"frozen\",\n      \"other\": {\n        \"barcode\": \"00062784302710\",\n        \"is_special\": true\n      }\n    },\n    {\n      \"product_name\": \"Frooan Peeled Chinese Yam\",\n      \"price\": 4.99,\n      \"unit\": \"Bag\",\n      \"unit_price\": null,\n      \"category\": \"produce\",\n      \"other\": {\n        \"barcode\": \"000696692710036\",\n        \"is_special\": false\n      }\n    },\n    {\n      \"product_name\": \"Sticky Rice Dumpling/Dried Scall\",\n      \"price\": 6.99,\n      \"unit\": \"EA\",\n      \"unit_price\": null,\n      \"category\": \"frozen\",\n      \"other\": {\n        \"barcode\": \"0000000010009\",\n        \"is_special\": false\n      }\n    },\n    {\n      \"product_name\": \"Sticky Rice Dumpling/Pork Sticky\",\n      \"price\": 4.49,\n      \"unit\": \"EA\",\n      \"unit_price\": null,\n      \"category\": \"frozen\",\n      \"other\": {\n        \"barcode\": \"0000000010000\",\n        \"is_special\": false\n      }\n    },\n    {\n      \"product_name\": \"Sticky Rice Dumpling/Egg Yolk\",\n      \"price\": 4.99,\n      \"unit\": \"EA\",\n      \"unit_price\": null,\n      \"category\": \"frozen\",\n      \"other\": {\n        \"barcode\": \"0000000010002\",\n        \"is_special\": false\n      }\n    },\n    {\n      \"product_name\": \"WFZ Rice Dumpling-Red Bean Pa\",\n      \"price\": 3.99,\n      \"unit\": \"Bag\",\n      \"unit_price\": null,\n      \"category\": \"frozen\",\n      \"other\": {\n        \"barcode\": \"1690761966245\",\n        \"is_special\": true\n      }\n    }\n  ]\n}",
+  "extractor": "gemini_direct",
+  "timing": {
+    "prep_ms": 111,
+    "llm_ms": 10737,
+    "duration_ms": 10848,
+    "model": "gemini-3.1-flash-lite",
+    "classify_ms": null
+  }
+}

@@ -1,0 +1,113 @@
+{
+  "image_id": "IMG_2104",
+  "date_folder": "2026_07_06",
+  "source_file": "data/2026_07_06/IMG_2104.jpeg",
+  "photo_type": "shelf",
+  "meta": {
+    "image_id": "IMG_2104",
+    "source_file": "data/2026_07_06/IMG_2104.jpeg",
+    "gps_latitude": 43.6474416666667,
+    "gps_longitude": -79.39315,
+    "captured_at": "2026-07-05 21:57:25",
+    "date_folder": "2026_07_06"
+  },
+  "products": [
+    {
+      "product_name": "Bestco Fresh Foods Side Off Pork Spare Ribs RWA",
+      "price": 19.42,
+      "unit": "lb",
+      "unit_price": 7.99,
+      "category": "meat",
+      "brand": "Bestco Fresh Foods",
+      "packed_on": "2026/JL/04",
+      "net_weight": "2.430 lb",
+      "barcode": "270380119422"
+    },
+    {
+      "product_name": "Bestco Fresh Foods Side Off Pork Spare Ribs RWA",
+      "price": 19.58,
+      "unit": "lb",
+      "unit_price": 7.99,
+      "category": "meat",
+      "brand": "Bestco Fresh Foods",
+      "packed_on": "2026/JL/04",
+      "net_weight": "2.450 lb",
+      "barcode": "270380119583"
+    },
+    {
+      "product_name": "Bestco Fresh Foods Side Off Pork Spare Ribs RWA",
+      "price": 19.66,
+      "unit": "lb",
+      "unit_price": 7.99,
+      "category": "meat",
+      "brand": "Bestco Fresh Foods",
+      "packed_on": "2026/JL/05",
+      "net_weight": "2.460 lb",
+      "barcode": "270380119668"
+    },
+    {
+      "product_name": "Bestco Fresh Foods Side Off Pork Spare Ribs RWA",
+      "price": 17.78,
+      "unit": "lb",
+      "unit_price": 7.99,
+      "category": "meat",
+      "brand": "Bestco Fresh Foods",
+      "packed_on": "2026/JL/05",
+      "net_weight": "2.225 lb",
+      "barcode": "270380117787"
+    },
+    {
+      "product_name": "Bestco Fresh Foods Side Off Pork Spare Ribs RWA",
+      "price": 18.86,
+      "unit": "lb",
+      "unit_price": 7.99,
+      "category": "meat",
+      "brand": "Bestco Fresh Foods",
+      "packed_on": "2026/JL/04",
+      "net_weight": "2.360 lb",
+      "barcode": "270380118869"
+    },
+    {
+      "product_name": "Bestco Fresh Foods Side Off Pork Spare Ribs RWA",
+      "price": 19.3,
+      "unit": "lb",
+      "unit_price": 7.99,
+      "category": "meat",
+      "brand": "Bestco Fresh Foods",
+      "packed_on": "2026/JL/04",
+      "net_weight": "2.415 lb",
+      "barcode": "270380119309"
+    },
+    {
+      "product_name": "Bestco Fresh Foods Side Off Pork Spare Ribs RWA",
+      "price": 23.93,
+      "unit": "lb",
+      "unit_price": 7.99,
+      "category": "meat",
+      "brand": "Bestco Fresh Foods",
+      "packed_on": "2026/JL/05",
+      "net_weight": "2.995 lb",
+      "barcode": "270380123931"
+    },
+    {
+      "product_name": "Bestco Fresh Foods Side Off Pork Spare Ribs RWA",
+      "price": 15.3,
+      "unit": "lb",
+      "unit_price": 7.99,
+      "category": "meat",
+      "brand": "Bestco Fresh Foods",
+      "packed_on": "2026/JL/05",
+      "net_weight": "1.915 lb",
+      "barcode": "270380115301"
+    }
+  ],
+  "raw_response": "{\n  \"type\": \"shelf\",\n  \"products\": [\n    {\n      \"product_name\": \"Bestco Fresh Foods Side Off Pork Spare Ribs RWA\",\n      \"price\": 19.42,\n      \"unit\": \"lb\",\n      \"unit_price\": 7.99,\n      \"category\": \"meat\",\n      \"other\": {\n        \"brand\": \"Bestco Fresh Foods\",\n        \"packed_on\": \"2026/JL/04\",\n        \"net_weight\": \"2.430 lb\",\n        \"barcode\": \"270380119422\",\n        \"is_special\": false\n      }\n    },\n    {\n      \"product_name\": \"Bestco Fresh Foods Side Off Pork Spare Ribs RWA\",\n      \"price\": 19.58,\n      \"unit\": \"lb\",\n      \"unit_price\": 7.99,\n      \"category\": \"meat\",\n      \"other\": {\n        \"brand\": \"Bestco Fresh Foods\",\n        \"packed_on\": \"2026/JL/04\",\n        \"net_weight\": \"2.450 lb\",\n        \"barcode\": \"270380119583\",\n        \"is_special\": false\n      }\n    },\n    {\n      \"product_name\": \"Bestco Fresh Foods Side Off Pork Spare Ribs RWA\",\n      \"price\": 19.66,\n      \"unit\": \"lb\",\n      \"unit_price\": 7.99,\n      \"category\": \"meat\",\n      \"other\": {\n        \"brand\": \"Bestco Fresh Foods\",\n        \"packed_on\": \"2026/JL/05\",\n        \"net_weight\": \"2.460 lb\",\n        \"barcode\": \"270380119668\",\n        \"is_special\": false\n      }\n    },\n    {\n      \"product_name\": \"Bestco Fresh Foods Side Off Pork Spare Ribs RWA\",\n      \"price\": 17.78,\n      \"unit\": \"lb\",\n      \"unit_price\": 7.99,\n      \"category\": \"meat\",\n      \"other\": {\n        \"brand\": \"Bestco Fresh Foods\",\n        \"packed_on\": \"2026/JL/05\",\n        \"net_weight\": \"2.225 lb\",\n        \"barcode\": \"270380117787\",\n        \"is_special\": false\n      }\n    },\n    {\n      \"product_name\": \"Bestco Fresh Foods Side Off Pork Spare Ribs RWA\",\n      \"price\": 18.86,\n      \"unit\": \"lb\",\n      \"unit_price\": 7.99,\n      \"category\": \"meat\",\n      \"other\": {\n        \"brand\": \"Bestco Fresh Foods\",\n        \"packed_on\": \"2026/JL/04\",\n        \"net_weight\": \"2.360 lb\",\n        \"barcode\": \"270380118869\",\n        \"is_special\": false\n      }\n    },\n    {\n      \"product_name\": \"Bestco Fresh Foods Side Off Pork Spare Ribs RWA\",\n      \"price\": 19.30,\n      \"unit\": \"lb\",\n      \"unit_price\": 7.99,\n      \"category\": \"meat\",\n      \"other\": {\n        \"brand\": \"Bestco Fresh Foods\",\n        \"packed_on\": \"2026/JL/04\",\n        \"net_weight\": \"2.415 lb\",\n        \"barcode\": \"270380119309\",\n        \"is_special\": false\n      }\n    },\n    {\n      \"product_name\": \"Bestco Fresh Foods Side Off Pork Spare Ribs RWA\",\n      \"price\": 23.93,\n      \"unit\": \"lb\",\n      \"unit_price\": 7.99,\n      \"category\": \"meat\",\n      \"other\": {\n        \"brand\": \"Bestco Fresh Foods\",\n        \"packed_on\": \"2026/JL/05\",\n        \"net_weight\": \"2.995 lb\",\n        \"barcode\": \"270380123931\",\n        \"is_special\": false\n      }\n    },\n    {\n      \"product_name\": \"Bestco Fresh Foods Side Off Pork Spare Ribs RWA\",\n      \"price\": 15.30,\n      \"unit\": \"lb\",\n      \"unit_price\": 7.99,\n      \"category\": \"meat\",\n      \"other\": {\n        \"brand\": \"Bestco Fresh Foods\",\n        \"packed_on\": \"2026/JL/05\",\n        \"net_weight\": \"1.915 lb\",\n        \"barcode\": \"270380115301\",\n        \"is_special\": false\n      }\n    }\n  ]\n}",
+  "extractor": "gemini_direct",
+  "timing": {
+    "prep_ms": 107,
+    "llm_ms": 8502,
+    "duration_ms": 8609,
+    "model": "gemini-3.1-flash-lite",
+    "classify_ms": null
+  }
+}

@@ -1,3 +1,4 @@
+import { Circle, Eye, EyeOff, Loader2 } from "lucide-react";
 import { useId, useRef, useState } from "react";
 import { useAuth } from "./AuthContext";
 import "./SignInPage.css";
@@ -18,33 +19,6 @@ const HERO_FEATURES = [
     body: "Search your catalog by store, category, and price as your collection grows.",
   },
 ] as const;
-
-function PasswordToggleIcon({ visible }: { visible: boolean }) {
-  if (visible) {
-    return (
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-        <path
-          d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7Z"
-          stroke="currentColor"
-          strokeWidth="1.75"
-          strokeLinejoin="round"
-        />
-        <circle cx="12" cy="12" r="3" stroke="currentColor" strokeWidth="1.75" />
-      </svg>
-    );
-  }
-  return (
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-      <path
-        d="M3 3l18 18M10.58 10.58A3 3 0 0 0 12 15a3 3 0 0 0 2.42-1.24M9.88 5.09A10.7 10.7 0 0 1 12 5c6.5 0 10 7 10 7a18.2 18.2 0 0 1-4.11 5.24M6.11 6.11C3.6 7.79 2 12 2 12s3.5 7 10 7c1.13 0 2.17-.17 3.11-.47"
-        stroke="currentColor"
-        strokeWidth="1.75"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </svg>
-  );
-}
 
 export function SignInPage() {
   const { login, register } = useAuth();
@@ -107,7 +81,7 @@ export function SignInPage() {
           <ul className="auth-hero-features">
             {HERO_FEATURES.map((feature) => (
               <li key={feature.title}>
-                <span className="auth-hero-feature-icon" aria-hidden="true" />
+                <Circle className="auth-hero-feature-icon" size={9} fill="currentColor" strokeWidth={0} aria-hidden />
                 <span className="auth-hero-feature-text">
                   <strong>{feature.title}</strong>
                   <span>{feature.body}</span>
@@ -207,7 +181,7 @@ export function SignInPage() {
                     aria-label={showPassword ? "Hide password" : "Show password"}
                     aria-pressed={showPassword}
                   >
-                    <PasswordToggleIcon visible={showPassword} />
+                    {showPassword ? <EyeOff size={20} aria-hidden /> : <Eye size={20} aria-hidden />}
                   </button>
                 </div>
               </div>
@@ -225,7 +199,7 @@ export function SignInPage() {
                 className="auth-submit"
                 disabled={busy || !username.trim() || !password}
               >
-                {busy && <span className="auth-submit-spinner" aria-hidden="true" />}
+                {busy && <Loader2 size={16} className="auth-submit-spinner" aria-hidden />}
                 {busy
                   ? isRegister
                     ? "Creating account…"

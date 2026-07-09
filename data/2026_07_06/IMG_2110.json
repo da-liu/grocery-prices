@@ -1,0 +1,124 @@
+{
+  "image_id": "IMG_2110",
+  "date_folder": "2026_07_06",
+  "source_file": "data/2026_07_06/IMG_2110.jpg",
+  "photo_type": "shelf",
+  "meta": {
+    "image_id": "IMG_2110",
+    "source_file": "data/2026_07_06/IMG_2110.jpg",
+    "gps_latitude": 43.6381444444444,
+    "gps_longitude": -79.390725,
+    "captured_at": "2026-07-06 19:13:59",
+    "date_folder": "2026_07_06"
+  },
+  "products": [
+    {
+      "product_name": "Colgate Optic White Purple",
+      "price": 4.0,
+      "unit": "EA",
+      "category": "oral care",
+      "brand": "Colgate",
+      "is_special": true,
+      "regular_price": 7.69
+    },
+    {
+      "product_name": "Colgate Optic White",
+      "price": 4.99,
+      "unit": "EA",
+      "category": "oral care",
+      "brand": "Colgate",
+      "is_special": true,
+      "regular_price": 8.39
+    },
+    {
+      "product_name": "Colgate Sensitive Pro-Relief",
+      "price": 5.99,
+      "unit": "EA",
+      "category": "oral care",
+      "brand": "Colgate",
+      "is_special": true,
+      "regular_price": 11.49
+    },
+    {
+      "product_name": "Colgate PerioGard",
+      "price": 5.99,
+      "unit": "EA",
+      "category": "oral care",
+      "brand": "Colgate",
+      "is_special": true,
+      "regular_price": 14.59
+    },
+    {
+      "product_name": "Colgate Sensitive Pro-Relief",
+      "price": 4.99,
+      "unit": "EA",
+      "category": "oral care",
+      "brand": "Colgate",
+      "is_special": true,
+      "regular_price": 8.69
+    },
+    {
+      "product_name": "Colgate MaxFresh",
+      "price": 4.99,
+      "unit": "EA",
+      "category": "oral care",
+      "brand": "Colgate",
+      "is_special": true,
+      "regular_price": 9.19
+    },
+    {
+      "product_name": "Colgate Total Active Prevention",
+      "price": 5.99,
+      "unit": "EA",
+      "category": "oral care",
+      "brand": "Colgate",
+      "is_special": true,
+      "regular_price": 11.49
+    },
+    {
+      "product_name": "Colgate Total",
+      "price": 4.99,
+      "unit": "EA",
+      "category": "oral care",
+      "brand": "Colgate",
+      "is_special": true,
+      "regular_price": 9.19
+    },
+    {
+      "product_name": "Colgate Total",
+      "price": 7.99,
+      "unit": "EA",
+      "category": "oral care",
+      "brand": "Colgate",
+      "is_special": true,
+      "regular_price": 16.49
+    },
+    {
+      "product_name": "Colgate MaxFresh",
+      "price": 4.99,
+      "unit": "EA",
+      "category": "oral care",
+      "brand": "Colgate",
+      "is_special": true,
+      "regular_price": 8.49
+    },
+    {
+      "product_name": "Colgate Cavity Protection",
+      "price": 3.49,
+      "unit": "EA",
+      "category": "oral care",
+      "brand": "Colgate",
+      "is_special": true,
+      "regular_price": 9.19
+    }
+  ],
+  "raw_response": "{\n  \"type\": \"shelf\",\n  \"products\": [\n    {\n      \"product_name\": \"Colgate Optic White Purple\",\n      \"price\": 4.0,\n      \"unit\": \"EA\",\n      \"unit_price\": null,\n      \"category\": \"oral care\",\n      \"other\": {\n        \"brand\": \"Colgate\",\n        \"is_special\": true,\n        \"regular_price\": 7.69\n      }\n    },\n    {\n      \"product_name\": \"Colgate Optic White\",\n      \"price\": 4.99,\n      \"unit\": \"EA\",\n      \"unit_price\": null,\n      \"category\": \"oral care\",\n      \"other\": {\n        \"brand\": \"Colgate\",\n        \"is_special\": true,\n        \"regular_price\": 8.39\n      }\n    },\n    {\n      \"product_name\": \"Colgate Sensitive Pro-Relief\",\n      \"price\": 5.99,\n      \"unit\": \"EA\",\n      \"unit_price\": null,\n      \"category\": \"oral care\",\n      \"other\": {\n        \"brand\": \"Colgate\",\n        \"is_special\": true,\n        \"regular_price\": 11.49\n      }\n    },\n    {\n      \"product_name\": \"Colgate PerioGard\",\n      \"price\": 5.99,\n      \"unit\": \"EA\",\n      \"unit_price\": null,\n      \"category\": \"oral care\",\n      \"other\": {\n        \"brand\": \"Colgate\",\n        \"is_special\": true,\n        \"regular_price\": 14.59\n      }\n    },\n    {\n      \"product_name\": \"Colgate Sensitive Pro-Relief\",\n      \"price\": 4.99,\n      \"unit\": \"EA\",\n      \"unit_price\": null,\n      \"category\": \"oral care\",\n      \"other\": {\n        \"brand\": \"Colgate\",\n        \"is_special\": true,\n        \"regular_price\": 8.69\n      }\n    },\n    {\n      \"product_name\": \"Colgate MaxFresh\",\n      \"price\": 4.99,\n      \"unit\": \"EA\",\n      \"unit_price\": null,\n      \"category\": \"oral care\",\n      \"other\": {\n        \"brand\": \"Colgate\",\n        \"is_special\": true,\n        \"regular_price\": 9.19\n      }\n    },\n    {\n      \"product_name\": \"Colgate Total Active Prevention\",\n      \"price\": 5.99,\n      \"unit\": \"EA\",\n      \"unit_price\": null,\n      \"category\": \"oral care\",\n      \"other\": {\n        \"brand\": \"Colgate\",\n        \"is_special\": true,\n        \"regular_price\": 11.49\n      }\n    },\n    {\n      \"product_name\": \"Colgate Total\",\n      \"price\": 4.99,\n      \"unit\": \"EA\",\n      \"unit_price\": null,\n      \"category\": \"oral care\",\n      \"other\": {\n        \"brand\": \"Colgate\",\n        \"is_special\": true,\n        \"regular_price\": 9.19\n      }\n    },\n    {\n      \"product_name\": \"Colgate Total\",\n      \"price\": 7.99,\n      \"unit\": \"EA\",\n      \"unit_price\": null,\n      \"category\": \"oral care\",\n      \"other\": {\n        \"brand\": \"Colgate\",\n        \"is_special\": true,\n        \"regular_price\": 16.49\n      }\n    },\n    {\n      \"product_name\": \"Colgate MaxFresh\",\n      \"price\": 4.99,\n      \"unit\": \"EA\",\n      \"unit_price\": null,\n      \"category\": \"oral care\",\n      \"other\": {\n        \"brand\": \"Colgate\",\n        \"is_special\": true,\n        \"regular_price\": 8.49\n      }\n    },\n    {\n      \"product_name\": \"Colgate Cavity Protection\",\n      \"price\": 3.49,\n      \"unit\": \"EA\",\n      \"unit_price\": null,\n      \"category\": \"oral care\",\n      \"other\": {\n        \"brand\": \"Colgate\",\n        \"is_special\": true,\n        \"regular_price\": 9.19\n      }\n    }\n  ]\n}",
+  "extractor": "gemini_direct",
+  "timing": {
+    "prep_ms": 109,
+    "llm_ms": 8668,
+    "duration_ms": 8777,
+    "model": "gemini-3.1-flash-lite",
+    "classify_ms": null
+  }
+}

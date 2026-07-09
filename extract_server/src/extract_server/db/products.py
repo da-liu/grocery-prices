@@ -81,6 +81,22 @@ def reextract_photo(
     updated = get_extraction(user_id, image_id)
     timing_payload = extraction_timing_payload(updated) if updated else None
 
+    try:
+        from extract_server.db import set_extraction_pipeline_status
+        from extract_server.extraction.match_catalog import match_photo
+
+        if product_count > 0:
+            set_extraction_pipeline_status(user_id, image_id, "extracted")
+            match_photo(user_id, image_id, api_key=api_key)
+            set_extraction_pipeline_status(user_id, image_id, "matched")
+        else:
+            set_extraction_pipeline_status(user_id, image_id, "matched")
+    except Exception:
+        if product_count > 0:
+            from extract_server.db import set_extraction_pipeline_status
+
+            set_extraction_pipeline_status(user_id, image_id, "match_failed")
+
     return {
         "image_id": image_id,
         "products": products,
