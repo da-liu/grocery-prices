@@ -1,0 +1,67 @@
+.coachmark-scrim {
+  position: fixed;
+  inset: 0;
+  z-index: 1300;
+  background: var(--scrim-subtle);
+  pointer-events: none;
+}
+
+.coachmark-target-active {
+  position: relative;
+  scroll-margin-block: 10rem;
+  outline: 2px solid var(--accent);
+  outline-offset: 4px;
+  border-radius: 6px;
+}
+
+/* Compact ring for header icon buttons so neighbors are not covered.
+ * z-index is safe here: the fixed header already isolates stacking. */
+.coachmark-target-active--icon {
+  outline-offset: 1px;
+  border-radius: 10px;
+  z-index: 1302;
+}
+
+.coachmark-card {
+  /* Popover is already position:fixed in the top layer; tether via anchor. */
+  position-anchor: --coachmark-target;
+  position-area: bottom;
+  position-try-fallbacks: flip-block, flip-inline;
+  box-sizing: border-box;
+  width: min(320px, calc(100vw - 16px));
+  margin: 8px;
+  padding: 0.9rem 1rem;
+  border: 0;
+  border-radius: 12px;
+  background: var(--surface);
+  box-shadow: 0 16px 40px var(--shadow-3xl);
+  color: inherit;
+  overflow: visible;
+}
+
+.coachmark-card:popover-open {
+  display: block;
+}
+
+.coachmark-card h3 {
+  margin: 0 0 0.35rem;
+  font-size: 1rem;
+}
+
+.coachmark-card p {
+  margin: 0 0 0.75rem;
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+  line-height: 1.45;
+}
+
+.coachmark-card button {
+  padding: 0.5rem 0.85rem;
+  border: 0;
+  border-radius: 8px;
+  background: var(--accent);
+  color: var(--text-on-accent);
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}

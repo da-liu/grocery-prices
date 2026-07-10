@@ -81,11 +81,12 @@
 .store-label-actions {
   display: grid;
   gap: 0.75rem;
-  padding-bottom: 0.25rem;
+  padding-bottom: 1rem;
 }
 
 .store-label-create-btn {
   width: 100%;
+  margin-bottom: 0.5rem;
 }
 
 .store-label-form {
@@ -193,4 +194,33 @@
   height: var(--store-label-preview-height, 8.5rem);
   border-radius: 10px;
   flex: none;
+}
+
+@media (max-width: 640px) {
+  .onboarding-backdrop:has(.store-label-card) {
+    align-items: stretch;
+    justify-content: stretch;
+    padding: 0;
+  }
+
+  .store-label-card {
+    width: 100%;
+    max-width: none;
+    height: 100%;
+    max-height: none;
+    border-radius: 0;
+    box-shadow: none;
+  }
+
+  .store-label-header {
+    padding: calc(1rem + env(safe-area-inset-top, 0px)) 1.25rem 0;
+  }
+
+  .store-label-context {
+    --store-label-preview-height: 7.5rem;
+  }
+
+  .store-label-footer {
+    padding: 0.85rem 1.25rem max(1.25rem, env(safe-area-inset-bottom, 0px));
+  }
 }

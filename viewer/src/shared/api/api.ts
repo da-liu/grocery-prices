@@ -9,6 +9,7 @@ export interface UserProfile {
   username: string;
   upload_count: number;
   needs_onboarding: boolean;
+  onboarding_completed: string[];
 }
 
 export class ApiError extends Error {
@@ -29,17 +30,87 @@ function toUserProfile(payload: {
   username: string;
   upload_count: number;
   needs_onboarding: boolean;
+  onboarding_completed?: string[];
 }): UserProfile {
-  return { authenticated: true, ...payload };
+  return {
+    authenticated: true,
+    username: payload.username,
+    upload_count: payload.upload_count,
+    needs_onboarding: payload.needs_onboarding,
+    onboarding_completed: payload.onboarding_completed ?? [],
+  };
 }
 
-function formatErrorDetail(body: unknown): string {
-  if (body && typeof body === "object" && "detail" in body) {
-    const { detail } = body as { detail: unknown };
-    if (typeof detail === "string") return detail;
-    return JSON.stringify(detail ?? body);
+const FIELD_LABELS: Record<string, string> = {
+  username: "Email",
+  password: "Password",
+  email: "Email",
+};
+
+function fieldLabel(loc: unknown): string | null {
+  if (!Array.isArray(loc) || loc.length === 0) return null;
+  const raw = loc[loc.length - 1];
+  if (typeof raw !== "string" || raw === "body") return null;
+  return FIELD_LABELS[raw] ?? raw.replace(/_/g, " ");
+}
+
+function formatValidationItem(item: unknown): string | null {
+  if (!item || typeof item !== "object") return null;
+  const entry = item as { msg?: unknown; loc?: unknown; type?: unknown };
+  const msg = typeof entry.msg === "string" ? entry.msg.trim() : "";
+  if (!msg) return null;
+
+  const label = fieldLabel(entry.loc);
+  const type = typeof entry.type === "string" ? entry.type : "";
+
+  if (type === "string_too_short" && label === "Password") {
+    return "Password must be at least 8 characters";
   }
-  return JSON.stringify(body);
+  if (type === "string_too_short" && label === "Email") {
+    return "Email must be at least 3 characters";
+  }
+  if (type === "string_too_long" && label) {
+    return `${label} is too long`;
+  }
+  if (type === "missing" && label) {
+    return `${label} is required`;
+  }
+  if (label && !msg.toLowerCase().startsWith(label.toLowerCase())) {
+    return `${label}: ${msg}`;
+  }
+  return msg;
+}
+
+/** Turn FastAPI / API error JSON into a short user-facing message. */
+export function formatErrorDetail(body: unknown): string {
+  if (typeof body === "string" && body.trim()) return body.trim();
+  if (!body || typeof body !== "object") return "Request failed";
+
+  if ("detail" in body) {
+    const { detail } = body as { detail: unknown };
+    if (typeof detail === "string" && detail.trim()) return detail.trim();
+
+    if (Array.isArray(detail)) {
+      const messages = detail
+        .map(formatValidationItem)
+        .filter((m): m is string => Boolean(m));
+      if (messages.length === 1) return messages[0];
+      if (messages.length > 1) return messages.join(". ");
+      return "Please check your input and try again";
+    }
+
+    if (detail && typeof detail === "object") {
+      const nested = formatValidationItem(detail);
+      if (nested) return nested;
+    }
+  }
+
+  if ("message" in body && typeof (body as { message: unknown }).message === "string") {
+    const message = (body as { message: string }).message.trim();
+    if (message) return message;
+  }
+
+  return "Request failed";
 }
 
 async function parseError(resp: Response): Promise<string> {
@@ -137,8 +208,15 @@ export async function fetchMe(): Promise<UserProfile> {
   return toUserProfile(await resp.json());
 }
 
-export async function completeOnboarding(): Promise<UserProfile> {
-  await authVoid("/api/auth/onboarding/complete", { method: "POST" });
+export async function completeOnboarding(
+  key: string = "welcome",
+): Promise<UserProfile> {
+  const resp = await authFetch("/api/auth/onboarding/complete", {
+    method: "POST",
+    headers: JSON_HEADERS,
+    body: JSON.stringify({ key }),
+  });
+  await checkResponse(resp);
   return fetchMe();
 }
 

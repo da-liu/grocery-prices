@@ -58,7 +58,7 @@ interface CatalogContextValue {
   setShowOnboarding: (show: boolean) => void;
   finishOnboarding: () => Promise<void>;
   refreshProducts: (options?: { silent?: boolean }) => Promise<void>;
-  handleUploadSuccess: () => Promise<void>;
+  handleUploadSuccess: (info?: { imageId?: string; productCount?: number }) => Promise<void>;
   browseSearch: string;
   setBrowseSearch: (search: string) => void;
   browseQuery: BrowseQueryState;
@@ -72,6 +72,7 @@ interface CatalogContextValue {
   browseDisplayed: Product[];
   browseStats: BrowseStats;
   photoGroupSizes: Map<string, number>;
+  multiProductTipImageId: string | null;
   productsById: Map<string, Product>;
   navigateToProduct: (productId: string) => void;
   navigateToPhotoGroup: (imageId: string, productId: string) => void;
@@ -136,6 +137,7 @@ export function CatalogProvider({ user, refreshAuth, children }: CatalogProvider
   const [bulkDeleting, setBulkDeleting] = useState(false);
   const [highlightProductId, setHighlightProductId] = useState<string | null>(null);
   const [highlightPhotoGroupId, setHighlightPhotoGroupId] = useState<string | null>(null);
+  const [multiProductTipImageId, setMultiProductTipImageId] = useState<string | null>(null);
 
   const refreshProducts = useCallback(
     (options?: { silent?: boolean }) => {
@@ -150,11 +152,17 @@ export function CatalogProvider({ user, refreshAuth, children }: CatalogProvider
     [user],
   );
 
-  const handleUploadSuccess = useCallback(async () => {
-    await refreshAuth();
-    await refreshProducts({ silent: true });
-    setShowOnboarding(false);
-  }, [refreshAuth, refreshProducts]);
+  const handleUploadSuccess = useCallback(
+    async (info?: { imageId?: string; productCount?: number }) => {
+      if (info?.imageId && (info.productCount ?? 0) >= 2) {
+        setMultiProductTipImageId(info.imageId);
+      }
+      await refreshAuth();
+      await refreshProducts({ silent: true });
+      setShowOnboarding(false);
+    },
+    [refreshAuth, refreshProducts],
+  );
 
   useEffect(() => {
     if (user) {
@@ -503,6 +511,7 @@ export function CatalogProvider({ user, refreshAuth, children }: CatalogProvider
       browseDisplayed,
       browseStats,
       photoGroupSizes,
+      multiProductTipImageId,
       productsById,
       navigateToProduct,
       navigateToPhotoGroup,
@@ -549,6 +558,7 @@ export function CatalogProvider({ user, refreshAuth, children }: CatalogProvider
       browseDisplayed,
       browseStats,
       photoGroupSizes,
+      multiProductTipImageId,
       productsById,
       navigateToProduct,
       navigateToPhotoGroup,

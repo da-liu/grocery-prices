@@ -17,6 +17,7 @@ import { BrowseSelectionBar } from "@/features/browse/BrowseSelectionBar";
 import { BrowseSortFilterPanel } from "@/features/browse/BrowseSortFilterPanel";
 import { BulkDeleteConfirmModal } from "@/features/browse/BulkDeleteConfirmModal";
 import { CatalogProvider, useCatalog } from "@/features/browse/CatalogContext";
+import { ContextualOnboardingProvider } from "@/features/browse/contextualOnboarding/ContextualOnboardingProvider";
 import { OnboardingGuide } from "@/features/browse/OnboardingGuide";
 import { SettingsPage } from "@/features/stores/SettingsPage";
 import { StoreLabelModal } from "@/features/stores/StoreLabelModal";
@@ -300,7 +301,9 @@ function AppShell() {
   return (
     <StoresProvider user={user}>
       <CatalogProvider user={user} refreshAuth={refresh}>
-        <AuthenticatedShell />
+        <ContextualOnboardingProvider>
+          <AuthenticatedShell />
+        </ContextualOnboardingProvider>
       </CatalogProvider>
     </StoresProvider>
   );

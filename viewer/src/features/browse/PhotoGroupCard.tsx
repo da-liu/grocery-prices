@@ -129,10 +129,17 @@ export function PhotoGroupCard({
               </div>
             )}
           </div>
-          <button
-            type="button"
+          <div
+            role="button"
+            tabIndex={0}
             className="photo-group-card-copy"
             onClick={() => setExpanded((open) => !open)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" || e.key === " ") {
+                e.preventDefault();
+                setExpanded((open) => !open);
+              }
+            }}
             aria-expanded={expanded}
           >
             <span className="photo-group-store-row">
@@ -152,7 +159,7 @@ export function PhotoGroupCard({
             <span>
               {preview.length} product{preview.length === 1 ? "" : "s"}
             </span>
-          </button>
+          </div>
         </div>
       </div>
 
@@ -170,6 +177,9 @@ export function PhotoGroupCard({
             <button
               type="button"
               className={`photo-group-product-row${highlightProductId === product.id ? " photo-group-product-row--highlight" : ""}`}
+              data-onboarding-target="photo-product-row"
+              data-product-id={product.id}
+              data-image-id={group.imageId}
               onClick={() => onNavigateToProduct?.(product.id)}
             >
               <span>{product.product_name}</span>

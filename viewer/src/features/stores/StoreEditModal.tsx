@@ -64,12 +64,13 @@ export function StoreEditModal({ store, onDone, onDismiss }: StoreEditModalProps
         <form className="store-form" onSubmit={(event) => void handleSubmit(event)}>
           <label>
             Store name
-            <input value={name} onChange={(event) => setName(event.target.value)} required />
+            <input name="store-name" value={name} onChange={(event) => setName(event.target.value)} required />
           </label>
           <div className="store-form-row">
             <label>
               Latitude
               <input
+                name="store-latitude"
                 value={latitude}
                 onChange={(event) => setLatitude(event.target.value)}
                 inputMode="decimal"
@@ -79,6 +80,7 @@ export function StoreEditModal({ store, onDone, onDismiss }: StoreEditModalProps
             <label>
               Longitude
               <input
+                name="store-longitude"
                 value={longitude}
                 onChange={(event) => setLongitude(event.target.value)}
                 inputMode="decimal"
@@ -89,6 +91,7 @@ export function StoreEditModal({ store, onDone, onDismiss }: StoreEditModalProps
           <label>
             Match radius (meters)
             <input
+              name="store-match-radius"
               value={radius}
               onChange={(event) => setRadius(event.target.value)}
               inputMode="numeric"

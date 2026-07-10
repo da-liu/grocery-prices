@@ -244,11 +244,12 @@ function ProductEditForm({ product, saving, formId, onSave, onCancel }: ProductE
     >
       <label>
         Name
-        <input value={name} onChange={(e) => setName(e.target.value)} required />
+        <input name="product-name" value={name} onChange={(e) => setName(e.target.value)} required />
       </label>
       <label>
         Price
         <input
+          name="product-price"
           className={priceInvalid ? "input--invalid" : ""}
           value={price}
           onChange={(e) => setPrice(e.target.value)}
@@ -257,11 +258,12 @@ function ProductEditForm({ product, saving, formId, onSave, onCancel }: ProductE
       </label>
       <label>
         Unit
-        <input value={unit} onChange={(e) => setUnit(e.target.value)} placeholder="EA, lb, 100g" />
+        <input name="product-unit" value={unit} onChange={(e) => setUnit(e.target.value)} placeholder="EA, lb, 100g" />
       </label>
       <label>
         Unit price
         <input
+          name="product-unit-price"
           className={unitPriceInvalid ? "input--invalid" : ""}
           value={unitPrice}
           onChange={(e) => setUnitPrice(e.target.value)}
@@ -270,15 +272,16 @@ function ProductEditForm({ product, saving, formId, onSave, onCancel }: ProductE
       </label>
       <label>
         Category
-        <input value={category} onChange={(e) => setCategory(e.target.value)} placeholder="Produce, Snacks, ..." />
+        <input name="product-category" value={category} onChange={(e) => setCategory(e.target.value)} placeholder="Produce, Snacks, ..." />
       </label>
       <label className="product-edit-checkbox">
         <span>Special</span>
-        <input type="checkbox" checked={isSpecial} onChange={(e) => setIsSpecial(e.target.checked)} />
+        <input name="product-is-special" type="checkbox" checked={isSpecial} onChange={(e) => setIsSpecial(e.target.checked)} />
       </label>
       <label>
         Regular price
         <input
+          name="product-regular-price"
           className={regularPriceInvalid ? "input--invalid" : ""}
           value={regularPrice}
           onChange={(e) => setRegularPrice(e.target.value)}
@@ -288,7 +291,7 @@ function ProductEditForm({ product, saving, formId, onSave, onCancel }: ProductE
       </label>
       <label>
         Barcode
-        <input value={barcode} onChange={(e) => setBarcode(e.target.value)} placeholder="Leave blank to clear" />
+        <input name="product-barcode" value={barcode} onChange={(e) => setBarcode(e.target.value)} placeholder="Leave blank to clear" />
       </label>
 
       <fieldset className="product-edit-other">
@@ -313,6 +316,7 @@ function ProductEditForm({ product, saving, formId, onSave, onCancel }: ProductE
               <div className={`other-kv-composite${rowInvalid && !row.removed ? " other-kv-composite--invalid" : ""}`}>
                 <input
                   className="other-key"
+                  name={`product-other-key-${row.id}`}
                   value={row.key}
                   onChange={(e) =>
                     setOtherRows((rows) => rows.map((r) => (r.id === row.id ? { ...r, key: e.target.value } : r)))
@@ -324,6 +328,7 @@ function ProductEditForm({ product, saving, formId, onSave, onCancel }: ProductE
                 <span className="other-kv-divider" aria-hidden="true" />
                 <input
                   className="other-value"
+                  name={`product-other-value-${row.id}`}
                   value={row.valueText}
                   onChange={(e) =>
                     setOtherRows((rows) =>
@@ -440,15 +445,15 @@ function ManualProductForm({ saving, onSave, onCancel }: ManualProductFormProps)
     >
       <label>
         Product name
-        <input value={name} onChange={(e) => setName(e.target.value)} required />
+        <input name="manual-product-name" value={name} onChange={(e) => setName(e.target.value)} required />
       </label>
       <label>
         Price
-        <input value={price} onChange={(e) => setPrice(e.target.value)} inputMode="decimal" />
+        <input name="manual-product-price" value={price} onChange={(e) => setPrice(e.target.value)} inputMode="decimal" />
       </label>
       <label>
         Unit
-        <input value={unit} onChange={(e) => setUnit(e.target.value)} />
+        <input name="manual-product-unit" value={unit} onChange={(e) => setUnit(e.target.value)} />
       </label>
       <div className="product-edit-actions">
         <button
@@ -573,6 +578,8 @@ export function ProductCard({
         <label className="card-select" onClick={(e) => e.stopPropagation()}>
           <input
             type="checkbox"
+            name="product-select"
+            value={product.id}
             checked={!!selected}
             onChange={() => handleToggleSelect()}
             aria-label={`Select ${displayName}`}
@@ -830,6 +837,9 @@ export function ProductCard({
                 <button
                   type="button"
                   className="meta-link"
+                  data-onboarding-target="photo-link"
+                  data-product-id={product.id}
+                  data-image-id={product.image_id}
                   onClick={(e) => {
                     e.stopPropagation();
                     onNavigateToPhotoGroup(product.image_id, product.id);
@@ -842,7 +852,11 @@ export function ProductCard({
           )}
         </dl>
         {relatedProducts.length > 0 && (
-          <section className="related-products-section">
+          <section
+            className="related-products-section"
+            data-onboarding-target="related-products"
+            data-product-id={product.id}
+          >
             <h3 className="related-products-heading">Related products</h3>
             <ul className="related-products-list">
               {relatedProducts.map(({ product: related, score }) => (

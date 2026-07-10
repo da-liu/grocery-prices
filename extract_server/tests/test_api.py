@@ -216,13 +216,59 @@ def test_complete_onboarding(client):
     token = reg.json()["token"]
     headers = {"Authorization": f"Bearer {token}"}
     assert reg.json()["needs_onboarding"] is True
+    assert reg.json()["onboarding_completed"] == []
 
     done = client.post("/api/auth/onboarding/complete", headers=headers)
     assert done.status_code == 200, done.text
     assert done.json()["needs_onboarding"] is False
+    assert done.json()["onboarding_completed"] == ["welcome"]
 
     me = client.get("/api/auth/me", headers=headers)
     assert me.json()["needs_onboarding"] is False
+    assert me.json()["onboarding_completed"] == ["welcome"]
+
+
+def test_complete_contextual_onboarding_tip(client):
+    reg = client.post(
+        "/api/auth/register",
+        json={"username": "contextual", "password": "password123"},
+    )
+    token = reg.json()["token"]
+    headers = {"Authorization": f"Bearer {token}"}
+
+    client.post("/api/auth/onboarding/complete", headers=headers)
+    tip = client.post(
+        "/api/auth/onboarding/complete",
+        headers=headers,
+        json={"key": "related_products"},
+    )
+    assert tip.status_code == 200, tip.text
+    body = tip.json()
+    assert body["needs_onboarding"] is False
+    assert set(body["onboarding_completed"]) == {"welcome", "related_products"}
+
+    me = client.get("/api/auth/me", headers=headers)
+    assert set(me.json()["onboarding_completed"]) == {"welcome", "related_products"}
+
+
+def test_legacy_onboarding_timestamp_counts_as_welcome(client):
+    from extract_server.db import get_conn, register_user
+
+    user = register_user("legacy-onboard", "password12345")
+    conn = get_conn()
+    conn.execute(
+        "UPDATE users SET onboarding_completed_at = ? WHERE id = ?",
+        ("2026-01-01T00:00:00+00:00", user.id),
+    )
+    conn.commit()
+
+    login = client.post(
+        "/api/auth/login",
+        json={"username": "legacy-onboard", "password": "password12345"},
+    )
+    assert login.status_code == 200
+    assert login.json()["needs_onboarding"] is False
+    assert login.json()["onboarding_completed"] == ["welcome"]
 
 
 def test_store_locations_crud(client):

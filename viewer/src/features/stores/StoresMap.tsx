@@ -42,7 +42,7 @@ export function StoresMap({ stores }: StoresMapProps) {
   }, []);
 
   const staticMapUrl = useMemo(() => {
-    if (!mapsApiKey || stores.length < 2) return null;
+    if (!mapsApiKey || stores.length < 1) return null;
 
     const bounds = geoBoundsFromCoords(stores);
     if (!bounds) return null;
@@ -58,10 +58,10 @@ export function StoresMap({ stores }: StoresMapProps) {
     return mapsStaticUrlForViewport(viewport, mapsApiKey, markers);
   }, [stores, mapSize.width, mapSize.height, mapsApiKey]);
 
-  if (stores.length < 2) {
+  if (stores.length < 1) {
     return (
       <p className="stores-map-empty">
-        Add at least two stores to see them on the map.
+        Add a store to see it on the map.
       </p>
     );
   }

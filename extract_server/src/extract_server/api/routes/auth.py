@@ -11,14 +11,16 @@ from extract_server.api.dependencies import (
     require_user,
     revoke_session,
 )
-from extract_server.schemas import AuthResponse, LoginRequest, RegisterRequest
+from extract_server.schemas import AuthResponse, CompleteOnboardingRequest, LoginRequest, RegisterRequest
 from extract_server.db import (
     authenticate_user,
     complete_onboarding,
     count_extractions,
+    list_onboarding_completed,
     register_user,
     user_needs_onboarding,
 )
+from extract_server.db.users import ALLOWED_ONBOARDING_KEYS
 
 router = APIRouter(prefix="/api/auth", tags=["auth"])
 
@@ -29,6 +31,7 @@ def _auth_payload(user) -> AuthResponse:
         username=user.username,
         upload_count=count_extractions(user.id),
         needs_onboarding=user_needs_onboarding(user.id),
+        onboarding_completed=list_onboarding_completed(user.id),
     )
 
 
@@ -65,11 +68,22 @@ def auth_me(
         "username": user.username,
         "upload_count": count_extractions(user.id),
         "needs_onboarding": user_needs_onboarding(user.id),
+        "onboarding_completed": list_onboarding_completed(user.id),
         "token": request.state.bearer_token,
     }
 
 
 @router.post("/onboarding/complete")
-def finish_onboarding(user: Annotated[AuthUser, Depends(require_user)]) -> dict:
-    complete_onboarding(user.id)
-    return {"ok": True, "needs_onboarding": False}
+def finish_onboarding(
+    user: Annotated[AuthUser, Depends(require_user)],
+    body: CompleteOnboardingRequest | None = None,
+) -> dict:
+    key = body.key if body else "welcome"
+    if key not in ALLOWED_ONBOARDING_KEYS:
+        raise HTTPException(status_code=400, detail="Unknown onboarding key")
+    complete_onboarding(user.id, key=key)
+    return {
+        "ok": True,
+        "needs_onboarding": user_needs_onboarding(user.id),
+        "onboarding_completed": list_onboarding_completed(user.id),
+    }

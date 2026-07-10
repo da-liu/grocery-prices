@@ -162,7 +162,7 @@ export function StoreLabelModal({ request, onDone, onDismiss }: StoreLabelModalP
             >
               <label>
                 Store name
-                <input value={name} onChange={(e) => setName(e.target.value)} required />
+                <input name="store-name" value={name} onChange={(e) => setName(e.target.value)} required />
               </label>
               <div className="store-form-actions">
                 <button

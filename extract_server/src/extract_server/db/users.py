@@ -1,10 +1,10 @@
 from __future__ import annotations
 
+import json
 import re
 import sqlite3
 import uuid
 from dataclasses import dataclass
-from datetime import datetime, timezone
 
 import bcrypt
 
@@ -13,6 +13,17 @@ from extract_server.db.connection import get_conn
 
 USERNAME_RE = re.compile(r"^[a-zA-Z0-9_-]{3,32}$")
 EMAIL_RE = re.compile(r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$")
+
+ONBOARDING_WELCOME = "welcome"
+ONBOARDING_RELATED_PRODUCTS = "related_products"
+ONBOARDING_MULTI_PRODUCT_PHOTO = "multi_product_photo"
+ALLOWED_ONBOARDING_KEYS = frozenset(
+    {
+        ONBOARDING_WELCOME,
+        ONBOARDING_RELATED_PRODUCTS,
+        ONBOARDING_MULTI_PRODUCT_PHOTO,
+    }
+)
 
 _SCHEMA = """
 CREATE TABLE IF NOT EXISTS users (
@@ -74,19 +85,62 @@ def _user_from_row(row: sqlite3.Row) -> User:
     return User(id=row["id"], username=row["username"])
 
 
-def user_needs_onboarding(user_id: str) -> bool:
+def _fetch_onboarding_raw(user_id: str) -> str | None:
     row = _fetchone(
         "SELECT onboarding_completed_at FROM users WHERE id = ?",
         (user_id,),
     )
-    return row is None or row["onboarding_completed_at"] is None
+    if row is None:
+        return None
+    return row["onboarding_completed_at"]
 
 
-def complete_onboarding(user_id: str) -> None:
+def _parse_onboarding_raw(raw: str | None) -> dict[str, str]:
+    if not raw:
+        return {}
+    trimmed = raw.strip()
+    if not trimmed:
+        return {}
+    if trimmed.startswith("{"):
+        try:
+            parsed = json.loads(trimmed)
+        except json.JSONDecodeError:
+            return {}
+        if not isinstance(parsed, dict):
+            return {}
+        state: dict[str, str] = {}
+        for key, value in parsed.items():
+            if isinstance(key, str) and key in ALLOWED_ONBOARDING_KEYS and isinstance(value, str):
+                state[key] = value
+        return state
+    return {ONBOARDING_WELCOME: trimmed}
+
+
+def get_onboarding_state(user_id: str) -> dict[str, str]:
+    return _parse_onboarding_raw(_fetch_onboarding_raw(user_id))
+
+
+def list_onboarding_completed(user_id: str) -> list[str]:
+    return sorted(get_onboarding_state(user_id).keys())
+
+
+def user_needs_onboarding(user_id: str) -> bool:
+    return ONBOARDING_WELCOME not in get_onboarding_state(user_id)
+
+
+def mark_onboarding(user_id: str, key: str) -> None:
+    if key not in ALLOWED_ONBOARDING_KEYS:
+        raise ValueError(f"Unknown onboarding key: {key}")
+    state = get_onboarding_state(user_id)
+    state[key] = utc_now()
     _execute(
         "UPDATE users SET onboarding_completed_at = ? WHERE id = ?",
-        (utc_now(), user_id),
+        (json.dumps(state), user_id),
     )
+
+
+def complete_onboarding(user_id: str, *, key: str = ONBOARDING_WELCOME) -> None:
+    mark_onboarding(user_id, key)
 
 
 def register_user(username: str, password: str) -> User:

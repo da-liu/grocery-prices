@@ -55,7 +55,7 @@ export function SettingsPage() {
 
           {loading && <p className="status">Loading stores…</p>}
 
-          {!loading && stores.length > 1 && <StoresMap stores={stores} />}
+          {!loading && stores.length > 0 && <StoresMap stores={stores} />}
 
           {!loading && stores.length > 0 && (
             <ul className="store-list">

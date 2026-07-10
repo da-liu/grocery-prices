@@ -162,13 +162,18 @@ function claimNextBatch(
   return queued.slice(0, MAX_BULK_BATCH);
 }
 
+export interface UploadSuccessInfo {
+  imageId?: string;
+  productCount?: number;
+}
+
 export function UploadQueueProvider({
   children,
   onUploadSuccess,
   extractBackend = "cursor",
 }: {
   children: React.ReactNode;
-  onUploadSuccess?: () => void | Promise<void>;
+  onUploadSuccess?: (info?: UploadSuccessInfo) => void | Promise<void>;
   extractBackend?: ExtractBackend;
 }) {
   const [items, setItems] = useState<UploadQueueItem[]>([]);
@@ -235,7 +240,10 @@ export function UploadQueueProvider({
         // onboarding may already be complete
       }
 
-      await onUploadSuccessRef.current?.();
+      await onUploadSuccessRef.current?.({
+        imageId: result.image_id,
+        productCount: productCountFromResult(result),
+      });
     },
     [updateItem],
   );
@@ -271,7 +279,10 @@ export function UploadQueueProvider({
 
           if (pipeline === "extracted") {
             if (!fetchedExtracted) {
-              await onUploadSuccessRef.current?.();
+              await onUploadSuccessRef.current?.({
+                imageId: status.image_id,
+                productCount: productCountFromResult(status),
+              });
               fetchedExtracted = true;
               extractedAt = Date.now();
             }
@@ -284,10 +295,14 @@ export function UploadQueueProvider({
           }
 
           if (pipeline === "matched") {
+            const info = {
+              imageId: status.image_id,
+              productCount: productCountFromResult(status),
+            };
             if (!fetchedExtracted) {
-              await onUploadSuccessRef.current?.();
+              await onUploadSuccessRef.current?.(info);
             } else {
-              await onUploadSuccessRef.current?.();
+              await onUploadSuccessRef.current?.(info);
             }
             await finishUpload(item, status);
             return;
@@ -295,7 +310,10 @@ export function UploadQueueProvider({
 
           if (pipeline === "match_failed") {
             if (!fetchedExtracted) {
-              await onUploadSuccessRef.current?.();
+              await onUploadSuccessRef.current?.({
+                imageId: status.image_id,
+                productCount: productCountFromResult(status),
+              });
             }
             await finishUpload(item, status);
             return;

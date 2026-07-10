@@ -97,6 +97,8 @@ function CheckboxList({
           <label key={opt} className="browse-checkbox-label">
             <input
               type="checkbox"
+              name={`browse-filter-${label.toLowerCase()}`}
+              value={opt}
               checked={selected.includes(opt)}
               onChange={() => onChange(toggleListValue(selected, opt))}
             />
@@ -262,6 +264,7 @@ export function BrowseSortFilterPanel({
                 Min
                 <input
                   type="number"
+                  name="browse-price-min"
                   min={0}
                   step={0.01}
                   placeholder={priceExtents.pricedCount ? String(priceExtents.min) : "—"}
@@ -277,6 +280,7 @@ export function BrowseSortFilterPanel({
                 Max
                 <input
                   type="number"
+                  name="browse-price-max"
                   min={0}
                   step={0.01}
                   placeholder={priceExtents.pricedCount ? String(priceExtents.max) : "—"}

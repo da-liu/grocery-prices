@@ -14,12 +14,6 @@ _EXTRACTION_TIMING_SET = (
 _PIPELINE_STATUSES = frozenset({"extracted", "matched", "failed", "match_failed"})
 
 
-def _ensure_extractions_status_column(conn: sqlite3.Connection) -> None:
-    columns = {row[1] for row in conn.execute("PRAGMA table_info(extractions)").fetchall()}
-    if "status" not in columns:
-        conn.execute("ALTER TABLE extractions ADD COLUMN status TEXT")
-
-
 def init_extractions_table() -> None:
     conn = get_conn()
     conn.execute(
@@ -43,7 +37,6 @@ def init_extractions_table() -> None:
         )
         """
     )
-    _ensure_extractions_status_column(conn)
 
 
 def extraction_timing_payload(row: dict[str, Any]) -> dict[str, Any] | None:

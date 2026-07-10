@@ -1,11 +1,63 @@
 import { describe, expect, it } from "vitest";
-import { ApiError, buildUploadForm, describeRequestError, isAuthError } from "./api";
+import {
+  ApiError,
+  buildUploadForm,
+  describeRequestError,
+  formatErrorDetail,
+  isAuthError,
+} from "./api";
 
 describe("isAuthError", () => {
   it("returns true only for 401 ApiError", () => {
     expect(isAuthError(new ApiError("Sign in required", 401))).toBe(true);
     expect(isAuthError(new ApiError("Server error", 500))).toBe(false);
     expect(isAuthError(new Error("Failed to fetch"))).toBe(false);
+  });
+});
+
+describe("formatErrorDetail", () => {
+  it("returns string detail as-is", () => {
+    expect(formatErrorDetail({ detail: "Invalid email or password" })).toBe(
+      "Invalid email or password",
+    );
+  });
+
+  it("humanizes FastAPI validation arrays instead of raw JSON", () => {
+    expect(
+      formatErrorDetail({
+        detail: [
+          {
+            type: "string_too_short",
+            loc: ["body", "password"],
+            msg: "String should have at least 8 characters",
+            input: "short",
+          },
+        ],
+      }),
+    ).toBe("Password must be at least 8 characters");
+  });
+
+  it("joins multiple validation messages", () => {
+    expect(
+      formatErrorDetail({
+        detail: [
+          {
+            type: "string_too_short",
+            loc: ["body", "username"],
+            msg: "String should have at least 3 characters",
+          },
+          {
+            type: "string_too_short",
+            loc: ["body", "password"],
+            msg: "String should have at least 8 characters",
+          },
+        ],
+      }),
+    ).toBe("Email must be at least 3 characters. Password must be at least 8 characters");
+  });
+
+  it("does not dump unknown bodies as JSON", () => {
+    expect(formatErrorDetail({ weird: true })).toBe("Request failed");
   });
 });
 

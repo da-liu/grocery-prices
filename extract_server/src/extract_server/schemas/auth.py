@@ -18,3 +18,8 @@ class AuthResponse(BaseModel):
     username: str
     upload_count: int
     needs_onboarding: bool
+    onboarding_completed: list[str] = Field(default_factory=list)
+
+
+class CompleteOnboardingRequest(BaseModel):
+    key: str = "welcome"

@@ -77,17 +77,22 @@ export function TopBar({
       ) : (
         <input
           type="search"
+          id="catalog-search"
+          name="catalog-search"
           className="top-bar-search"
           placeholder={searchPlaceholder}
           value={search}
           onChange={(e) => onSearchChange(e.target.value)}
           aria-label={searchPlaceholder}
+          autoComplete="off"
         />
       )}
 
       <div className="top-bar-actions">
         <input
           ref={photoInputRef}
+          id="catalog-photo-upload"
+          name="catalog-photo-upload"
           type="file"
           accept="image/*"
           multiple
@@ -123,6 +128,7 @@ export function TopBar({
             className={`top-bar-icon-btn top-bar-icon-btn--filter${sortFilterOpen || activeChipCount > 0 ? " active" : ""}`}
             aria-label="Sort and filter"
             aria-expanded={sortFilterOpen}
+            data-onboarding-target="sort-filter"
             onClick={() => {
               onToggleSortFilter?.();
               setMenuOpen(false);

@@ -87,6 +87,7 @@ export function CapturedDateFilter({
             From
             <input
               type="date"
+              name="browse-captured-after"
               value={capturedAfter ?? ""}
               onChange={(e) =>
                 onChange({
@@ -100,6 +101,7 @@ export function CapturedDateFilter({
             To
             <input
               type="date"
+              name="browse-captured-before"
               value={capturedBefore ?? ""}
               onChange={(e) =>
                 onChange({

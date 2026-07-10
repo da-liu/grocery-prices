@@ -216,8 +216,6 @@
 
 .related-products-heading {
   margin: 0 0 0.5rem;
-  padding-left: 0.5rem;
-  padding-right: 0.5rem;
   font-size: 0.72rem;
   font-weight: 600;
   letter-spacing: 0.04em;
@@ -227,7 +225,7 @@
 
 .related-products-list {
   list-style: none;
-  margin: 0;
+  margin: 0 -0.5rem;
   padding: 0;
   display: flex;
   flex-direction: column;
@@ -394,6 +392,8 @@
 }
 
 .product-edit-form {
+  --edit-input-min-height: 2.15rem;
+  --edit-input-padding: 0.35rem 0.6rem;
   display: grid;
   gap: 0.5rem;
   margin: 0.5rem 0 0.75rem;
@@ -418,9 +418,9 @@
   height: 1.05rem;
 }
 
-.product-edit-form input {
-  min-height: 2.5rem;
-  padding: 0.55rem 0.7rem;
+.product-edit-form label:not(.product-edit-checkbox) input {
+  min-height: var(--edit-input-min-height);
+  padding: var(--edit-input-padding);
   border: 1px solid var(--border-input);
   border-radius: 8px;
   font: inherit;
@@ -429,16 +429,16 @@
   transition: border-color 160ms ease, box-shadow 160ms ease;
 }
 
-.product-edit-form input:focus {
+.product-edit-form label:not(.product-edit-checkbox) input:focus {
   outline: 2px solid var(--accent);
   outline-offset: 0;
 }
 
-.product-edit-form input.input--invalid {
+.product-edit-form label:not(.product-edit-checkbox) input.input--invalid {
   border-color: var(--danger);
 }
 
-.product-edit-form input.input--invalid:focus {
+.product-edit-form label:not(.product-edit-checkbox) input.input--invalid:focus {
   outline-color: var(--danger);
 }
 
@@ -519,8 +519,8 @@
 
 .product-edit-form .other-key,
 .product-edit-form .other-value {
-  min-height: 2.15rem;
-  padding: 0.35rem 0.6rem;
+  min-height: var(--edit-input-min-height);
+  padding: var(--edit-input-padding);
   border: 0;
   border-radius: 0;
   box-shadow: none;
@@ -569,8 +569,8 @@
   align-items: center;
   justify-content: center;
   position: relative;
-  flex: 0 0 2.15rem;
-  width: 2.15rem;
+  flex: 0 0 var(--edit-input-min-height);
+  width: var(--edit-input-min-height);
   padding: 0;
   border: 0;
   border-radius: 0;

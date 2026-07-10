@@ -16,6 +16,7 @@ interface AuthState {
   register: (username: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
   refresh: () => Promise<void>;
+  applyUser: (profile: UserProfile) => void;
 }
 
 const AuthContext = createContext<AuthState | null>(null);
@@ -52,9 +53,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setUser(null);
   }, []);
 
+  const applyUser = useCallback((profile: UserProfile) => {
+    setUser(profile);
+  }, []);
+
   const value = useMemo(
-    () => ({ user, loading, login, register, logout, refresh }),
-    [user, loading, login, register, logout, refresh],
+    () => ({ user, loading, login, register, logout, refresh, applyUser }),
+    [user, loading, login, register, logout, refresh, applyUser],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
