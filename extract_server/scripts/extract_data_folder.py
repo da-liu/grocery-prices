@@ -4,9 +4,7 @@
 from __future__ import annotations
 
 import json
-import subprocess
 import sys
-import time
 from pathlib import Path
 
 from dotenv import load_dotenv
@@ -38,31 +36,6 @@ def _image_files(folder: Path) -> list[Path]:
     return [by_stem[stem] for stem in sorted(by_stem)]
 
 
-def _read_exif(image_path: Path) -> dict:
-    cmd = [
-        "exiftool",
-        "-json",
-        "-n",
-        "-GPSLatitude",
-        "-GPSLongitude",
-        "-DateTimeOriginal",
-        str(image_path),
-    ]
-    output = subprocess.check_output(cmd, text=True)
-    rows = json.loads(output)
-    if not rows:
-        return {}
-    row = rows[0]
-    captured_at = row.get("DateTimeOriginal")
-    if isinstance(captured_at, str):
-        captured_at = captured_at.replace(":", "-", 2).replace(":", ":", 1)
-    return {
-        "GPSLatitude": row.get("GPSLatitude"),
-        "GPSLongitude": row.get("GPSLongitude"),
-        "captured_at": captured_at,
-    }
-
-
 def _flat_product(product) -> dict:
     data = product.to_product_dict()
     other = data.pop("other", None)
@@ -71,14 +44,8 @@ def _flat_product(product) -> dict:
     return data
 
 
-def _write_json(folder: Path, image_path: Path, result, *, prep_ms: int) -> Path:
+def _write_json(folder: Path, image_path: Path, result) -> Path:
     rel_source = f"data/{folder.name}/{image_path.name}"
-    meta = result.meta.model_copy(
-        update={
-            "source_file": rel_source,
-            "date_folder": folder.name,
-        }
-    )
     timing = result.timing
     llm_ms = timing.llm_ms if timing else 0
     other_ms = timing.other_ms if timing else 0
@@ -87,16 +54,13 @@ def _write_json(folder: Path, image_path: Path, result, *, prep_ms: int) -> Path
         "date_folder": folder.name,
         "source_file": rel_source,
         "photo_type": result.photo_type,
-        "meta": meta.model_dump(exclude_none=True),
         "products": [_flat_product(product) for product in result.products],
         "raw_response": result.raw_response,
         "extractor": result.extractor,
         "timing": {
-            "prep_ms": prep_ms,
             "llm_ms": llm_ms,
-            "duration_ms": prep_ms + llm_ms + other_ms,
+            "duration_ms": llm_ms + other_ms,
             "model": timing.model if timing else None,
-            "classify_ms": None,
         },
     }
     out_path = folder / f"{image_path.stem}.json"
@@ -123,18 +87,9 @@ def main() -> int:
             print(f"  skip {image_path.name} (json exists)")
             continue
 
-        prep_start = time.perf_counter()
-        exif = _read_exif(image_path)
-        exif["date_folder"] = folder.name
-        prep_ms = int((time.perf_counter() - prep_start) * 1000)
-
         print(f"  extracting {image_path.name}...", flush=True)
-        result = extract_from_upload(
-            image_path,
-            image_id=image_path.stem,
-            exif=exif,
-        )
-        out_path = _write_json(folder, image_path, result, prep_ms=prep_ms)
+        result = extract_from_upload(image_path)
+        out_path = _write_json(folder, image_path, result)
         print(
             f"    -> {out_path.name} ({result.photo_type}, {len(result.products)} products, "
             f"{result.timing.llm_ms if result.timing else 0}ms)"

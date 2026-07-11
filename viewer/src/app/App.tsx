@@ -202,7 +202,7 @@ function AuthenticatedLayout() {
           user={user!}
           onLogout={() => void logout()}
           photoInputRef={photoInputRef}
-          onPhotosSelected={(files) => enqueueFiles(files)}
+          onPhotosSelected={enqueueFiles}
           showSortFilter={isBrowse}
           sortFilterOpen={catalog.sortFilterOpen}
           activeChipCount={catalog.activeChipCount}

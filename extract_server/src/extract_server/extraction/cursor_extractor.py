@@ -11,7 +11,7 @@ from pathlib import Path
 import httpx
 from cursor_sdk import Agent, AgentOptions, CursorAgentError, LocalAgentOptions, SDKImage, UserMessage
 
-from extract_server.core.exceptions import ConfigError, CursorExtractError, ExtractionError
+from extract_server.core.exceptions import ConfigError, ExtractionError
 from extract_server.extraction.parse_response import parse_unified_response
 from extract_server.extraction.prompt import build_unified_prompt
 from extract_server.extraction.schema import ExtractedProduct
@@ -72,9 +72,9 @@ def configured_api_key(api_key: str | None = None, backend: str | None = None) -
         return api_key
     backend = backend or current_extract_backend()
     if backend == GEMINI_DIRECT_BACKEND:
-        key = os.environ.get("GEMINI_API_KEY") or os.environ.get("GOOGLE_API_KEY")
+        key = os.environ.get("GEMINI_API_KEY")
         if not key:
-            raise ConfigError("GEMINI_API_KEY or GOOGLE_API_KEY is required for direct Gemini extraction")
+            raise ConfigError("GEMINI_API_KEY is required for direct Gemini extraction")
         return key
     key = os.environ.get("CURSOR_API_KEY")
     if not key:

@@ -30,14 +30,14 @@ function toUserProfile(payload: {
   username: string;
   upload_count: number;
   needs_onboarding: boolean;
-  onboarding_completed?: string[];
+  onboarding_completed: string[];
 }): UserProfile {
   return {
     authenticated: true,
     username: payload.username,
     upload_count: payload.upload_count,
     needs_onboarding: payload.needs_onboarding,
-    onboarding_completed: payload.onboarding_completed ?? [],
+    onboarding_completed: payload.onboarding_completed,
   };
 }
 

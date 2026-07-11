@@ -20,7 +20,6 @@ def test_new_photo_ids_returns_unique_uuid_ids():
 def test_accept_upload_batch_assigns_distinct_image_ids(tmp_path: Path, monkeypatch):
     monkeypatch.setenv("GROCERY_DATA_DIR", str(tmp_path / "data"))
     monkeypatch.setenv("GROCERY_DB_PATH", str(tmp_path / "grocery.db"))
-    monkeypatch.setattr("extract_server.extraction.paths.ROOT", tmp_path)
     monkeypatch.setattr("extract_server.extraction.paths.DATA_DIR", tmp_path / "data")
 
     from extract_server.db import init_db, register_user
@@ -67,7 +66,6 @@ def test_accept_upload_batch_assigns_distinct_image_ids(tmp_path: Path, monkeypa
 def test_accept_upload_batch_persists_jpeg(tmp_path: Path, monkeypatch):
     monkeypatch.setenv("GROCERY_DATA_DIR", str(tmp_path / "data"))
     monkeypatch.setenv("GROCERY_DB_PATH", str(tmp_path / "grocery.db"))
-    monkeypatch.setattr("extract_server.extraction.paths.ROOT", tmp_path)
     monkeypatch.setattr("extract_server.extraction.paths.DATA_DIR", tmp_path / "data")
 
     from extract_server.db import init_db, register_user
@@ -111,7 +109,7 @@ def test_bulk_endpoint_passes_distinct_saved_paths(client, monkeypatch):
         json={"username": "bulk-uploader", "password": "password123"},
     )
     token = reg.json()["token"]
-    monkeypatch.setenv("CURSOR_API_KEY", "test-key")
+    monkeypatch.setenv("GEMINI_API_KEY", "test-key")
 
     captured_bytes: list[bytes] = []
 

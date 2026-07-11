@@ -35,8 +35,6 @@ class ExtractionJob:
     user_stores: list[dict[str, Any]]
     exif: dict[str, Any]
     date_folder: str
-    captured_at: str | None
-    store_location_id: str | None
     content_hash: str
     request_id: str | None = None
     extract_backend: str | None = None

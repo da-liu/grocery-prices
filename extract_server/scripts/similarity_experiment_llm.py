@@ -281,9 +281,9 @@ def make_hybrid_scorer(
 
 def run_llm_experiments() -> dict[str, Any]:
     load_dotenv(REPO_ROOT / "extract_server" / ".env")
-    api_key = os.environ.get("GEMINI_API_KEY") or os.environ.get("GOOGLE_API_KEY")
+    api_key = os.environ.get("GEMINI_API_KEY")
     if not api_key:
-        raise RuntimeError("GOOGLE_API_KEY or GEMINI_API_KEY is required for embedding experiments")
+        raise RuntimeError("GEMINI_API_KEY is required for embedding experiments")
 
     products = load_products()
     pairs = build_labeled_pairs(products)

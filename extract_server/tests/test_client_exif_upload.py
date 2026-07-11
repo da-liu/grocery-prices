@@ -9,7 +9,7 @@ def test_bulk_upload_accepts_exif_json(client, monkeypatch):
         json={"username": "exif-uploader", "password": "password123"},
     )
     token = reg.json()["token"]
-    monkeypatch.setenv("CURSOR_API_KEY", "test-key")
+    monkeypatch.setenv("GEMINI_API_KEY", "test-key")
 
     captured: dict = {}
 
@@ -53,7 +53,7 @@ def test_bulk_upload_rejects_exif_json_length_mismatch(client, monkeypatch):
         json={"username": "exif-length", "password": "password123"},
     )
     token = reg.json()["token"]
-    monkeypatch.setenv("CURSOR_API_KEY", "test-key")
+    monkeypatch.setenv("GEMINI_API_KEY", "test-key")
 
     resp = client.post(
         "/api/photos/bulk",

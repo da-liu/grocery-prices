@@ -74,15 +74,14 @@ def test_extraction_error_returns_safe_502(client):
     assert resp.json() == {"detail": "Extraction failed"}
 
 
-def test_run_extraction_failure_logs(tmp_path, monkeypatch, caplog):
+def test_run_extraction_pipeline_failure_logs(tmp_path, monkeypatch, caplog):
     monkeypatch.setenv("GROCERY_DATA_DIR", str(tmp_path / "data"))
     monkeypatch.setenv("GROCERY_DB_PATH", str(tmp_path / "grocery.db"))
-    monkeypatch.setattr("extract_server.extraction.paths.ROOT", tmp_path)
     monkeypatch.setattr("extract_server.extraction.paths.DATA_DIR", tmp_path / "data")
 
     from extract_server.db import init_db, register_user
     from extract_server.extraction.worker import ExtractionJob
-    from extract_server.extraction.ingest import accept_upload_batch, run_extraction
+    from extract_server.extraction.ingest import accept_upload_batch, run_extraction_pipeline
 
     caplog.set_level(logging.ERROR)
 
@@ -106,13 +105,11 @@ def test_run_extraction_failure_logs(tmp_path, monkeypatch, caplog):
         user_stores=[],
         exif={},
         date_folder=accepted["date_folder"],
-        captured_at=None,
-        store_location_id=None,
         content_hash=accepted["content_hash"],
         request_id="req-log-test",
     )
 
-    result = run_extraction(job)
+    result = run_extraction_pipeline(job)
     assert result["extraction_status"] == "failed"
     assert any("extraction_failed" in record.message for record in caplog.records)
 

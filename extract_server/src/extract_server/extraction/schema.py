@@ -51,15 +51,6 @@ class ExtractedProduct(BaseModel):
         return data
 
 
-class ImageMeta(BaseModel):
-    image_id: str | None = None
-    source_file: str | None = None
-    gps_latitude: float | None = None
-    gps_longitude: float | None = None
-    captured_at: str | None = None
-    date_folder: str | None = None
-
-
 class ExtractionTiming(BaseModel):
     llm_ms: int = 0
     other_ms: int = 0
@@ -68,7 +59,6 @@ class ExtractionTiming(BaseModel):
 
 class ExtractionResult(BaseModel):
     image_path: str
-    meta: ImageMeta
     products: list[ExtractedProduct] = Field(default_factory=list)
     photo_type: str = "shelf"
     raw_response: str | None = None

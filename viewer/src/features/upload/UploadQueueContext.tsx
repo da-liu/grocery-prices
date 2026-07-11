@@ -97,10 +97,7 @@ function markUnknownStoreHintShown(): void {
 }
 
 function pipelineStatusFromResult(result: UploadResult): PhotoPipelineStatus {
-  if (result.status) return result.status;
-  if (result.extraction_status === "pending") return "pending";
-  if (result.extraction_status === "failed") return "failed";
-  return "matched";
+  return result.status ?? "matched";
 }
 
 function applyUploadResult(result: UploadResult): Partial<UploadQueueItem> {

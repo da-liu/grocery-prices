@@ -25,8 +25,7 @@ def test_extract_products_from_image_posts_to_gemini_direct(tmp_path: Path, monk
     source.write_bytes(b"source-image")
 
     monkeypatch.setenv("GROCERY_EXTRACT_BACKEND", "gemini_direct")
-    monkeypatch.setenv("GOOGLE_API_KEY", "google-key")
-    monkeypatch.delenv("GEMINI_API_KEY", raising=False)
+    monkeypatch.setenv("GEMINI_API_KEY", "gemini-key")
 
     captured: dict[str, object] = {}
 
@@ -78,7 +77,7 @@ def test_extract_products_from_image_posts_to_gemini_direct(tmp_path: Path, monk
         "https://generativelanguage.googleapis.com/v1beta/models/"
         "gemini-3.1-flash-lite:generateContent"
     )
-    assert captured["params"] == {"key": "google-key"}
+    assert captured["params"] == {"key": "gemini-key"}
     payload = captured["payload"]
     assert payload["generationConfig"]["responseMimeType"] == "application/json"
     encoded = payload["contents"][0]["parts"][1]["inline_data"]["data"]
@@ -107,10 +106,8 @@ def test_extract_from_upload_uses_backend_extractor_label(tmp_path: Path, monkey
 
     result = extract_from_upload(
         upload,
-        image_id="IMG_0001",
         api_key="test-key",
         backend="gemini_direct",
-        exif={},
     )
 
     assert result.extractor == "gemini_direct"

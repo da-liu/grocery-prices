@@ -32,7 +32,6 @@ from extract_server.db.photos import (
     save_photo,
     set_photo_store_location_id,
 )
-from extract_server.db.products import add_product, reextract_photo, update_product
 from extract_server.db.queries import (
     build_product_row,
     get_photos_extraction_status,
@@ -109,7 +108,6 @@ __all__ = [
     "CreateStoreResult",
     "User",
     "UserStoreLocation",
-    "add_product",
     "add_sighting",
     "authenticate_user",
     "blob_key",
@@ -153,7 +151,6 @@ __all__ = [
     "photo_id_for_empty_sighting",
     "prune_orphan_photo_files",
     "record_photo_extraction_failure",
-    "reextract_photo",
     "register_user",
     "replace_photo_extraction",
     "save_photo",
@@ -163,7 +160,6 @@ __all__ = [
     "set_user_extract_backend",
     "store_as_match_dict",
     "store_to_api_dict",
-    "update_product",
     "update_sighting",
     "update_user_store",
     "user_needs_onboarding",

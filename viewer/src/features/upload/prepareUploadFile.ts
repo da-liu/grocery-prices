@@ -22,7 +22,7 @@ export async function prepareUploadFile(file: File): Promise<{
   }
 
   const uploadFile = new File([result.blob], result.downloadName, {
-    type: result.blob.type || "image/webp",
+    type: result.blob.type || "image/jpeg",
   });
   revokeCompressResult(result);
   return { file: uploadFile, clientExif, compressed: true };

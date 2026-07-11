@@ -130,7 +130,6 @@ def get_photos_extraction_status(
             "image_path": f"api/media/{image_id}",
             "status": pipeline,
             "extraction_status": status,
-            "detected_receipt": False,
             "product_count": product_count,
             "products": products,
             "extraction_empty": status == "done" and product_count == 0,
@@ -144,7 +143,6 @@ def get_photos_extraction_status(
         photo_type = photo.get("type")
         if isinstance(photo_type, str) and photo_type:
             payload["photo_type"] = photo_type
-            payload["detected_receipt"] = photo_type == "receipt"
         store_location_id = photo.get("store_location_id")
         if isinstance(store_location_id, str) and store_location_id:
             payload["store_location_id"] = store_location_id

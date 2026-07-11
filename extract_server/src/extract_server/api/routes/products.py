@@ -6,8 +6,9 @@ from fastapi import APIRouter, Depends, HTTPException
 
 from extract_server.api.dependencies import AuthUser, require_user
 from extract_server.schemas import BulkDeleteProductsBody, ProductUpdateBody
-from extract_server.db import add_product, is_valid_photo_id, list_product_rows, reextract_photo, update_product
+from extract_server.db import list_product_rows
 from extract_server.extraction.delete import delete_product, delete_products_bulk
+from extract_server.services.products import update_product
 
 router = APIRouter(prefix="/api/products", tags=["products"])
 

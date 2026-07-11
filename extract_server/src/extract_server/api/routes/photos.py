@@ -13,11 +13,11 @@ from extract_server.api.dependencies import AuthUser, require_user
 from extract_server.core.config import user_extract_credentials
 from extract_server.core.request import request_id_from_request
 from extract_server.schemas import AssignPhotoStoreBody, ManualProductBody, PhotoStatusRequest
-from extract_server.db import complete_onboarding
-from extract_server.db import add_product, get_user_store, is_valid_photo_id, reextract_photo
+from extract_server.db import complete_onboarding, get_user_store, is_valid_photo_id
 from extract_server.extraction.ingest import accept_upload_batch, build_status_response
 from extract_server.extraction.delete import delete_photo
 from extract_server.extraction.photo_stores import set_image_store_location_id
+from extract_server.services.products import add_product, reextract_photo
 
 router = APIRouter(prefix="/api/photos", tags=["photos"])
 

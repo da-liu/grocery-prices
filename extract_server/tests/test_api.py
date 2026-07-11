@@ -77,7 +77,7 @@ def test_upload_with_mocked_ingest(client):
                 "extraction_status": "pending",
             }
         ]
-        with patch.dict("os.environ", {"CURSOR_API_KEY": "test-key"}):
+        with patch.dict("os.environ", {"GEMINI_API_KEY": "test-key"}):
             resp = client.post(
                 "/api/photos/bulk",
                 headers={"Authorization": f"Bearer {token}"},
@@ -88,7 +88,7 @@ def test_upload_with_mocked_ingest(client):
     assert resp.json()["results"][0]["extraction_status"] == "pending"
 
 
-def test_upload_with_gemini_direct_backend_uses_google_key(client):
+def test_upload_with_gemini_direct_backend_uses_gemini_key(client):
     reg = client.post(
         "/api/auth/register",
         json={"username": "gemini-uploader", "password": "password123"},
@@ -124,7 +124,7 @@ def test_upload_with_gemini_direct_backend_uses_google_key(client):
         with patch.dict(
             "os.environ",
             {
-                "GOOGLE_API_KEY": "google-test-key",
+                "GEMINI_API_KEY": "gemini-test-key",
             },
         ):
             resp = client.post(
@@ -133,11 +133,11 @@ def test_upload_with_gemini_direct_backend_uses_google_key(client):
                 files=[("files", ("x.jpg", b"abc", "image/jpeg"))],
             )
     assert resp.status_code == 202
-    assert captured["api_key"] == "google-test-key"
+    assert captured["api_key"] == "gemini-test-key"
     assert captured["extract_backend"] == "gemini_direct"
 
 
-def test_rerun_extraction_with_gemini_direct_uses_google_key(client):
+def test_rerun_extraction_with_gemini_direct_uses_gemini_key(client):
     reg = client.post(
         "/api/auth/register",
         json={"username": "gemini-reextract", "password": "password123"},
@@ -164,7 +164,7 @@ def test_rerun_extraction_with_gemini_direct_uses_google_key(client):
         with patch.dict(
             "os.environ",
             {
-                "GOOGLE_API_KEY": "google-test-key",
+                "GEMINI_API_KEY": "gemini-test-key",
             },
         ):
             resp = client.post(
@@ -173,7 +173,7 @@ def test_rerun_extraction_with_gemini_direct_uses_google_key(client):
             )
 
     assert resp.status_code == 200
-    assert reextract.call_args.kwargs["api_key"] == "google-test-key"
+    assert reextract.call_args.kwargs["api_key"] == "gemini-test-key"
     assert reextract.call_args.kwargs["extract_backend"] == "gemini_direct"
 
 

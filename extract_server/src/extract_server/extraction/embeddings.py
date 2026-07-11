@@ -10,7 +10,6 @@ import httpx
 
 from extract_server.db.connection import get_conn
 from extract_server.db.similarity import delete_embedding, upsert_embedding
-from extract_server.extraction.cursor_extractor import configured_api_key
 from extract_server.extraction.matching import MatchSighting
 
 logger = logging.getLogger(__name__)
@@ -80,9 +79,7 @@ class EmbeddingClient:
 
 
 def configured_embedding_api_key() -> str | None:
-    return os.environ.get("GEMINI_API_KEY") or os.environ.get("GOOGLE_API_KEY") or configured_api_key(
-        backend="gemini_direct"
-    )
+    return os.environ.get("GEMINI_API_KEY")
 
 
 def ensure_embeddings(
@@ -96,7 +93,7 @@ def ensure_embeddings(
 
     key = api_key or configured_embedding_api_key()
     if not key:
-        raise RuntimeError("GOOGLE_API_KEY or GEMINI_API_KEY is required for product embeddings")
+        raise RuntimeError("GEMINI_API_KEY is required for product embeddings")
 
     conn = get_conn()
     model = embed_model()

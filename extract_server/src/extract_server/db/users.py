@@ -128,7 +128,7 @@ def user_needs_onboarding(user_id: str) -> bool:
     return ONBOARDING_WELCOME not in get_onboarding_state(user_id)
 
 
-def mark_onboarding(user_id: str, key: str) -> None:
+def complete_onboarding(user_id: str, *, key: str = ONBOARDING_WELCOME) -> None:
     if key not in ALLOWED_ONBOARDING_KEYS:
         raise ValueError(f"Unknown onboarding key: {key}")
     state = get_onboarding_state(user_id)
@@ -137,10 +137,6 @@ def mark_onboarding(user_id: str, key: str) -> None:
         "UPDATE users SET onboarding_completed_at = ? WHERE id = ?",
         (json.dumps(state), user_id),
     )
-
-
-def complete_onboarding(user_id: str, *, key: str = ONBOARDING_WELCOME) -> None:
-    mark_onboarding(user_id, key)
 
 
 def register_user(username: str, password: str) -> User:

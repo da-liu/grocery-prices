@@ -20,7 +20,6 @@ from extract_server.db import (
     register_user,
     user_needs_onboarding,
 )
-from extract_server.db.users import ALLOWED_ONBOARDING_KEYS
 
 router = APIRouter(prefix="/api/auth", tags=["auth"])
 
@@ -74,14 +73,15 @@ def auth_me(
 
 
 @router.post("/onboarding/complete")
-def finish_onboarding(
+def complete_onboarding_route(
     user: Annotated[AuthUser, Depends(require_user)],
     body: CompleteOnboardingRequest | None = None,
 ) -> dict:
     key = body.key if body else "welcome"
-    if key not in ALLOWED_ONBOARDING_KEYS:
-        raise HTTPException(status_code=400, detail="Unknown onboarding key")
-    complete_onboarding(user.id, key=key)
+    try:
+        complete_onboarding(user.id, key=key)
+    except ValueError as err:
+        raise HTTPException(status_code=400, detail=str(err)) from err
     return {
         "ok": True,
         "needs_onboarding": user_needs_onboarding(user.id),

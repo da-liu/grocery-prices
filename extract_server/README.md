@@ -61,7 +61,7 @@ CURSOR_API_KEY=cursor_your_key_here
 
 # Direct Gemini
 GROCERY_EXTRACT_BACKEND=gemini_direct
-GOOGLE_API_KEY=your_google_api_key_here
+GEMINI_API_KEY=your_gemini_api_key_here
 
 # Production LLM input image size
 GROCERY_EXTRACT_SCALE_PCT=25

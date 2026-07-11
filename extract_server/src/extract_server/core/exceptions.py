@@ -11,7 +11,3 @@ class ConfigError(GroceryError):
 
 class ExtractionError(GroceryError):
     """Vision LLM or extraction pipeline failure (maps to HTTP 502)."""
-
-
-# Backward-compatible alias used across the codebase and tests.
-CursorExtractError = ExtractionError

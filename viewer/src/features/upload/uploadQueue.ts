@@ -54,15 +54,11 @@ export interface PendingDuplicate {
 export const UPLOAD_CONCURRENCY = 4;
 export const MAX_BULK_BATCH = 8;
 
-function thumbnailUrlForFile(file: File): string {
-  return URL.createObjectURL(file);
-}
-
 export function createQueueItem(file: File): UploadQueueItem {
   return {
     id: crypto.randomUUID(),
     label: file.name || "Photo",
-    thumbnailUrl: thumbnailUrlForFile(file),
+    thumbnailUrl: URL.createObjectURL(file),
     status: "queued",
     file,
     uploadFile: file,

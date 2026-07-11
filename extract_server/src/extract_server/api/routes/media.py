@@ -6,8 +6,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import FileResponse
 
 from extract_server.api.dependencies import bearer_token, user_from_token
-from extract_server.db import is_valid_photo_id
-from extract_server.extraction.paths import find_user_jpg
+from extract_server.db import get_photo_blob_path, is_valid_photo_id
 
 router = APIRouter(prefix="/api/media", tags=["media"])
 
@@ -29,7 +28,7 @@ def get_media(
     user = user_from_token(access_token or header_token)
     if not user:
         raise HTTPException(status_code=401, detail="Sign in required")
-    image_path = find_user_jpg(user.id, image_id)
+    image_path = get_photo_blob_path(user.id, image_id)
     if image_path is None or not image_path.exists():
         raise HTTPException(status_code=404, detail="Image not found")
     media_type = _MEDIA_TYPES.get(image_path.suffix.lower(), "application/octet-stream")

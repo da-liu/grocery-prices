@@ -7,10 +7,9 @@ from extract_server.db.extractions import (
     get_extraction,
     replace_photo_extraction,
 )
-from extract_server.db.photos import get_photo
+from extract_server.db.photos import get_photo, get_photo_blob_path
 from extract_server.db.sightings import add_sighting, update_sighting
 from extract_server.extraction.pipeline import extract_from_upload
-from extract_server.extraction.paths import find_user_jpg
 
 
 def update_product(user_id: str, product_id: str, updates: dict) -> dict | None:
@@ -47,7 +46,7 @@ def reextract_photo(
     if not is_valid_photo_id(image_id):
         return None
 
-    jpg_path = find_user_jpg(user_id, image_id)
+    jpg_path = get_photo_blob_path(user_id, image_id)
     if jpg_path is None or not jpg_path.exists():
         return None
 
@@ -58,7 +57,6 @@ def reextract_photo(
 
     result = extract_from_upload(
         jpg_path,
-        image_id=image_id,
         api_key=api_key,
         backend=extract_backend,
     )

@@ -20,14 +20,14 @@ def location_for_photo(
     if assigned and assigned in user_store_by_id:
         store = user_store_by_id[assigned]
         location = {
-            "store": store.get("store") or store.get("name") or "Unknown store",
+            "store": store.get("store") or "Unknown store",
             "store_location_id": assigned,
         }
     elif lat is not None and lon is not None:
         matched = store_from_gps(lat, lon, user_stores)
         if matched:
             location = {
-                "store": matched.get("store") or matched.get("name") or "Unknown store",
+                "store": matched.get("store") or "Unknown store",
                 "store_location_id": matched.get("id"),
             }
         else:

@@ -14,7 +14,6 @@ from extract_server.extraction.delete import delete_product, delete_products_bul
 def user_env(tmp_path: Path, monkeypatch):
     monkeypatch.setenv("GROCERY_DATA_DIR", str(tmp_path / "data"))
     monkeypatch.setenv("GROCERY_DB_PATH", str(tmp_path / "grocery.db"))
-    monkeypatch.setattr("extract_server.extraction.paths.ROOT", tmp_path)
     monkeypatch.setattr("extract_server.extraction.paths.DATA_DIR", tmp_path / "data")
     monkeypatch.setattr(
         "extract_server.db.user_stores.list_user_stores_as_dicts",

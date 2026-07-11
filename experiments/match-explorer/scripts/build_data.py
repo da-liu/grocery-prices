@@ -105,9 +105,8 @@ def main() -> None:
             continue
 
         payload = json.loads(path.read_text())
-        meta = payload.get("meta") or {}
-        image_id = meta.get("image_id") or path.stem
-        date_folder = meta.get("date_folder") or path.parent.name
+        image_id = payload.get("image_id") or path.stem
+        date_folder = payload.get("date_folder") or path.parent.name
 
         photos.append(
             {
@@ -116,7 +115,6 @@ def main() -> None:
                 "date_folder": date_folder,
                 "path": str(path.relative_to(REPO_ROOT)),
                 "image_file": resolve_image_file(date_folder, image_id, payload),
-                "meta": meta,
                 "extraction": payload,
                 "product_count": len(payload.get("products") or []),
             }

@@ -15,7 +15,6 @@ def test_find_exact_duplicate(tmp_path: Path, monkeypatch):
     user_id = "user-1"
     monkeypatch.setenv("GROCERY_DATA_DIR", str(tmp_path / "data"))
     monkeypatch.setenv("GROCERY_DB_PATH", str(tmp_path / "grocery.db"))
-    monkeypatch.setattr("extract_server.extraction.paths.ROOT", tmp_path)
     monkeypatch.setattr("extract_server.extraction.paths.DATA_DIR", tmp_path / "data")
 
     from extract_server.db import init_db, register_user

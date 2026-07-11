@@ -1,11 +1,9 @@
 /**
- * WebP size heuristics for browser canvas encoding.
+ * JPEG size heuristics for browser canvas encoding.
  *
- * Original JPEG bytes alone are a weak predictor (same size can be different
+ * Original file bytes alone are a weak predictor (same size can be different
  * resolutions or scene complexity). After decode, combine original bytes with
  * pixel count, then refine with one or two probe encodes.
- *
- * Re-fit coefficients with: python viewer/scripts/calibrate_webp_heuristic.py
  */
 
 const PROBE_QUALITY = 0.85;

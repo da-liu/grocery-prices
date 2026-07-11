@@ -60,11 +60,6 @@ export function TopBar({
     setMenuOpen(false);
   }, [location.pathname]);
 
-  function handlePhotos(files: FileList | null | undefined) {
-    if (!files?.length) return;
-    onPhotosSelected(Array.from(files));
-  }
-
   function goToCatalog() {
     setMenuOpen(false);
     navigate("/");
@@ -98,7 +93,8 @@ export function TopBar({
           multiple
           className="sr-only"
           onChange={(e) => {
-            handlePhotos(e.target.files);
+            const files = e.target.files;
+            if (files?.length) onPhotosSelected(Array.from(files));
             e.target.value = "";
           }}
         />
