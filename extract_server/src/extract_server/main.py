@@ -12,7 +12,7 @@ load_dotenv(_PROJECT_ROOT / ".env")
 from fastapi import FastAPI  # noqa: E402
 from fastapi.middleware.cors import CORSMiddleware  # noqa: E402
 
-from extract_server.api.routes import auth, health, media, photos, products, settings, stores  # noqa: E402
+from extract_server.api.routes import auth, health, media, photos, products, stores  # noqa: E402
 from extract_server.core.exception_handlers import register_exception_handlers  # noqa: E402
 from extract_server.core.logging import configure_logging  # noqa: E402
 from extract_server.core.middleware import RequestLoggingMiddleware  # noqa: E402
@@ -52,7 +52,6 @@ def create_app() -> FastAPI:
     for router in (
         health.router,
         auth.router,
-        settings.router,
         products.router,
         stores.router,
         media.router,

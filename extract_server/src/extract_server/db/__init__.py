@@ -15,7 +15,6 @@ EDITABLE_FIELDS = set(_EDITABLE_FIELDS)
 from extract_server.db.connection import DB_PATH, close_all_connections, db_path, get_conn
 from extract_server.db.extractions import (
     count_extractions,
-    extraction_timing_payload,
     get_extraction,
     record_photo_extraction_failure,
     replace_photo_extraction,
@@ -66,12 +65,9 @@ from extract_server.db.users import (
     create_session,
     delete_session,
     get_user_by_id,
-    get_user_extract_backend,
     get_user_id_for_session,
     list_onboarding_completed,
     register_user,
-    set_user_extract_backend,
-    user_needs_onboarding,
 )
 
 
@@ -126,7 +122,6 @@ __all__ = [
     "delete_sightings_bulk",
     "delete_user_store",
     "empty_sighting_id",
-    "extraction_timing_payload",
     "find_photo_by_content_hash",
     "get_conn",
     "get_extraction",
@@ -136,7 +131,6 @@ __all__ = [
     "get_photos_extraction_status",
     "get_sighting",
     "get_user_by_id",
-    "get_user_extract_backend",
     "get_user_id_for_session",
     "get_user_store",
     "list_onboarding_completed",
@@ -157,10 +151,8 @@ __all__ = [
     "save_photo_extraction",
     "set_extraction_pipeline_status",
     "set_photo_store_location_id",
-    "set_user_extract_backend",
     "store_as_match_dict",
     "store_to_api_dict",
     "update_sighting",
     "update_user_store",
-    "user_needs_onboarding",
 ]

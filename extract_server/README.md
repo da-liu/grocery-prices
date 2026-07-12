@@ -1,6 +1,6 @@
 # Grocery price extraction server
 
-HTTP service that accepts grocery shelf photos and extracts product names, prices, and metadata using a configurable vision backend.
+HTTP service that accepts grocery shelf photos and extracts product names, prices, and metadata using the Gemini vision API.
 
 ## Project layout
 
@@ -27,14 +27,14 @@ Upload (HEIC/JPG/WebP)
   → client EXIF metadata
   → store original + WebP/JPEG blob
   → scaled derivative for model input
-  → Cursor SDK or direct Gemini API (vision extraction)
+  → Gemini API (vision extraction)
   → JSON product list → SQLite catalog
 ```
 
 | Module | Role |
 |--------|------|
 | `extraction/prompt.py` | Saved extraction prompt |
-| `extraction/cursor_extractor.py` | Vision backend routing (Cursor SDK or Gemini) |
+| `extraction/gemini_extractor.py` | Gemini vision extraction |
 | `extraction/parse_response.py` | Parse and sanitize model JSON |
 | `extraction/scoring.py` | Benchmark metrics vs ground truth |
 | `extraction/pipeline.py` | End-to-end upload pipeline |
@@ -52,15 +52,9 @@ cp .env.example .env
 
 Requires `sips` (macOS) on PATH for some image conversions. The server loads `extract_server/.env` on startup. EXIF metadata is supplied by the viewer at upload time.
 
-Set one of these backend configurations in `.env`:
+Configure Gemini in `.env`:
 
 ```bash
-# Cursor SDK
-GROCERY_EXTRACT_BACKEND=cursor
-CURSOR_API_KEY=cursor_your_key_here
-
-# Direct Gemini
-GROCERY_EXTRACT_BACKEND=gemini_direct
 GEMINI_API_KEY=your_gemini_api_key_here
 
 # Production LLM input image size

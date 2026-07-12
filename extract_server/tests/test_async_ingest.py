@@ -61,14 +61,17 @@ def test_run_extraction_pipeline_completes_photo(tmp_path: Path, monkeypatch):
     monkeypatch.setattr("extract_server.extraction.ingest.image_needs_store_label", lambda *_args: False)
 
     accepted = accept_upload_batch([upload], user_id=user.id, enqueue=False)[0]
+    photo = get_photo(user.id, accepted["image_id"])
+    assert photo is not None
+    date_folder = photo["blob_key"].split("/")[-2]
     job = ExtractionJob(
         user_id=user.id,
         image_id=accepted["image_id"],
         api_key="test",
         user_stores=[],
         exif={},
-        date_folder=accepted["date_folder"],
-        content_hash=accepted["content_hash"],
+        date_folder=date_folder,
+        content_hash=photo["content_hash"],
     )
 
     def fake_extract(upload_path: Path, **kwargs):
@@ -81,7 +84,7 @@ def test_run_extraction_pipeline_completes_photo(tmp_path: Path, monkeypatch):
             ],
             photo_type="shelf",
             raw_response='{"type":"shelf","products":[{"product_name":"Milk","price":4.99,"category":"dairy"}]}',
-            extractor="cursor_sdk",
+            extractor="gemini_direct",
             timing=ExtractionTiming(llm_ms=2000, other_ms=50, model="auto"),
         )
 
@@ -128,9 +131,7 @@ def test_photos_status_endpoint(client, monkeypatch, tmp_path: Path):
             {
                 "image_id": "IMG_0001",
                 "extraction_status": "pending",
-                "products": [],
                 "product_count": 0,
-                "meta": {},
             }
         ]
         with patch.dict("os.environ", {"GEMINI_API_KEY": "test-key"}):

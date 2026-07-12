@@ -21,7 +21,7 @@ function statusLabel(item: UploadQueueItem): string {
       return percent >= 100 ? "Uploaded" : `Uploading… ${percent}%`;
     }
     case "processing": {
-      const percent = extractionProgressPercent(item.processingStartedAt, item.extractBackend);
+      const percent = extractionProgressPercent(item.processingStartedAt);
       return percent > 0
         ? `Uploaded · reading prices… ${percent}%`
         : "Uploaded · reading prices…";
@@ -164,7 +164,6 @@ export function UploadStatusPanel() {
                   {item.status === "processing" && item.processingStartedAt != null && (
                     <ExtractionProgressBar
                       startedAt={item.processingStartedAt}
-                      backend={item.extractBackend}
                     />
                   )}
                 </div>

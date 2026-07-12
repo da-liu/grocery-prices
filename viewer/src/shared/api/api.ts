@@ -8,8 +8,13 @@ export interface UserProfile {
   authenticated: boolean;
   username: string;
   upload_count: number;
-  needs_onboarding: boolean;
   onboarding_completed: string[];
+}
+
+export const ONBOARDING_WELCOME = "welcome";
+
+export function needsWelcomeOnboarding(completed: string[]): boolean {
+  return !completed.includes(ONBOARDING_WELCOME);
 }
 
 export class ApiError extends Error {
@@ -29,14 +34,12 @@ export function isAuthError(err: unknown): boolean {
 function toUserProfile(payload: {
   username: string;
   upload_count: number;
-  needs_onboarding: boolean;
   onboarding_completed: string[];
 }): UserProfile {
   return {
     authenticated: true,
     username: payload.username,
     upload_count: payload.upload_count,
-    needs_onboarding: payload.needs_onboarding,
     onboarding_completed: payload.onboarding_completed,
   };
 }
@@ -209,7 +212,7 @@ export async function fetchMe(): Promise<UserProfile> {
 }
 
 export async function completeOnboarding(
-  key: string = "welcome",
+  key: string = ONBOARDING_WELCOME,
 ): Promise<UserProfile> {
   const resp = await authFetch("/api/auth/onboarding/complete", {
     method: "POST",
@@ -294,24 +297,10 @@ export type PhotoPipelineStatus =
   | "failed"
   | "match_failed";
 
-export interface ExtractionTiming {
-  llm_ms?: number;
-  other_ms?: number;
-  model?: string;
-}
-
 export interface UploadResult {
   image_id: string;
-  image_path: string;
-  products: ExtractedProductRow[];
   product_count: number;
   needs_store_label?: boolean;
-  meta: {
-    captured_at?: string;
-    gps_latitude?: number | null;
-    gps_longitude?: number | null;
-  };
-  duplicate?: boolean;
   duplicate_of?: string;
   action_required?: boolean;
   skipped?: boolean;
@@ -319,8 +308,6 @@ export interface UploadResult {
   extraction_status?: ExtractionStatus;
   status?: PhotoPipelineStatus;
   extraction_error?: string;
-  extraction_timing?: ExtractionTiming;
-  photo_type?: "shelf" | "receipt";
 }
 
 export interface ReextractResult {
@@ -328,7 +315,6 @@ export interface ReextractResult {
   products: ExtractedProductRow[];
   product_count: number;
   extraction_empty: boolean;
-  extraction_timing?: ExtractionTiming;
 }
 
 export type ProductUpdateInput = {
@@ -447,25 +433,6 @@ export async function addManualProduct(imageId: string, product: ManualProductIn
 
 export async function reextractPhoto(imageId: string): Promise<ReextractResult> {
   return authJson(`/api/photos/${encodeURIComponent(imageId)}/re-extract`, { method: "POST" });
-}
-
-export type ExtractBackend = "cursor" | "gemini_direct";
-
-export interface UserSettings {
-  extract_backend: ExtractBackend;
-  extract_model: string;
-}
-
-export async function fetchSettings(): Promise<UserSettings> {
-  return authJson("/api/settings");
-}
-
-export async function updateSettings(settings: { extract_backend: ExtractBackend }): Promise<UserSettings> {
-  return authJson("/api/settings", {
-    method: "PATCH",
-    headers: JSON_HEADERS,
-    body: JSON.stringify(settings),
-  });
 }
 
 export type StoreLocationInput = {

@@ -18,7 +18,6 @@ from extract_server.db import (
     count_extractions,
     list_onboarding_completed,
     register_user,
-    user_needs_onboarding,
 )
 
 router = APIRouter(prefix="/api/auth", tags=["auth"])
@@ -29,7 +28,6 @@ def _auth_payload(user) -> AuthResponse:
         token=issue_session(user),
         username=user.username,
         upload_count=count_extractions(user.id),
-        needs_onboarding=user_needs_onboarding(user.id),
         onboarding_completed=list_onboarding_completed(user.id),
     )
 
@@ -66,7 +64,6 @@ def auth_me(
         "authenticated": True,
         "username": user.username,
         "upload_count": count_extractions(user.id),
-        "needs_onboarding": user_needs_onboarding(user.id),
         "onboarding_completed": list_onboarding_completed(user.id),
         "token": request.state.bearer_token,
     }
@@ -83,7 +80,5 @@ def complete_onboarding_route(
     except ValueError as err:
         raise HTTPException(status_code=400, detail=str(err)) from err
     return {
-        "ok": True,
-        "needs_onboarding": user_needs_onboarding(user.id),
         "onboarding_completed": list_onboarding_completed(user.id),
     }

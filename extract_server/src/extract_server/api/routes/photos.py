@@ -10,7 +10,7 @@ from fastapi import APIRouter, Depends, File, Form, HTTPException, Request, Uplo
 from fastapi.responses import JSONResponse, Response
 
 from extract_server.api.dependencies import AuthUser, require_user
-from extract_server.core.config import user_extract_credentials
+from extract_server.extraction.gemini_extractor import configured_api_key
 from extract_server.core.request import request_id_from_request
 from extract_server.schemas import AssignPhotoStoreBody, ManualProductBody, PhotoStatusRequest
 from extract_server.db import complete_onboarding, get_user_store, is_valid_photo_id
@@ -58,7 +58,7 @@ async def upload_photos_bulk(
         raise HTTPException(status_code=400, detail="No files uploaded")
 
     client_exifs = _parse_exif_json(exif_json, len(files))
-    extract_backend, api_key = user_extract_credentials(user.id)
+    api_key = configured_api_key()
 
     with tempfile.TemporaryDirectory(prefix="grocery-bulk-") as tmp:
         saved_paths = await _save_uploads(Path(tmp), files)
@@ -72,7 +72,6 @@ async def upload_photos_bulk(
                 enqueue=True,
                 client_exifs=client_exifs,
                 request_id=request_id_from_request(request),
-                extract_backend=extract_backend,
             )
         except ValueError as err:
             raise HTTPException(status_code=400, detail=str(err)) from err
@@ -101,12 +100,10 @@ def rerun_extraction(
     user: Annotated[AuthUser, Depends(require_user)],
 ) -> dict:
     _require_valid_photo_id(image_id)
-    extract_backend, api_key = user_extract_credentials(user.id)
     result = reextract_photo(
         user.id,
         image_id,
-        api_key=api_key,
-        extract_backend=extract_backend,
+        api_key=configured_api_key(),
     )
     if result is None:
         raise HTTPException(status_code=404, detail="Photo not found")

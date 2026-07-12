@@ -118,10 +118,7 @@ def test_bulk_endpoint_passes_distinct_saved_paths(client, monkeypatch):
         return [
             {
                 "image_id": f"photo-{i}",
-                "products": [],
                 "product_count": 0,
-                "meta": {},
-                "extractor": "cursor_sdk",
             }
             for i in range(len(paths))
         ]

@@ -122,6 +122,11 @@ export function isStoreLabeled(product: Product): boolean {
   );
 }
 
+/** Capture time for sort/filter: EXIF captured_at, else photo upload created_at. */
+export function effectiveCaptureAt(product: Product): string | undefined {
+  return product.captured_at ?? product.created_at;
+}
+
 function capturedDateKey(capturedAt: string | undefined): string | null {
   if (!capturedAt) return null;
   const d = capturedAt.slice(0, 10);
@@ -209,8 +214,9 @@ function floorToDayMs(ms: number): number {
 export function photoTimesByImage(products: Product[]): Map<string, number> {
   const timeByImage = new Map<string, number>();
   for (const product of products) {
-    if (!product.captured_at) continue;
-    const ms = timestampToMs(product.captured_at);
+    const at = effectiveCaptureAt(product);
+    if (!at) continue;
+    const ms = timestampToMs(at);
     if (Number.isNaN(ms)) continue;
     if (!timeByImage.has(product.image_id)) {
       timeByImage.set(product.image_id, ms);
@@ -337,7 +343,7 @@ export function matchesBrowseQuery(
     if (labeled !== query.storeLabeled) return false;
   }
 
-  const capturedKey = capturedDateKey(product.captured_at);
+  const capturedKey = capturedDateKey(effectiveCaptureAt(product));
   if (!options?.skipCapturedDate) {
     if (query.capturedAfter) {
       if (!capturedKey || capturedKey < query.capturedAfter) return false;
@@ -380,9 +386,11 @@ export function sortProducts(products: Product[], sort: SortOption): Product[] {
     switch (sort) {
       case "captured_desc":
       case "captured_asc": {
-        const ta = a.captured_at ? new Date(a.captured_at).getTime() : 0;
-        const tb = b.captured_at ? new Date(b.captured_at).getTime() : 0;
-        return sort === "captured_desc" ? tb - ta : ta - tb;
+        const ta = effectiveCaptureAt(a);
+        const tb = effectiveCaptureAt(b);
+        const ma = ta ? new Date(ta).getTime() : 0;
+        const mb = tb ? new Date(tb).getTime() : 0;
+        return sort === "captured_desc" ? mb - ma : ma - mb;
       }
       case "price_asc":
       case "price_desc": {
@@ -749,8 +757,8 @@ export function groupProductsByImageId(products: Product[]): PhotoGroup[] {
   return [...groups.entries()]
     .map(([imageId, groupProducts]) => {
       const sorted = [...groupProducts].sort((a, b) => {
-        const aTs = a.captured_at ?? "";
-        const bTs = b.captured_at ?? "";
+        const aTs = effectiveCaptureAt(a) ?? "";
+        const bTs = effectiveCaptureAt(b) ?? "";
         return bTs.localeCompare(aTs);
       });
       const lead = sorted[0];
@@ -762,7 +770,11 @@ export function groupProductsByImageId(products: Product[]): PhotoGroup[] {
         photoType: lead.photo_type ?? "shelf",
       };
     })
-    .sort((a, b) => (b.capturedAt ?? "").localeCompare(a.capturedAt ?? ""));
+    .sort((a, b) => {
+      const aTs = effectiveCaptureAt(a.products[0]) ?? "";
+      const bTs = effectiveCaptureAt(b.products[0]) ?? "";
+      return bTs.localeCompare(aTs);
+    });
 }
 
 export function toggleListValue(list: string[], value: string): string[] {

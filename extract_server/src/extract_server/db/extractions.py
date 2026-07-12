@@ -39,17 +39,6 @@ def init_extractions_table() -> None:
     )
 
 
-def extraction_timing_payload(row: dict[str, Any]) -> dict[str, Any] | None:
-    if row.get("llm_ms") is None and row.get("other_ms") is None:
-        return None
-    payload = {
-        "llm_ms": row.get("llm_ms"),
-        "other_ms": row.get("other_ms"),
-        "model": row.get("model"),
-    }
-    return {key: value for key, value in payload.items() if value is not None}
-
-
 def count_extractions(user_id: str) -> int:
     from extract_server.db._helpers import count
 

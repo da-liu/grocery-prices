@@ -63,7 +63,7 @@ def _seed_products(
     save_photo_extraction(
         user_id,
         image_id,
-        extractor="cursor_sdk",
+        extractor="gemini_direct",
         raw_response="[]",
         products=products,
         photo_type="shelf",

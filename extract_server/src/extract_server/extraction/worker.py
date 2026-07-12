@@ -37,7 +37,6 @@ class ExtractionJob:
     date_folder: str
     content_hash: str
     request_id: str | None = None
-    extract_backend: str | None = None
 
 
 def register_extraction_complete(callback: Callable[[str, dict[str, Any]], None]) -> None:

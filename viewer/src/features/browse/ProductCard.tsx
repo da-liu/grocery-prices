@@ -18,7 +18,6 @@ import { StoreLink } from "@/features/stores/StoreLink";
 import { photoGroupLinkLabel, resolveRelatedProducts } from "./browseQuery";
 import { useCatalog } from "./CatalogContext";
 import { ExtractionProgressBar } from "@/features/upload/ExtractionProgressBar";
-import type { ExtractBackend } from "@/shared/api/api";
 import type { Product } from "@/shared/types/types";
 import "./ProductCard.css";
 
@@ -497,7 +496,6 @@ export function ProductCard({
   onAddManual,
   reextracting,
   reextractStartedAt,
-  extractBackend,
   saving,
   compact: compactProp,
   selectionMode,
@@ -517,7 +515,6 @@ export function ProductCard({
   onAddManual?: (imageId: string, product: ManualProductInput) => Promise<void>;
   reextracting?: boolean;
   reextractStartedAt?: number;
-  extractBackend?: ExtractBackend;
   saving?: boolean;
   compact?: boolean;
   selectionMode?: boolean;
@@ -749,7 +746,6 @@ export function ProductCard({
             {reextracting && reextractStartedAt != null && (
               <ExtractionProgressBar
                 startedAt={reextractStartedAt}
-                backend={extractBackend}
               />
             )}
             {addingManual && onAddManual && (

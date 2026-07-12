@@ -7,7 +7,7 @@ from extract_server.schemas.auth import (
     RegisterRequest,
 )
 from extract_server.schemas.catalog import BulkDeleteProductsBody, ManualProductBody, ProductUpdateBody
-from extract_server.schemas.photos import AssignPhotoStoreBody, PhotoStatusRequest, SettingsBody
+from extract_server.schemas.photos import AssignPhotoStoreBody, PhotoStatusRequest
 from extract_server.schemas.stores import StoreLocationBody
 
 __all__ = [
@@ -19,6 +19,5 @@ __all__ = [
     "PhotoStatusRequest",
     "ProductUpdateBody",
     "RegisterRequest",
-    "SettingsBody",
     "StoreLocationBody",
 ]

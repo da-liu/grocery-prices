@@ -15,10 +15,9 @@ import {
   deletePhoto,
   deleteProductsBulk,
   fetchProducts,
-  fetchSettings,
+  needsWelcomeOnboarding,
   reextractPhoto,
   updateProduct,
-  type ExtractBackend,
   type ManualProductInput,
   type ProductUpdateInput,
 } from "@/shared/api/api";
@@ -53,7 +52,6 @@ interface CatalogContextValue {
   productsLoading: boolean;
   error: string | null;
   setError: (error: string | null) => void;
-  extractBackend: ExtractBackend;
   showOnboarding: boolean;
   setShowOnboarding: (show: boolean) => void;
   finishOnboarding: () => Promise<void>;
@@ -112,7 +110,7 @@ export function useCatalog() {
 }
 
 interface CatalogProviderProps {
-  user: { needs_onboarding: boolean } | null;
+  user: { onboarding_completed: string[] } | null;
   refreshAuth: () => Promise<void>;
   children: ReactNode;
 }
@@ -130,7 +128,6 @@ export function CatalogProvider({ user, refreshAuth, children }: CatalogProvider
   const [savingId, setSavingId] = useState<string | null>(null);
   const [reextractingId, setReextractingId] = useState<string | null>(null);
   const [reextractStartedAt, setReextractStartedAt] = useState<number | null>(null);
-  const [extractBackend, setExtractBackend] = useState<ExtractBackend>("cursor");
   const [selectionMode, setSelectionMode] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [bulkDeleteImpact, setBulkDeleteImpact] = useState<BulkDeleteImpact | null>(null);
@@ -167,12 +164,9 @@ export function CatalogProvider({ user, refreshAuth, children }: CatalogProvider
   useEffect(() => {
     if (user) {
       refreshProducts();
-      if (user.needs_onboarding) {
+      if (needsWelcomeOnboarding(user.onboarding_completed)) {
         setShowOnboarding(true);
       }
-      fetchSettings()
-        .then((settings) => setExtractBackend(settings.extract_backend))
-        .catch(() => {});
     } else {
       setProducts([]);
     }
@@ -492,7 +486,6 @@ export function CatalogProvider({ user, refreshAuth, children }: CatalogProvider
       productsLoading,
       error,
       setError,
-      extractBackend,
       showOnboarding,
       setShowOnboarding,
       finishOnboarding,
@@ -543,7 +536,6 @@ export function CatalogProvider({ user, refreshAuth, children }: CatalogProvider
       products,
       productsLoading,
       error,
-      extractBackend,
       showOnboarding,
       finishOnboarding,
       refreshProducts,

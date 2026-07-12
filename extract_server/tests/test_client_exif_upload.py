@@ -18,10 +18,7 @@ def test_bulk_upload_accepts_exif_json(client, monkeypatch):
         return [
             {
                 "image_id": "IMG_0001",
-                "products": [],
                 "product_count": 0,
-                "meta": {},
-                "extractor": "cursor_sdk",
                 "extraction_status": "pending",
             }
         ]

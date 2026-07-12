@@ -34,7 +34,7 @@ def test_register_login_and_scoped_products(client):
     assert reg.status_code == 200, reg.text
     body = reg.json()
     assert body["username"] == "testuser"
-    assert body["needs_onboarding"] is True
+    assert body["onboarding_completed"] == []
     token = body["token"]
 
     me = client.get("/api/auth/me", headers={"Authorization": f"Bearer {token}"})
@@ -69,11 +69,7 @@ def test_upload_with_mocked_ingest(client):
         ingest.return_value = [
             {
                 "image_id": "IMG_0001",
-                "image_path": "api/media/IMG_0001",
-                "products": [],
                 "product_count": 0,
-                "meta": {},
-                "extractor": None,
                 "extraction_status": "pending",
             }
         ]
@@ -88,7 +84,7 @@ def test_upload_with_mocked_ingest(client):
     assert resp.json()["results"][0]["extraction_status"] == "pending"
 
 
-def test_upload_with_gemini_direct_backend_uses_gemini_key(client):
+def test_upload_uses_gemini_api_key(client):
     reg = client.post(
         "/api/auth/register",
         json={"username": "gemini-uploader", "password": "password123"},
@@ -97,25 +93,12 @@ def test_upload_with_gemini_direct_backend_uses_gemini_key(client):
     headers = {"Authorization": f"Bearer {token}"}
     captured: dict[str, object] = {}
 
-    settings = client.patch(
-        "/api/settings",
-        headers=headers,
-        json={"extract_backend": "gemini_direct"},
-    )
-    assert settings.status_code == 200, settings.text
-    assert settings.json()["extract_backend"] == "gemini_direct"
-
     def fake_batch(paths, **kwargs):
         captured["api_key"] = kwargs["api_key"]
-        captured["extract_backend"] = kwargs["extract_backend"]
         return [
             {
                 "image_id": "IMG_0001",
-                "image_path": "api/media/IMG_0001",
-                "products": [],
                 "product_count": 0,
-                "meta": {},
-                "extractor": None,
                 "extraction_status": "pending",
             }
         ]
@@ -134,23 +117,15 @@ def test_upload_with_gemini_direct_backend_uses_gemini_key(client):
             )
     assert resp.status_code == 202
     assert captured["api_key"] == "gemini-test-key"
-    assert captured["extract_backend"] == "gemini_direct"
 
 
-def test_rerun_extraction_with_gemini_direct_uses_gemini_key(client):
+def test_rerun_extraction_uses_gemini_api_key(client):
     reg = client.post(
         "/api/auth/register",
         json={"username": "gemini-reextract", "password": "password123"},
     )
     token = reg.json()["token"]
     headers = {"Authorization": f"Bearer {token}"}
-
-    settings = client.patch(
-        "/api/settings",
-        headers=headers,
-        json={"extract_backend": "gemini_direct"},
-    )
-    assert settings.status_code == 200, settings.text
 
     with patch(
         "extract_server.api.routes.photos.reextract_photo",
@@ -174,37 +149,6 @@ def test_rerun_extraction_with_gemini_direct_uses_gemini_key(client):
 
     assert resp.status_code == 200
     assert reextract.call_args.kwargs["api_key"] == "gemini-test-key"
-    assert reextract.call_args.kwargs["extract_backend"] == "gemini_direct"
-
-
-def test_settings_get_and_patch(client):
-    reg = client.post(
-        "/api/auth/register",
-        json={"username": "settings-user", "password": "password123"},
-    )
-    token = reg.json()["token"]
-    headers = {"Authorization": f"Bearer {token}"}
-
-    get_resp = client.get("/api/settings", headers=headers)
-    assert get_resp.status_code == 200
-    assert get_resp.json()["extract_backend"] == "gemini_direct"
-    assert get_resp.json()["extract_model"] == "gemini-3.1-flash-lite"
-
-    patch_resp = client.patch(
-        "/api/settings",
-        headers=headers,
-        json={"extract_backend": "gemini_direct"},
-    )
-    assert patch_resp.status_code == 200
-    assert patch_resp.json()["extract_backend"] == "gemini_direct"
-    assert patch_resp.json()["extract_model"] == "gemini-3.1-flash-lite"
-
-    bad_resp = client.patch(
-        "/api/settings",
-        headers=headers,
-        json={"extract_backend": "openai"},
-    )
-    assert bad_resp.status_code == 400
 
 
 def test_complete_onboarding(client):
@@ -215,16 +159,13 @@ def test_complete_onboarding(client):
     assert reg.status_code == 200, reg.text
     token = reg.json()["token"]
     headers = {"Authorization": f"Bearer {token}"}
-    assert reg.json()["needs_onboarding"] is True
     assert reg.json()["onboarding_completed"] == []
 
     done = client.post("/api/auth/onboarding/complete", headers=headers)
     assert done.status_code == 200, done.text
-    assert done.json()["needs_onboarding"] is False
     assert done.json()["onboarding_completed"] == ["welcome"]
 
     me = client.get("/api/auth/me", headers=headers)
-    assert me.json()["needs_onboarding"] is False
     assert me.json()["onboarding_completed"] == ["welcome"]
 
 
@@ -244,7 +185,6 @@ def test_complete_contextual_onboarding_tip(client):
     )
     assert tip.status_code == 200, tip.text
     body = tip.json()
-    assert body["needs_onboarding"] is False
     assert set(body["onboarding_completed"]) == {"welcome", "related_products"}
 
     me = client.get("/api/auth/me", headers=headers)
@@ -267,7 +207,6 @@ def test_legacy_onboarding_timestamp_counts_as_welcome(client):
         json={"username": "legacy-onboard", "password": "password12345"},
     )
     assert login.status_code == 200
-    assert login.json()["needs_onboarding"] is False
     assert login.json()["onboarding_completed"] == ["welcome"]
 
 

@@ -1,4 +1,4 @@
-import type { ClientExifPayload, DuplicateAction, ExtractBackend } from "@/shared/api/api";
+import type { ClientExifPayload, DuplicateAction } from "@/shared/api/api";
 
 export type UploadQueueStatus =
   | "queued"
@@ -20,7 +20,6 @@ export interface UploadQueueItem {
   clientExif?: ClientExifPayload;
   uploadProgress?: number;
   processingStartedAt?: number;
-  extractBackend?: ExtractBackend;
   productCount?: number;
   imageId?: string;
   error?: string;
@@ -73,11 +72,10 @@ export function revokeQueueItem(item: UploadQueueItem) {
 
 export function productCountFromResult(result: {
   product_count?: number;
-  products?: unknown[];
   skipped?: boolean;
   extraction_empty?: boolean;
 }): number {
   if (result.skipped) return 0;
   if (result.extraction_empty) return 0;
-  return result.product_count ?? result.products?.length ?? 0;
+  return result.product_count ?? 0;
 }

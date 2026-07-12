@@ -21,7 +21,6 @@ def pytest_configure(config):
     _TEST_ROOT = Path(tempfile.mkdtemp(prefix="grocery-test-"))
     os.environ["GROCERY_DB_PATH"] = str(_TEST_ROOT / "grocery.db")
     os.environ["GROCERY_DATA_DIR"] = str(_TEST_ROOT / "data")
-    os.environ.setdefault("GROCERY_EXTRACT_BACKEND", "gemini_direct")
 
     db_path = Path(os.environ["GROCERY_DB_PATH"]).resolve()
     if db_path == _PROD_DB_PATH.resolve():

@@ -27,7 +27,7 @@ def _seed_user_products(client, username: str, token: str) -> tuple[str, list[st
     save_photo_extraction(
         user_id,
         "IMG_0001",
-        extractor="cursor_sdk",
+        extractor="gemini_direct",
         raw_response="[]",
         products=[
             {"product_name": "Milk", "price": 5.99, "category": "dairy"},
@@ -48,7 +48,7 @@ def _seed_user_products(client, username: str, token: str) -> tuple[str, list[st
     save_photo_extraction(
         user_id,
         "IMG_0002",
-        extractor="cursor_sdk",
+        extractor="gemini_direct",
         raw_response="[]",
         products=[{"product_name": "Eggs", "price": 4.99, "category": "dairy"}],
         photo_type="shelf",

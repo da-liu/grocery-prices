@@ -1,14 +1,11 @@
 import { useEffect, useState } from "react";
-import type { ExtractBackend } from "@/shared/api/api";
 import { extractionProgressPercent } from "./extractionProgress";
 
 export function ExtractionProgressBar({
   startedAt,
-  backend,
   ariaLabel = "Reading prices progress",
 }: {
   startedAt: number;
-  backend?: ExtractBackend;
   ariaLabel?: string;
 }) {
   const [, setTick] = useState(0);
@@ -18,7 +15,7 @@ export function ExtractionProgressBar({
     return () => window.clearInterval(id);
   }, []);
 
-  const percent = extractionProgressPercent(startedAt, backend);
+  const percent = extractionProgressPercent(startedAt);
 
   return (
     <div

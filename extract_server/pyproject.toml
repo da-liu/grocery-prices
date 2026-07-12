@@ -7,7 +7,6 @@ name = "grocery-extract-server"
 version = "0.1.0"
 requires-python = ">=3.10"
 dependencies = [
-  "cursor-sdk>=0.1.8",
   "python-dotenv>=1.0",
   "fastapi>=0.115",
   "uvicorn>=0.30",

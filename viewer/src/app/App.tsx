@@ -90,7 +90,6 @@ function BrowseRoute() {
           savingId={catalog.savingId}
           reextractingId={catalog.reextractingId}
           reextractStartedAt={catalog.reextractStartedAt}
-          extractBackend={catalog.extractBackend}
           selectionMode={catalog.selectionMode}
           selectedIds={catalog.selectedIds}
           onToggleSelect={catalog.toggleProductSelection}
@@ -278,10 +277,10 @@ function AuthenticatedApp() {
 }
 
 function AuthenticatedShell() {
-  const { extractBackend, handleUploadSuccess } = useCatalog();
+  const { handleUploadSuccess } = useCatalog();
 
   return (
-    <UploadQueueProvider extractBackend={extractBackend} onUploadSuccess={handleUploadSuccess}>
+    <UploadQueueProvider onUploadSuccess={handleUploadSuccess}>
       <AuthenticatedApp />
     </UploadQueueProvider>
   );

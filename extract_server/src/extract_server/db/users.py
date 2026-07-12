@@ -31,8 +31,7 @@ CREATE TABLE IF NOT EXISTS users (
     username TEXT NOT NULL UNIQUE COLLATE NOCASE,
     password_hash TEXT NOT NULL,
     created_at TEXT NOT NULL,
-    onboarding_completed_at TEXT,
-    extract_backend TEXT
+    onboarding_completed_at TEXT
 );
 CREATE TABLE IF NOT EXISTS sessions (
     token TEXT PRIMARY KEY,
@@ -124,10 +123,6 @@ def list_onboarding_completed(user_id: str) -> list[str]:
     return sorted(get_onboarding_state(user_id).keys())
 
 
-def user_needs_onboarding(user_id: str) -> bool:
-    return ONBOARDING_WELCOME not in get_onboarding_state(user_id)
-
-
 def complete_onboarding(user_id: str, *, key: str = ONBOARDING_WELCOME) -> None:
     if key not in ALLOWED_ONBOARDING_KEYS:
         raise ValueError(f"Unknown onboarding key: {key}")
@@ -189,27 +184,3 @@ def get_user_id_for_session(token: str, *, now: float) -> str | None:
     _execute("DELETE FROM sessions WHERE expires_at <= ?", (now,))
     row = _fetchone("SELECT user_id FROM sessions WHERE token = ?", (token,))
     return row["user_id"] if row else None
-
-
-def get_user_extract_backend(user_id: str) -> str:
-    from extract_server.extraction.cursor_extractor import (
-        VALID_EXTRACT_BACKENDS,
-        current_extract_backend,
-    )
-
-    row = _fetchone("SELECT extract_backend FROM users WHERE id = ?", (user_id,))
-    backend = row["extract_backend"] if row else None
-    if backend in VALID_EXTRACT_BACKENDS:
-        return backend
-    return current_extract_backend()
-
-
-def set_user_extract_backend(user_id: str, backend: str) -> str:
-    from extract_server.extraction.cursor_extractor import normalize_extract_backend
-
-    normalized = normalize_extract_backend(backend)
-    _execute(
-        "UPDATE users SET extract_backend = ? WHERE id = ?",
-        (normalized, user_id),
-    )
-    return normalized

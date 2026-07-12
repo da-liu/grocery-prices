@@ -42,7 +42,7 @@ def test_config_error_returns_safe_503(client):
     token = reg.json()["token"]
     headers = {"Authorization": f"Bearer {token}"}
 
-    with patch("extract_server.core.config.configured_api_key", side_effect=ConfigError("CURSOR_API_KEY missing")):
+    with patch("extract_server.api.routes.photos.configured_api_key", side_effect=ConfigError("GEMINI_API_KEY missing")):
         resp = client.post(
             "/api/photos/bulk",
             headers=headers,
@@ -63,7 +63,7 @@ def test_extraction_error_returns_safe_502(client):
     token = reg.json()["token"]
     headers = {"Authorization": f"Bearer {token}"}
 
-    with patch("extract_server.core.config.configured_api_key", return_value="test-key"):
+    with patch("extract_server.api.routes.photos.configured_api_key", return_value="test-key"):
         with patch("extract_server.api.routes.photos.accept_upload_batch", side_effect=ExtractionError("LLM timeout")):
             resp = client.post(
                 "/api/photos/bulk",
@@ -79,7 +79,7 @@ def test_run_extraction_pipeline_failure_logs(tmp_path, monkeypatch, caplog):
     monkeypatch.setenv("GROCERY_DB_PATH", str(tmp_path / "grocery.db"))
     monkeypatch.setattr("extract_server.extraction.paths.DATA_DIR", tmp_path / "data")
 
-    from extract_server.db import init_db, register_user
+    from extract_server.db import init_db, register_user, get_photo
     from extract_server.extraction.worker import ExtractionJob
     from extract_server.extraction.ingest import accept_upload_batch, run_extraction_pipeline
 
@@ -98,14 +98,16 @@ def test_run_extraction_pipeline_failure_logs(tmp_path, monkeypatch, caplog):
     )
 
     accepted = accept_upload_batch([upload], user_id=user.id, enqueue=False)[0]
+    photo = get_photo(user.id, accepted["image_id"])
+    assert photo is not None
     job = ExtractionJob(
         user_id=user.id,
         image_id=accepted["image_id"],
         api_key="test",
         user_stores=[],
         exif={},
-        date_folder=accepted["date_folder"],
-        content_hash=accepted["content_hash"],
+        date_folder=photo["blob_key"].split("/")[-2],
+        content_hash=photo["content_hash"],
         request_id="req-log-test",
     )
 

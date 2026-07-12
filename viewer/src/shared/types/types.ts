@@ -51,6 +51,7 @@ export interface Product {
   category: string;
   other?: Record<string, string | number | boolean | null>;
   captured_at?: string;
+  created_at?: string;
   location: Location;
   extraction_empty?: boolean;
   photo_type?: "shelf" | "receipt";

@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useAuth } from "@/features/auth/AuthContext";
 import { useCatalog } from "../CatalogContext";
-import { completeOnboarding } from "@/shared/api/api";
+import { completeOnboarding, needsWelcomeOnboarding } from "@/shared/api/api";
 import { Coachmark } from "./Coachmark";
 import {
   type ActiveTip,
@@ -48,7 +48,7 @@ export function ContextualOnboardingProvider({
     catalog.selectionMode || catalog.browseQuery.gridColumns >= 3;
   const canShowTips =
     Boolean(user) &&
-    !user!.needs_onboarding &&
+    !needsWelcomeOnboarding(user!.onboarding_completed) &&
     !catalog.showOnboarding &&
     !catalog.productsLoading &&
     catalog.products.length > 0 &&

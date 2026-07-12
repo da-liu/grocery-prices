@@ -62,5 +62,5 @@ class ExtractionResult(BaseModel):
     products: list[ExtractedProduct] = Field(default_factory=list)
     photo_type: str = "shelf"
     raw_response: str | None = None
-    extractor: str = "cursor_sdk"
+    extractor: str = "gemini_direct"
     timing: ExtractionTiming | None = None

@@ -3,7 +3,7 @@ from __future__ import annotations
 import base64
 from pathlib import Path
 
-from extract_server.extraction.cursor_extractor import (
+from extract_server.extraction.gemini_extractor import (
     ExtractImageResult,
     default_extract_model,
     current_extractor_name,
@@ -13,18 +13,15 @@ from extract_server.extraction.pipeline import extract_from_upload
 from extract_server.extraction.schema import ExtractedProduct
 
 
-def test_default_extract_model_uses_backend_defaults(monkeypatch):
-    monkeypatch.setenv("GROCERY_EXTRACT_BACKEND", "gemini_direct")
-
+def test_default_extract_model_is_gemini():
     assert default_extract_model() == "gemini-3.1-flash-lite"
     assert current_extractor_name() == "gemini_direct"
 
 
-def test_extract_products_from_image_posts_to_gemini_direct(tmp_path: Path, monkeypatch):
+def test_extract_products_from_image_posts_to_gemini(tmp_path: Path, monkeypatch):
     source = tmp_path / "source.jpg"
     source.write_bytes(b"source-image")
 
-    monkeypatch.setenv("GROCERY_EXTRACT_BACKEND", "gemini_direct")
     monkeypatch.setenv("GEMINI_API_KEY", "gemini-key")
 
     captured: dict[str, object] = {}
@@ -66,7 +63,7 @@ def test_extract_products_from_image_posts_to_gemini_direct(tmp_path: Path, monk
             captured["payload"] = json
             return FakeResponse()
 
-    monkeypatch.setattr("extract_server.extraction.cursor_extractor.httpx.Client", FakeClient)
+    monkeypatch.setattr("extract_server.extraction.gemini_extractor.httpx.Client", FakeClient)
 
     result = extract_products_from_image(source)
 
@@ -84,7 +81,7 @@ def test_extract_products_from_image_posts_to_gemini_direct(tmp_path: Path, monk
     assert base64.b64decode(encoded) == b"source-image"
 
 
-def test_extract_from_upload_uses_backend_extractor_label(tmp_path: Path, monkeypatch):
+def test_extract_from_upload_uses_gemini_extractor_label(tmp_path: Path, monkeypatch):
     upload = tmp_path / "photo.jpg"
     upload.write_bytes(b"jpg-bytes")
 
@@ -99,15 +96,10 @@ def test_extract_from_upload_uses_backend_extractor_label(tmp_path: Path, monkey
             model="gemini-3.1-flash-lite",
         ),
     )
-    monkeypatch.setattr(
-        "extract_server.extraction.pipeline.current_extractor_name",
-        lambda backend=None: "gemini_direct",
-    )
 
     result = extract_from_upload(
         upload,
         api_key="test-key",
-        backend="gemini_direct",
     )
 
     assert result.extractor == "gemini_direct"

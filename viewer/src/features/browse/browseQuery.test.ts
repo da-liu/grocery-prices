@@ -164,6 +164,24 @@ describe("sortProducts", () => {
     expect(rows[0].id).toBe("4");
     expect(rows.at(-1)?.id).toBe("2");
   });
+
+  it("falls back to created_at when captured_at is missing", () => {
+    const products = [
+      makeProduct({
+        id: "old",
+        product_name: "Old",
+        captured_at: "2026-01-01T12:00:00Z",
+        created_at: "2026-01-01T12:00:00Z",
+      }),
+      makeProduct({
+        id: "new-upload",
+        product_name: "New Upload",
+        created_at: "2026-07-11T18:00:00Z",
+      }),
+    ];
+    const rows = sortProducts(products, "captured_desc");
+    expect(rows.map((p) => p.id)).toEqual(["new-upload", "old"]);
+  });
 });
 
 describe("chips", () => {
@@ -238,6 +256,30 @@ describe("captured date histogram", () => {
     expect(bins[0].count).toBe(2);
     expect(bins[1].from).toBe("2026-07-05");
     expect(bins[1].count).toBe(1);
+  });
+
+  it("includes photos that only have created_at", () => {
+    const products: Product[] = [
+      makeProduct({
+        id: "upload-only",
+        product_name: "Upload Only",
+        image_id: "img-upload",
+        created_at: "2026-07-11T18:30:00Z",
+      }),
+    ];
+    const timeByImage = photoTimesByImage(products);
+    expect(timeByImage.has("img-upload")).toBe(true);
+
+    const rows = filterProducts(
+      products,
+      {
+        ...EMPTY_BROWSE_QUERY,
+        capturedAfter: "2026-07-11",
+        capturedBefore: "2026-07-11",
+      },
+      "",
+    );
+    expect(rows.map((p) => p.id)).toEqual(["upload-only"]);
   });
 });
 

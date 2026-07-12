@@ -51,6 +51,7 @@ def product_line(
         "image_id": photo["id"],
         "image_path": f"api/media/{photo['id']}",
         "captured_at": photo.get("captured_at"),
+        "created_at": photo.get("created_at"),
         "location": location,
         "photo_type": photo.get("type") or "shelf",
     }

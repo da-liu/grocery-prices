@@ -5,9 +5,7 @@ from typing import Any
 
 from extract_server.db._helpers import one
 from extract_server.db._location import extraction_status, location_for_photo, pipeline_status, product_line
-from extract_server.db._product_fields import merge_sighting_row
 from extract_server.db.connection import get_conn
-from extract_server.db.extractions import extraction_timing_payload
 from extract_server.db.user_stores import list_user_stores_as_dicts
 
 
@@ -27,11 +25,11 @@ def list_product_rows(
     photos = db.execute(
         """
         SELECT p.id, p.type, p.gps_latitude, p.gps_longitude,
-               p.captured_at, p.store_location_id
+               p.captured_at, p.created_at, p.store_location_id
         FROM photos p
         INNER JOIN extractions e ON e.user_id = p.user_id AND e.photo_id = p.id
         WHERE p.user_id = ? AND e.extraction_error IS NULL
-        ORDER BY p.captured_at DESC, p.id DESC
+        ORDER BY COALESCE(p.captured_at, p.created_at) DESC, p.id DESC
         """,
         (user_id,),
     ).fetchall()
@@ -76,6 +74,7 @@ def get_photos_extraction_status(
     image_ids: list[str],
     *,
     conn: sqlite3.Connection | None = None,
+    user_stores: list[dict[str, Any]] | None = None,
 ) -> list[dict[str, Any]]:
     if not image_ids:
         return []
@@ -84,24 +83,24 @@ def get_photos_extraction_status(
     db = conn or get_conn()
     photos = db.execute(
         f"""
-        SELECT id, gps_latitude, gps_longitude, captured_at, store_location_id, type
+        SELECT id, gps_latitude, gps_longitude, store_location_id
         FROM photos
         WHERE user_id = ? AND id IN ({placeholders})
         """,
         (user_id, *image_ids),
     ).fetchall()
-    sightings = db.execute(
+    counts = db.execute(
         f"""
-        SELECT photo_id, product_name, price, other, line_index
+        SELECT photo_id, COUNT(*) AS product_count
         FROM product_sightings
         WHERE user_id = ? AND photo_id IN ({placeholders})
-        ORDER BY photo_id, line_index
+        GROUP BY photo_id
         """,
         (user_id, *image_ids),
     ).fetchall()
     extractions = db.execute(
         f"""
-        SELECT photo_id, llm_ms, other_ms, model, extraction_error, status
+        SELECT photo_id, extraction_error, status
         FROM extractions
         WHERE user_id = ? AND photo_id IN ({placeholders})
         """,
@@ -109,12 +108,16 @@ def get_photos_extraction_status(
     ).fetchall()
 
     extraction_by_photo = {row["photo_id"]: dict(row) for row in extractions}
-    sightings_by_photo: dict[str, list[dict[str, Any]]] = {}
-    for row in sightings:
-        merged = merge_sighting_row(row)
-        sightings_by_photo.setdefault(row["photo_id"], []).append(merged)
-
+    count_by_photo = {row["photo_id"]: int(row["product_count"]) for row in counts}
     photo_by_id = {row["id"]: dict(row) for row in photos}
+
+    stores = user_stores
+    if stores is None:
+        stores = list_user_stores_as_dicts(user_id, conn=db)
+
+    # Late import avoids a db ↔ extraction import cycle at module load.
+    from extract_server.extraction.photo_stores import image_needs_store_label
+
     results: list[dict[str, Any]] = []
     for image_id in image_ids:
         photo = photo_by_id.get(image_id)
@@ -123,34 +126,27 @@ def get_photos_extraction_status(
         extraction = extraction_by_photo.get(image_id)
         status = extraction_status(extraction)
         pipeline = pipeline_status(extraction)
-        products = sightings_by_photo.get(image_id, [])
-        product_count = len(products)
+        product_count = count_by_photo.get(image_id, 0)
         payload: dict[str, Any] = {
             "image_id": image_id,
-            "image_path": f"api/media/{image_id}",
             "status": pipeline,
             "extraction_status": status,
             "product_count": product_count,
-            "products": products,
             "extraction_empty": status == "done" and product_count == 0,
-            "meta": {
-                "gps_latitude": photo.get("gps_latitude"),
-                "gps_longitude": photo.get("gps_longitude"),
-                "captured_at": photo.get("captured_at"),
-                "store_location_id": photo.get("store_location_id"),
-            },
         }
-        photo_type = photo.get("type")
-        if isinstance(photo_type, str) and photo_type:
-            payload["photo_type"] = photo_type
-        store_location_id = photo.get("store_location_id")
-        if isinstance(store_location_id, str) and store_location_id:
-            payload["store_location_id"] = store_location_id
+        if status == "done":
+            payload["needs_store_label"] = image_needs_store_label(
+                user_id,
+                image_id,
+                photo.get("gps_latitude"),
+                photo.get("gps_longitude"),
+                stores,
+                store_location_id=photo.get("store_location_id"),
+            )
+        else:
+            payload["needs_store_label"] = False
         if extraction and extraction.get("extraction_error"):
             payload["extraction_error"] = extraction["extraction_error"]
-        timing = extraction_timing_payload(extraction or {})
-        if timing:
-            payload["extraction_timing"] = timing
         results.append(payload)
     return results
 
@@ -172,7 +168,8 @@ def build_product_row(user_id: str, sighting_id: str) -> dict[str, Any] | None:
     photo = one(
         conn,
         """
-        SELECT p.id, p.type, p.gps_latitude, p.gps_longitude, p.captured_at, p.store_location_id
+        SELECT p.id, p.type, p.gps_latitude, p.gps_longitude,
+               p.captured_at, p.created_at, p.store_location_id
         FROM photos p
         INNER JOIN extractions e ON e.user_id = p.user_id AND e.photo_id = p.id
         WHERE p.user_id = ? AND p.id = ? AND e.extraction_error IS NULL

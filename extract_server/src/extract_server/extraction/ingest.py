@@ -67,46 +67,27 @@ def _result(
     *,
     image_id: str,
     extraction_status: str,
-    content_hash: str | None = None,
-    date_folder: str | None = None,
-    products: list | None = None,
     product_count: int = 0,
-    meta: dict | None = None,
-    extractor: str | None = None,
     needs_store_label: bool = False,
     extraction_empty: bool = False,
-    duplicate: bool = False,
     duplicate_of: str | None = None,
     skipped: bool = False,
     status: str | None = None,
-    photo_type: str | None = None,
     extraction_error: str | None = None,
 ) -> dict:
     payload: dict[str, Any] = {
         "image_id": image_id,
-        "products": products if products is not None else [],
         "product_count": product_count,
-        "extractor": extractor,
         "needs_store_label": needs_store_label,
         "extraction_empty": extraction_empty,
-        "duplicate": duplicate,
         "extraction_status": extraction_status,
     }
-    if content_hash is not None:
-        payload["content_hash"] = content_hash
-    if date_folder is not None:
-        payload["date_folder"] = date_folder
-        payload["image_path"] = f"api/media/{image_id}"
-    if meta is not None:
-        payload["meta"] = meta
     if duplicate_of is not None:
         payload["duplicate_of"] = duplicate_of
     if skipped:
         payload["skipped"] = True
     if status is not None:
         payload["status"] = status
-    if photo_type is not None:
-        payload["photo_type"] = photo_type
     if extraction_error is not None:
         payload["extraction_error"] = extraction_error
     return payload
@@ -115,24 +96,18 @@ def _result(
 def _duplicate_response(
     *,
     duplicate_of: str,
-    content_hash: str,
     duplicate_action: str | None,
 ) -> dict | None:
     if duplicate_action == "skip":
         return _result(
             image_id=duplicate_of,
             extraction_status="done",
-            content_hash=content_hash,
-            meta={},
-            duplicate=True,
             duplicate_of=duplicate_of,
             skipped=True,
         )
     if duplicate_action is None:
         return {
-            "duplicate": True,
             "duplicate_of": duplicate_of,
-            "content_hash": content_hash,
             "action_required": True,
         }
     return None
@@ -157,7 +132,6 @@ def persist_upload(
     duplicate_action: str | None,
     user_stores: list[dict[str, Any]],
     client_exif: dict | None,
-    extract_backend: str | None,
     api_key: str | None,
 ) -> tuple[dict, ExtractionJob | None]:
     """Stage 1: save blob + photo row. Returns API payload and optional extract job."""
@@ -168,7 +142,6 @@ def persist_upload(
     if duplicate_of:
         duplicate_result = _duplicate_response(
             duplicate_of=duplicate_of,
-            content_hash=content_hash,
             duplicate_action=duplicate_action,
         )
         if duplicate_result is not None:
@@ -213,13 +186,6 @@ def persist_upload(
     result = _result(
         image_id=image_id,
         extraction_status="pending",
-        content_hash=content_hash,
-        date_folder=date_folder,
-        meta={
-            "gps_latitude": lat,
-            "gps_longitude": lon,
-            "captured_at": captured_at,
-        },
         needs_store_label=needs_store_label,
     )
     job = ExtractionJob(
@@ -230,7 +196,6 @@ def persist_upload(
         exif=exif,
         date_folder=date_folder,
         content_hash=content_hash,
-        extract_backend=extract_backend,
     )
     return result, job
 
@@ -245,7 +210,6 @@ def extract_and_save(job: ExtractionJob) -> ExtractedPhoto:
     result = extract_from_upload(
         image_path,
         api_key=job.api_key,
-        backend=job.extract_backend,
     )
     products = [product.to_product_dict() for product in result.products]
     photo_type = result.photo_type
@@ -338,15 +302,10 @@ def run_extraction_pipeline(job: ExtractionJob) -> dict:
         return _result(
             image_id=job.image_id,
             extraction_status="done",
-            content_hash=job.content_hash,
-            date_folder=job.date_folder,
-            products=extracted.products,
             product_count=extracted.product_count,
-            extractor=extracted.extractor,
             needs_store_label=needs_store_label,
-            extraction_empty=len(extracted.products) == 0,
+            extraction_empty=extracted.product_count == 0,
             status=pipeline_status,
-            photo_type=extracted.photo_type,
         )
     except Exception as err:
         record_extraction_failure(type(err).__name__)
@@ -400,7 +359,6 @@ def accept_upload_batch(
     enqueue: bool = True,
     client_exifs: list[dict | None] | None = None,
     request_id: str | None = None,
-    extract_backend: str | None = None,
 ) -> list[dict]:
     """Persist uploads, then enqueue extract→match for each new photo."""
     image_ids = new_photo_ids(len(upload_paths))
@@ -416,7 +374,6 @@ def accept_upload_batch(
         user_id=user_id,
         duplicate_action=duplicate_action,
         user_stores=user_stores,
-        extract_backend=extract_backend,
         api_key=api_key,
     )
     accepted = _persist_uploads_parallel(items, persist=persist, workers=workers)
@@ -436,22 +393,9 @@ def accept_upload_batch(
 def build_status_response(user_id: str, image_ids: list[str]) -> list[dict]:
     conn = get_conn()
     user_stores = list_user_stores_as_dicts(user_id, conn=conn)
-    statuses = get_photos_extraction_status(user_id, image_ids, conn=conn)
-
-    enriched: list[dict] = []
-    for status in statuses:
-        row = dict(status)
-        meta = row.get("meta") or {}
-        if row.get("extraction_status") == "done":
-            row["needs_store_label"] = image_needs_store_label(
-                user_id,
-                row["image_id"],
-                meta.get("gps_latitude"),
-                meta.get("gps_longitude"),
-                user_stores,
-                store_location_id=row.get("store_location_id") or meta.get("store_location_id"),
-            )
-        else:
-            row.setdefault("needs_store_label", False)
-        enriched.append(row)
-    return enriched
+    return get_photos_extraction_status(
+        user_id,
+        image_ids,
+        conn=conn,
+        user_stores=user_stores,
+    )

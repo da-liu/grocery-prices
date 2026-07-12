@@ -29,7 +29,6 @@ import {
   type UploadQueueItem,
   type UploadToast,
 } from "./uploadQueue";
-import type { ExtractBackend } from "@/shared/api/api";
 
 import type { StoreLabelRequest } from "@/shared/types/types";
 
@@ -167,11 +166,9 @@ export interface UploadSuccessInfo {
 export function UploadQueueProvider({
   children,
   onUploadSuccess,
-  extractBackend = "cursor",
 }: {
   children: React.ReactNode;
   onUploadSuccess?: (info?: UploadSuccessInfo) => void | Promise<void>;
-  extractBackend?: ExtractBackend;
 }) {
   const [items, setItems] = useState<UploadQueueItem[]>([]);
   const [toast, setToast] = useState<UploadToast | null>(null);
@@ -183,11 +180,6 @@ export function UploadQueueProvider({
   const processingIdsRef = useRef<Set<string>>(new Set());
   const pendingDuplicateRef = useRef<string | undefined>(undefined);
   const onUploadSuccessRef = useRef(onUploadSuccess);
-  const extractBackendRef = useRef(extractBackend);
-
-  useEffect(() => {
-    extractBackendRef.current = extractBackend;
-  }, [extractBackend]);
 
   useEffect(() => {
     itemsRef.current = items;
@@ -374,7 +366,6 @@ export function UploadQueueProvider({
           status: "processing",
           uploadProgress: undefined,
           processingStartedAt: Date.now(),
-          extractBackend: extractBackendRef.current,
           imageId: result.image_id,
         });
         await waitForExtraction(item, result.image_id);

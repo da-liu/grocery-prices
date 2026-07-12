@@ -3,7 +3,6 @@ from __future__ import annotations
 from extract_server.db._ids import is_valid_photo_id
 from extract_server.db._product_fields import EDITABLE_FIELDS, validate_product
 from extract_server.db.extractions import (
-    extraction_timing_payload,
     get_extraction,
     replace_photo_extraction,
 )
@@ -41,7 +40,6 @@ def reextract_photo(
     image_id: str,
     *,
     api_key: str | None = None,
-    extract_backend: str | None = None,
 ) -> dict | None:
     if not is_valid_photo_id(image_id):
         return None
@@ -58,7 +56,6 @@ def reextract_photo(
     result = extract_from_upload(
         jpg_path,
         api_key=api_key,
-        backend=extract_backend,
     )
 
     products = [product.to_product_dict() for product in result.products]
@@ -75,9 +72,6 @@ def reextract_photo(
         model=timing.model if timing else None,
         photo_type=result.photo_type,
     )
-
-    updated = get_extraction(user_id, image_id)
-    timing_payload = extraction_timing_payload(updated) if updated else None
 
     try:
         from extract_server.db import set_extraction_pipeline_status
@@ -100,5 +94,4 @@ def reextract_photo(
         "products": products,
         "product_count": product_count,
         "extraction_empty": len(products) == 0,
-        **({"extraction_timing": timing_payload} if timing_payload else {}),
     }

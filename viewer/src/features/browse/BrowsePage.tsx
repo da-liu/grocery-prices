@@ -1,6 +1,6 @@
 import { ProductCard } from "./ProductCard";
 import { PhotoGroupCard } from "./PhotoGroupCard";
-import { productImageUrl, type ExtractBackend } from "@/shared/api/api";
+import { productImageUrl } from "@/shared/api/api";
 import type { ManualProductInput, ProductUpdateInput } from "@/shared/api/api";
 import type { Product } from "@/shared/types/types";
 
@@ -22,7 +22,6 @@ export function BrowsePage({
   onAddManualProduct,
   reextractingId,
   reextractStartedAt,
-  extractBackend,
   savingId,
   selectionMode,
   selectedIds,
@@ -48,7 +47,6 @@ export function BrowsePage({
   onAddManualProduct?: (imageId: string, product: ManualProductInput) => Promise<void>;
   reextractingId?: string | null;
   reextractStartedAt?: number | null;
-  extractBackend?: ExtractBackend;
   savingId?: string | null;
   selectionMode?: boolean;
   selectedIds?: ReadonlySet<string>;
@@ -117,7 +115,6 @@ export function BrowsePage({
           reextractStartedAt={
             reextractingId === product.image_id ? reextractStartedAt ?? undefined : undefined
           }
-          extractBackend={extractBackend}
           saving={savingId === product.id}
           compact={compact}
           selectionMode={selectionMode}

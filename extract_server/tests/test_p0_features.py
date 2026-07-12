@@ -39,7 +39,7 @@ def test_find_exact_duplicate(tmp_path: Path, monkeypatch):
     save_photo_extraction(
         user_id,
         "IMG_0001",
-        extractor="cursor_sdk",
+        extractor="gemini_direct",
         raw_response=None,
         products=[],
         photo_type="shelf",
