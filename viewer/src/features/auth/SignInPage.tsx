@@ -12,7 +12,7 @@ const HERO_FEATURES = [
   },
   {
     title: "Track prices over time",
-    body: "Build a private catalog and spot changes across Toronto stores.",
+    body: "Build a private catalog and spot changes across your stores.",
   },
   {
     title: "Filter and search",

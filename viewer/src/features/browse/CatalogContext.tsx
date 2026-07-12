@@ -125,7 +125,7 @@ export function CatalogProvider({ user, refreshAuth, children }: CatalogProvider
   const [error, setError] = useState<string | null>(null);
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [browseSearch, setBrowseSearch] = useState("");
-  const [browseQuery, setBrowseQuery] = useState<BrowseQueryState>(initialBrowseQuery);
+  const [browseQuery, setBrowseQueryState] = useState<BrowseQueryState>(initialBrowseQuery);
   const [sortFilterOpen, setSortFilterOpen] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [deletingPhotoId, setDeletingPhotoId] = useState<string | null>(null);
@@ -142,6 +142,21 @@ export function CatalogProvider({ user, refreshAuth, children }: CatalogProvider
 
   const browseQueryRef = useRef(browseQuery);
   browseQueryRef.current = browseQuery;
+  const recentTripUserClearedRef = useRef(false);
+  const recentTripAutoAppliedKeysRef = useRef(new Set<string>());
+  const lastRecentTripKeyRef = useRef<string | null>(null);
+
+  const setBrowseQuery = useCallback((query: BrowseQueryState) => {
+    const prev = browseQueryRef.current;
+    const clearedCapture =
+      (prev.capturedAfter != null || prev.capturedBefore != null) &&
+      query.capturedAfter == null &&
+      query.capturedBefore == null;
+    if (clearedCapture) {
+      recentTripUserClearedRef.current = true;
+    }
+    setBrowseQueryState(query);
+  }, []);
 
   const refreshProducts = useCallback(
     (options?: { silent?: boolean }): Promise<Product[] | void> => {
@@ -166,15 +181,29 @@ export function CatalogProvider({ user, refreshAuth, children }: CatalogProvider
       }
       await refreshAuth();
       const rows = await refreshProducts({ silent: true });
-      if (rows && hasActiveSession(rows)) {
+      // Auto-apply once per upload image while the newest cluster is still "active".
+      // Do not re-apply on later poll/label callbacks after the user clears filters.
+      if (rows && info?.imageId && hasActiveSession(rows)) {
         const trip = recentTripRange(rows);
         if (trip) {
-          setBrowseQuery({ ...browseQueryRef.current, ...trip });
+          // Cluster identity is the start bound; new photos only move capturedBefore.
+          const clusterId = trip.capturedAfter;
+          if (clusterId !== lastRecentTripKeyRef.current) {
+            lastRecentTripKeyRef.current = clusterId;
+            recentTripUserClearedRef.current = false;
+          }
+          if (
+            !recentTripUserClearedRef.current &&
+            !recentTripAutoAppliedKeysRef.current.has(info.imageId)
+          ) {
+            recentTripAutoAppliedKeysRef.current.add(info.imageId);
+            setBrowseQuery({ ...browseQueryRef.current, ...trip });
+          }
         }
       }
       setShowOnboarding(false);
     },
-    [refreshAuth, refreshProducts],
+    [refreshAuth, refreshProducts, setBrowseQuery],
   );
 
   useEffect(() => {

@@ -1,7 +1,7 @@
 import { X } from "lucide-react";
 import { useEffect, useId } from "react";
 import {
-  EMPTY_BROWSE_QUERY,
+  clearedBrowseFilters,
   GRID_COLUMN_OPTIONS,
   SORT_OPTIONS,
   buildPriceHistogram,
@@ -155,7 +155,7 @@ export function BrowseSortFilterPanel({
   }
 
   function resetAll() {
-    onChange(EMPTY_BROWSE_QUERY);
+    onChange(clearedBrowseFilters(query));
   }
 
   const tripRange = recentTripRange(products);

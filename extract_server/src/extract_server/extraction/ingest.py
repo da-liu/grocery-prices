@@ -6,11 +6,10 @@ import shutil
 import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from dataclasses import dataclass, replace
-from datetime import datetime
+from datetime import datetime, timezone
 from functools import partial
 from pathlib import Path
 from typing import Any, Callable
-from zoneinfo import ZoneInfo
 
 from extract_server.db import (
     blob_key,
@@ -35,13 +34,12 @@ from extract_server.extraction.photo_stores import image_needs_store_label
 from extract_server.extraction.stores import store_from_gps
 from extract_server.extraction.paths import user_photos_dir, user_root
 
-TORONTO = ZoneInfo("America/Toronto")
 DEFAULT_UPLOAD_WORKERS = int(os.environ.get("GROCERY_UPLOAD_WORKERS", "4"))
 logger = logging.getLogger(__name__)
 
 
 def _today_folder() -> str:
-    return datetime.now(TORONTO).strftime("%Y_%m_%d")
+    return datetime.now(timezone.utc).strftime("%Y_%m_%d")
 
 
 def _persist_image(

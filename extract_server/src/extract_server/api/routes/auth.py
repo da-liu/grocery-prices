@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, HTTPException, Request
+from fastapi import APIRouter, Depends, HTTPException, Request, Response
 
 from extract_server.api.dependencies import (
     AuthUser,
@@ -11,13 +11,21 @@ from extract_server.api.dependencies import (
     require_user,
     revoke_session,
 )
-from extract_server.schemas import AuthResponse, CompleteOnboardingRequest, LoginRequest, RegisterRequest
+from extract_server.schemas import (
+    AuthResponse,
+    CompleteOnboardingRequest,
+    DeleteAccountRequest,
+    LoginRequest,
+    RegisterRequest,
+)
 from extract_server.db import (
     authenticate_user,
     complete_onboarding,
     count_extractions,
     list_onboarding_completed,
     register_user,
+    remove_registered_user,
+    verify_user_password,
 )
 
 router = APIRouter(prefix="/api/auth", tags=["auth"])
@@ -82,3 +90,15 @@ def complete_onboarding_route(
     return {
         "onboarding_completed": list_onboarding_completed(user.id),
     }
+
+
+@router.delete("/account")
+def delete_account(
+    user: Annotated[AuthUser, Depends(require_user)],
+    body: DeleteAccountRequest,
+) -> Response:
+    if not verify_user_password(user.id, body.password):
+        raise HTTPException(status_code=401, detail="Invalid password")
+    if not remove_registered_user(user.id):
+        raise HTTPException(status_code=404, detail="User not found")
+    return Response(status_code=204)

@@ -56,7 +56,7 @@ export function StoresProvider({ user, children }: StoresProviderProps) {
     }
   }, [user, refreshStoreLocations]);
 
-  const showSettings = !storeLocationsLoading && storeLocations.length > 0;
+  const showSettings = Boolean(user);
 
   const value = useMemo(
     (): StoresContextValue => ({

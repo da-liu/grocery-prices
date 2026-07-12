@@ -68,6 +68,8 @@ from extract_server.db.users import (
     get_user_id_for_session,
     list_onboarding_completed,
     register_user,
+    remove_registered_user,
+    verify_user_password,
 )
 
 
@@ -146,6 +148,7 @@ __all__ = [
     "prune_orphan_photo_files",
     "record_photo_extraction_failure",
     "register_user",
+    "remove_registered_user",
     "replace_photo_extraction",
     "save_photo",
     "save_photo_extraction",
@@ -155,4 +158,5 @@ __all__ = [
     "store_to_api_dict",
     "update_sighting",
     "update_user_store",
+    "verify_user_password",
 ]

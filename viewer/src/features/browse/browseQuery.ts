@@ -63,6 +63,15 @@ export const EMPTY_BROWSE_QUERY: BrowseQueryState = {
   viewMode: "photos",
 };
 
+/** Clear sort/filters while keeping view layout prefs (view mode, card size). */
+export function clearedBrowseFilters(query: BrowseQueryState): BrowseQueryState {
+  return {
+    ...EMPTY_BROWSE_QUERY,
+    viewMode: query.viewMode,
+    gridColumns: query.gridColumns,
+  };
+}
+
 /** Gap threshold for shopping-session clusters (also "recent" cue after upload). */
 export const SESSION_GAP_MS = 40 * 60 * 1000;
 

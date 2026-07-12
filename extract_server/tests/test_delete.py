@@ -31,7 +31,7 @@ def user_env(tmp_path: Path, monkeypatch):
     try:
         yield user_id, user_dir
     finally:
-        from scripts.remove_user import remove_registered_user
+        from extract_server.db import remove_registered_user
 
         remove_registered_user(user_id)
 

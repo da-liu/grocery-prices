@@ -22,3 +22,7 @@ class AuthResponse(BaseModel):
 
 class CompleteOnboardingRequest(BaseModel):
     key: str = "welcome"
+
+
+class DeleteAccountRequest(BaseModel):
+    password: str = Field(min_length=1, max_length=128)

@@ -3,7 +3,7 @@ from __future__ import annotations
 import sqlite3
 from typing import Any
 
-from extract_server.db._helpers import one, toronto_now, utc_now
+from extract_server.db._helpers import one, utc_now
 from extract_server.db.connection import get_conn
 from extract_server.db.photos import set_photo_type
 
@@ -60,7 +60,7 @@ def record_photo_extraction_failure(user_id: str, photo_id: str, error: str) -> 
             product_count = 0,
             status = 'failed'
         """,
-        (user_id, photo_id, toronto_now(), error),
+        (user_id, photo_id, utc_now(), error),
     )
 
 
@@ -93,7 +93,7 @@ def _write_extraction(
     replace: bool,
     reextracted: bool,
 ) -> None:
-    extracted_at = toronto_now()
+    extracted_at = utc_now()
     pipeline_status = "matched" if len(products) == 0 else "extracted"
     timing = (llm_ms, other_ms, model, len(products), pipeline_status)
     if replace:
@@ -245,7 +245,7 @@ def mark_manually_edited(conn: sqlite3.Connection, user_id: str, photo_id: str) 
         SET manually_edited_at = ?
         WHERE user_id = ? AND photo_id = ?
         """,
-        (toronto_now(), user_id, photo_id),
+        (utc_now(), user_id, photo_id),
     )
 
 
@@ -261,5 +261,5 @@ def ensure_manual_extraction(conn: sqlite3.Connection, user_id: str, photo_id: s
                 user_id, photo_id, extractor, extracted_at, raw_response
             ) VALUES (?, ?, 'manual', ?, NULL)
             """,
-            (user_id, photo_id, toronto_now()),
+            (user_id, photo_id, utc_now()),
         )

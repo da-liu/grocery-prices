@@ -146,8 +146,7 @@ function BrowseRoute() {
 }
 
 function SettingsRoute() {
-  const stores = useStores();
-  return stores.showSettings ? <SettingsPage /> : null;
+  return <SettingsPage />;
 }
 
 function AuthenticatedLayout() {
@@ -177,16 +176,6 @@ function AuthenticatedLayout() {
     if (hash === "settings") navigate("/settings", { replace: true });
     else if (hash) navigate("/", { replace: true });
   }, [navigate]);
-
-  useEffect(() => {
-    if (
-      location.pathname === "/settings" &&
-      !stores.storeLocationsLoading &&
-      !stores.showSettings
-    ) {
-      navigate("/", { replace: true });
-    }
-  }, [location.pathname, stores.storeLocationsLoading, stores.showSettings, navigate]);
 
   function openPhotoPicker() {
     photoInputRef.current?.click();

@@ -6,6 +6,7 @@ import {
   buildActiveChips,
   buildCapturedDateHistogram,
   buildPriceHistogram,
+  clearedBrowseFilters,
   clusterPhotosByTime,
   countActiveChips,
   filterProducts,
@@ -456,6 +457,27 @@ describe("session clustering", () => {
       capturedAfter: null,
       capturedBefore: null,
     });
+  });
+
+  it("clearedBrowseFilters drops recent trip while keeping view prefs", () => {
+    const products = [timedPhoto("a", 0), timedPhoto("b", 10)];
+    const trip = recentTripRange(products)!;
+    const query = {
+      ...EMPTY_BROWSE_QUERY,
+      ...trip,
+      viewMode: "products" as const,
+      gridColumns: 1 as const,
+      stores: ["Longos"],
+    };
+    const cleared = clearedBrowseFilters(query);
+    expect(cleared).toMatchObject({
+      capturedAfter: null,
+      capturedBefore: null,
+      stores: [],
+      viewMode: "products",
+      gridColumns: 1,
+    });
+    expect(buildActiveChips(cleared, null, products)).toEqual([]);
   });
 });
 

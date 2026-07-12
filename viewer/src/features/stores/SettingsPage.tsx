@@ -1,5 +1,6 @@
-import { useState } from "react";
+import { useId, useState, type FormEvent } from "react";
 import { deleteStoreLocation } from "@/shared/api/api";
+import { useAuth } from "@/features/auth/AuthContext";
 import { useStores } from "./StoresContext";
 import { MapPreview } from "./MapPreview";
 import { StoreEditModal } from "./StoreEditModal";
@@ -9,6 +10,7 @@ import type { StoreLocation } from "@/shared/types/types";
 import "./SettingsPage.css";
 
 export function SettingsPage() {
+  const { deleteAccount } = useAuth();
   const {
     storeLocations: stores,
     storeLocationsLoading: loading,
@@ -18,6 +20,11 @@ export function SettingsPage() {
   const [busy, setBusy] = useState(false);
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
   const [editingStore, setEditingStore] = useState<StoreLocation | null>(null);
+  const [confirmDeleteAccount, setConfirmDeleteAccount] = useState(false);
+  const [deletePassword, setDeletePassword] = useState("");
+  const [accountError, setAccountError] = useState<string | null>(null);
+  const [accountBusy, setAccountBusy] = useState(false);
+  const deletePasswordId = useId();
 
   async function handleDelete(storeId: string) {
     setBusy(true);
@@ -33,12 +40,34 @@ export function SettingsPage() {
     }
   }
 
+  function cancelDeleteAccount() {
+    setConfirmDeleteAccount(false);
+    setDeletePassword("");
+    setAccountError(null);
+  }
+
+  async function handleDeleteAccount(event: FormEvent) {
+    event.preventDefault();
+    if (!deletePassword) {
+      setAccountError("Enter your password to confirm");
+      return;
+    }
+    setAccountBusy(true);
+    setAccountError(null);
+    try {
+      await deleteAccount(deletePassword);
+    } catch (err) {
+      setAccountError(err instanceof Error ? err.message : "Could not delete account");
+      setAccountBusy(false);
+    }
+  }
+
   return (
     <section className="panel settings-page">
       <div className="panel-header">
         <div>
           <h1>Settings</h1>
-          <p className="subtitle">Manage store preferences.</p>
+          <p className="subtitle">Manage stores and account.</p>
         </div>
       </div>
 
@@ -125,6 +154,63 @@ export function SettingsPage() {
           )}
         </section>
       )}
+
+      <section className="settings-section settings-account">
+        <div className="settings-section-header">
+          <h2>Account</h2>
+          <p className="subtitle">
+            Permanently delete your account, photos, products, and store labels.
+          </p>
+        </div>
+
+        <div className="settings-account-body">
+          {accountError && <p className="status error">{accountError}</p>}
+
+          {confirmDeleteAccount ? (
+            <form className="settings-delete-account" onSubmit={(e) => void handleDeleteAccount(e)}>
+              <p className="settings-delete-warning">
+                This cannot be undone.
+              </p>
+              <div className="settings-delete-field">
+                <label className="settings-delete-label" htmlFor={deletePasswordId}>
+                  Password
+                </label>
+                <input
+                  id={deletePasswordId}
+                  type="password"
+                  name="password"
+                  autoComplete="current-password"
+                  value={deletePassword}
+                  onChange={(e) => setDeletePassword(e.target.value)}
+                  disabled={accountBusy}
+                  placeholder="Enter your password"
+                />
+              </div>
+              <div className="settings-delete-actions">
+                <button type="submit" className="danger" disabled={accountBusy || !deletePassword}>
+                  {accountBusy ? "Deleting…" : "Delete account and all data"}
+                </button>
+                <button
+                  type="button"
+                  className="ghost"
+                  disabled={accountBusy}
+                  onClick={cancelDeleteAccount}
+                >
+                  Cancel
+                </button>
+              </div>
+            </form>
+          ) : (
+            <button
+              type="button"
+              className="danger-outline settings-delete-trigger"
+              onClick={() => setConfirmDeleteAccount(true)}
+            >
+              Delete account and all data
+            </button>
+          )}
+        </div>
+      </section>
 
       {editingStore && (
         <StoreEditModal

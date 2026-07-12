@@ -12,7 +12,7 @@ load_dotenv(_PROJECT_ROOT / ".env")
 from fastapi import FastAPI  # noqa: E402
 from fastapi.middleware.cors import CORSMiddleware  # noqa: E402
 
-from extract_server.api.routes import auth, health, media, photos, products, stores  # noqa: E402
+from extract_server.api.routes import auth, health, match, media, photos, products, stores  # noqa: E402
 from extract_server.core.exception_handlers import register_exception_handlers  # noqa: E402
 from extract_server.core.logging import configure_logging  # noqa: E402
 from extract_server.core.middleware import RequestLoggingMiddleware  # noqa: E402
@@ -35,7 +35,7 @@ def create_app() -> FastAPI:
         origin.strip()
         for origin in os.environ.get(
             "GROCERY_CORS_ORIGINS",
-            "https://g.daliu.ca,http://localhost:41873",
+            "https://g.daliu.ca,http://localhost:41873,http://localhost:41875",
         ).split(",")
         if origin.strip()
     ]
@@ -56,6 +56,7 @@ def create_app() -> FastAPI:
         stores.router,
         media.router,
         photos.router,
+        match.router,
     ):
         app.include_router(router)
 

@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import re
+import shutil
 import sqlite3
 import uuid
 from dataclasses import dataclass
@@ -10,6 +11,7 @@ import bcrypt
 
 from extract_server.db._helpers import utc_now
 from extract_server.db.connection import get_conn
+from extract_server.extraction.paths import user_root
 
 USERNAME_RE = re.compile(r"^[a-zA-Z0-9_-]{3,32}$")
 EMAIL_RE = re.compile(r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$")
@@ -165,6 +167,32 @@ def authenticate_user(username: str, password: str) -> User | None:
 def get_user_by_id(user_id: str) -> User | None:
     row = _fetchone("SELECT id, username FROM users WHERE id = ?", (user_id,))
     return _user_from_row(row) if row else None
+
+
+def verify_user_password(user_id: str, password: str) -> bool:
+    row = _fetchone("SELECT password_hash FROM users WHERE id = ?", (user_id,))
+    if row is None:
+        return False
+    return _verify_password(password, row["password_hash"])
+
+
+def remove_registered_user(user_id: str, *, remove_files: bool = True) -> bool:
+    user = get_user_by_id(user_id)
+    if user is None:
+        return False
+
+    conn = get_conn()
+    conn.execute("DELETE FROM user_store_locations WHERE user_id = ?", (user_id,))
+    deleted = conn.execute("DELETE FROM users WHERE id = ?", (user_id,)).rowcount
+    if deleted == 0:
+        return False
+
+    if remove_files:
+        user_dir = user_root(user_id)
+        if user_dir.exists():
+            shutil.rmtree(user_dir)
+
+    return True
 
 
 def create_session(user_id: str, *, expires_at: float) -> str:

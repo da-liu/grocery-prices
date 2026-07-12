@@ -205,6 +205,15 @@ export async function logout() {
   }
 }
 
+export async function deleteAccount(password: string): Promise<void> {
+  await authVoid("/api/auth/account", {
+    method: "DELETE",
+    headers: JSON_HEADERS,
+    body: JSON.stringify({ password }),
+  });
+  clearToken();
+}
+
 export async function fetchMe(): Promise<UserProfile> {
   const resp = await authFetch("/api/auth/me");
   if (!resp.ok) throw new ApiError(await parseError(resp), resp.status);

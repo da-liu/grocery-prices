@@ -7,7 +7,7 @@ import {
   staticMapMarkerParam,
 } from "./maps";
 
-const TORONTO_STORES = [
+const SAMPLE_STORES = [
   { latitude: 43.63943, longitude: -79.38029 },
   { latitude: 43.63961, longitude: -79.38039 },
   { latitude: 43.64239, longitude: -79.38118 },
@@ -15,7 +15,7 @@ const TORONTO_STORES = [
 
 describe("mapViewportForBounds", () => {
   it("fits nearby stores within the viewport dimensions", () => {
-    const bounds = geoBoundsFromCoords(TORONTO_STORES);
+    const bounds = geoBoundsFromCoords(SAMPLE_STORES);
     expect(bounds).not.toBeNull();
 
     const viewport = mapViewportForBounds(bounds!, 640, 220);
@@ -37,7 +37,7 @@ describe("mapViewportForBounds", () => {
 
 describe("mapsStaticUrlForViewport", () => {
   it("builds a static maps URL with center, zoom, size, and key", () => {
-    const bounds = geoBoundsFromCoords(TORONTO_STORES);
+    const bounds = geoBoundsFromCoords(SAMPLE_STORES);
     const viewport = mapViewportForBounds(bounds!, 640, 220);
     const url = mapsStaticUrlForViewport(viewport, "test-key");
 
@@ -50,7 +50,7 @@ describe("mapsStaticUrlForViewport", () => {
   });
 
   it("adds static map markers for each store", () => {
-    const bounds = geoBoundsFromCoords(TORONTO_STORES);
+    const bounds = geoBoundsFromCoords(SAMPLE_STORES);
     const viewport = mapViewportForBounds(bounds!, 640, 220);
     const url = mapsStaticUrlForViewport(viewport, "test-key", [
       { latitude: 43.63943, longitude: -79.38029, label: "F" },

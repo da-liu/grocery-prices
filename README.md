@@ -1,6 +1,6 @@
 # Grocery Prices
 
-Photo-based grocery price tracking for Toronto stores.
+Photo-based grocery price tracking for any stores you shop.
 
 ## Layout
 

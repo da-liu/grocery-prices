@@ -1,8 +1,8 @@
 import { X } from "lucide-react";
 import type { BrowseChip, BrowseQueryState, PriceExtents } from "./browseQuery";
 import {
-  EMPTY_BROWSE_QUERY,
   buildActiveChips,
+  clearedBrowseFilters,
   removeChip,
 } from "./browseQuery";
 import type { Product } from "@/shared/types/types";
@@ -24,7 +24,7 @@ export function BrowseQueryChips({ query, extents, products, onChange }: BrowseQ
   }
 
   function clearAll() {
-    onChange(EMPTY_BROWSE_QUERY);
+    onChange(clearedBrowseFilters(query));
   }
 
   return (

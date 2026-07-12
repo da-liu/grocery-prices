@@ -11,45 +11,10 @@
   font-size: 1.1rem;
 }
 
-.settings-extract-options {
-  display: grid;
-  gap: 0.65rem;
-  margin-top: 0.85rem;
-}
-
-.settings-extract-option {
-  display: flex;
-  gap: 0.75rem;
-  align-items: flex-start;
-  padding: 0.85rem 1rem;
-  border: 1px solid var(--border-input);
-  border-radius: 12px;
-  cursor: pointer;
-  transition: border-color 0.15s ease, background-color 0.15s ease;
-}
-
-.settings-extract-option:hover {
-  border-color: var(--accent);
-}
-
-.settings-extract-option.is-selected {
-  border-color: var(--accent);
-  background: var(--accent-selection);
-}
-
-.settings-extract-option input {
-  margin-top: 0.2rem;
-}
-
-.settings-extract-option-body {
-  display: grid;
-  gap: 0.2rem;
-}
-
-.settings-extract-option-detail {
-  font-size: 0.85rem;
-  color: var(--text-secondary);
-  line-height: 1.4;
+.settings-section-header .subtitle {
+  margin: 0.4rem 0 0;
+  line-height: 1.45;
+  max-width: 36rem;
 }
 
 .store-list {
@@ -137,4 +102,83 @@
 
 .store-delete {
   color: var(--danger);
+}
+
+.settings-account {
+  max-width: 640px;
+  margin-top: 2.25rem;
+  padding-top: 1.75rem;
+  border-top: 1px solid var(--border);
+}
+
+.settings-account:first-of-type {
+  margin-top: 0.5rem;
+  padding-top: 0;
+  border-top: 0;
+}
+
+.settings-account-body {
+  margin-top: 1.1rem;
+}
+
+.settings-account-body > .status {
+  margin: 0 0 0.85rem;
+}
+
+.settings-delete-trigger {
+  padding: 0.65rem 1.1rem;
+}
+
+.settings-delete-account {
+  display: grid;
+  gap: 0.85rem;
+  padding: 1rem 1.1rem;
+  border: 1px solid color-mix(in srgb, var(--danger) 28%, var(--border));
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--danger) 6%, var(--surface));
+}
+
+.settings-delete-warning {
+  margin: 0;
+  font-size: 0.9rem;
+  color: var(--danger);
+  line-height: 1.45;
+}
+
+.settings-delete-field {
+  display: grid;
+  gap: 0.4rem;
+}
+
+.settings-delete-label {
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.settings-delete-account input {
+  width: 100%;
+  max-width: 320px;
+  padding: 0.65rem 0.75rem;
+  border: 1px solid var(--border-input);
+  border-radius: 10px;
+  background: var(--surface);
+  color: inherit;
+  font: inherit;
+}
+
+.settings-delete-account input:focus {
+  outline: 2px solid color-mix(in srgb, var(--accent) 45%, transparent);
+  outline-offset: 1px;
+}
+
+.settings-delete-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.65rem;
+  margin-top: 0.15rem;
+}
+
+.settings-delete-actions .danger {
+  padding: 0.65rem 1.1rem;
 }

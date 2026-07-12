@@ -4,31 +4,9 @@
 from __future__ import annotations
 
 import argparse
-import shutil
 import sys
-from pathlib import Path
 
-from extract_server.db import close_all_connections, get_conn, get_user_by_id
-from extract_server.extraction.paths import user_root
-
-
-def remove_registered_user(user_id: str, *, remove_files: bool = True) -> bool:
-    user = get_user_by_id(user_id)
-    if user is None:
-        return False
-
-    conn = get_conn()
-    conn.execute("DELETE FROM user_store_locations WHERE user_id = ?", (user_id,))
-    deleted = conn.execute("DELETE FROM users WHERE id = ?", (user_id,)).rowcount
-    if deleted == 0:
-        return False
-
-    if remove_files:
-        user_dir = user_root(user_id)
-        if user_dir.exists():
-            shutil.rmtree(user_dir)
-
-    return True
+from extract_server.db import close_all_connections, remove_registered_user
 
 
 def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:

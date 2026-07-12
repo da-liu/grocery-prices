@@ -4,6 +4,7 @@ import {
   isAuthError,
   login as apiLogin,
   logout as apiLogout,
+  deleteAccount as apiDeleteAccount,
   register as apiRegister,
   type UserProfile,
 } from "@/shared/api/api";
@@ -15,6 +16,7 @@ interface AuthState {
   login: (username: string, password: string) => Promise<void>;
   register: (username: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
+  deleteAccount: (password: string) => Promise<void>;
   refresh: () => Promise<void>;
   applyUser: (profile: UserProfile) => void;
 }
@@ -53,13 +55,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setUser(null);
   }, []);
 
+  const deleteAccount = useCallback(async (password: string) => {
+    await apiDeleteAccount(password);
+    setUser(null);
+  }, []);
+
   const applyUser = useCallback((profile: UserProfile) => {
     setUser(profile);
   }, []);
 
   const value = useMemo(
-    () => ({ user, loading, login, register, logout, refresh, applyUser }),
-    [user, loading, login, register, logout, refresh, applyUser],
+    () => ({ user, loading, login, register, logout, deleteAccount, refresh, applyUser }),
+    [user, loading, login, register, logout, deleteAccount, refresh, applyUser],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
