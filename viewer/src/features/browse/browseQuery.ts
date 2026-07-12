@@ -63,6 +63,9 @@ export const EMPTY_BROWSE_QUERY: BrowseQueryState = {
   viewMode: "photos",
 };
 
+/** Gap threshold for shopping-session clusters (also "recent" cue after upload). */
+export const SESSION_GAP_MS = 40 * 60 * 1000;
+
 export interface PriceExtents {
   min: number;
   max: number;
@@ -127,10 +130,132 @@ export function effectiveCaptureAt(product: Product): string | undefined {
   return product.captured_at ?? product.created_at;
 }
 
-function capturedDateKey(capturedAt: string | undefined): string | null {
-  if (!capturedAt) return null;
-  const d = capturedAt.slice(0, 10);
-  return /^\d{4}-\d{2}-\d{2}$/.test(d) ? d : null;
+export interface PhotoTimeCluster {
+  imageIds: string[];
+  minMs: number;
+  maxMs: number;
+}
+
+/**
+ * Cluster photos by effective capture time. A new cluster starts when the gap
+ * between consecutive photos (by unique image_id) exceeds gapMs.
+ */
+export function clusterPhotosByTime(
+  products: Product[],
+  gapMs: number = SESSION_GAP_MS,
+): PhotoTimeCluster[] {
+  const timeByImage = photoTimesByImage(products);
+  const sorted = [...timeByImage.entries()].sort((a, b) => a[1] - b[1]);
+  if (sorted.length === 0) return [];
+
+  const clusters: PhotoTimeCluster[] = [];
+  let current: PhotoTimeCluster = {
+    imageIds: [sorted[0][0]],
+    minMs: sorted[0][1],
+    maxMs: sorted[0][1],
+  };
+
+  for (let i = 1; i < sorted.length; i++) {
+    const [imageId, ms] = sorted[i];
+    if (ms - current.maxMs > gapMs) {
+      clusters.push(current);
+      current = { imageIds: [imageId], minMs: ms, maxMs: ms };
+    } else {
+      current.imageIds.push(imageId);
+      current.maxMs = ms;
+    }
+  }
+  clusters.push(current);
+  return clusters;
+}
+
+/** Image ids in the newest session cluster (highest max timestamp). */
+export function newestSessionImageIds(
+  products: Product[],
+  gapMs: number = SESSION_GAP_MS,
+): Set<string> {
+  const cluster = newestPhotoCluster(products, gapMs);
+  return cluster ? new Set(cluster.imageIds) : new Set();
+}
+
+function newestPhotoCluster(
+  products: Product[],
+  gapMs: number = SESSION_GAP_MS,
+): PhotoTimeCluster | null {
+  const clusters = clusterPhotosByTime(products, gapMs);
+  if (clusters.length === 0) return null;
+  let newest = clusters[0];
+  for (const cluster of clusters) {
+    if (cluster.maxMs >= newest.maxMs) newest = cluster;
+  }
+  return newest;
+}
+
+/** Datetime range covering the newest photo cluster (inclusive ISO bounds). */
+export function recentTripRange(
+  products: Product[],
+  gapMs: number = SESSION_GAP_MS,
+): { capturedAfter: string; capturedBefore: string } | null {
+  const newest = newestPhotoCluster(products, gapMs);
+  if (!newest) return null;
+  return {
+    capturedAfter: new Date(newest.minMs).toISOString(),
+    capturedBefore: new Date(newest.maxMs).toISOString(),
+  };
+}
+
+export function isRecentTripRange(
+  query: Pick<BrowseQueryState, "capturedAfter" | "capturedBefore">,
+  products: Product[],
+  gapMs: number = SESSION_GAP_MS,
+): boolean {
+  const trip = recentTripRange(products, gapMs);
+  if (!trip) return false;
+  return query.capturedAfter === trip.capturedAfter && query.capturedBefore === trip.capturedBefore;
+}
+
+/**
+ * True when the newest cluster has a photo within the last SESSION_GAP_MS of now.
+ * Used for post-upload auto-apply.
+ */
+export function hasActiveSession(
+  products: Product[],
+  nowMs: number = Date.now(),
+  gapMs: number = SESSION_GAP_MS,
+): boolean {
+  const newest = newestPhotoCluster(products, gapMs);
+  if (!newest) return false;
+  return nowMs - newest.maxMs <= gapMs;
+}
+
+const DATE_ONLY_RE = /^\d{4}-\d{2}-\d{2}$/;
+
+/** Parse a capture filter bound: date-only (local day) or full ISO datetime. */
+export function parseCaptureFilterBound(
+  bound: string,
+  role: "after" | "before",
+): number | null {
+  if (DATE_ONLY_RE.test(bound)) {
+    const date = parseISODate(bound);
+    if (role === "before") {
+      date.setHours(23, 59, 59, 999);
+    }
+    return date.getTime();
+  }
+  const ms = Date.parse(bound);
+  return Number.isNaN(ms) ? null : ms;
+}
+
+function formatCaptureBoundChip(bound: string): string {
+  if (DATE_ONLY_RE.test(bound)) return bound;
+  const ms = Date.parse(bound);
+  if (Number.isNaN(ms)) return bound;
+  return new Date(ms).toLocaleString(undefined, {
+    month: "short",
+    day: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+  });
 }
 
 export interface DateBin {
@@ -273,7 +398,12 @@ export function getDateExtents(timeByImage: Map<string, number>): DateExtents | 
 }
 
 export function dateToMs(iso: string): number {
-  return parseISODate(iso).getTime();
+  const day = iso.slice(0, 10);
+  if (DATE_ONLY_RE.test(day)) {
+    return parseISODate(day).getTime();
+  }
+  const ms = Date.parse(iso);
+  return Number.isNaN(ms) ? 0 : ms;
 }
 
 export function msToISODate(ms: number): string {
@@ -319,7 +449,11 @@ export function isPriceFilterActive(
 export function matchesBrowseQuery(
   product: Product,
   query: BrowseQueryState,
-  options?: { skipPrice?: boolean; skipCapturedDate?: boolean; extents?: PriceExtents | null },
+  options?: {
+    skipPrice?: boolean;
+    skipCapturedDate?: boolean;
+    extents?: PriceExtents | null;
+  },
 ): boolean {
   if (query.stores.length > 0 && !query.stores.includes(product.location.store)) {
     return false;
@@ -343,13 +477,19 @@ export function matchesBrowseQuery(
     if (labeled !== query.storeLabeled) return false;
   }
 
-  const capturedKey = capturedDateKey(effectiveCaptureAt(product));
-  if (!options?.skipCapturedDate) {
+  if (!options?.skipCapturedDate && (query.capturedAfter || query.capturedBefore)) {
+    const at = effectiveCaptureAt(product);
+    if (!at) return false;
+    const productMs = Date.parse(at);
+    if (Number.isNaN(productMs)) return false;
+
     if (query.capturedAfter) {
-      if (!capturedKey || capturedKey < query.capturedAfter) return false;
+      const afterMs = parseCaptureFilterBound(query.capturedAfter, "after");
+      if (afterMs == null || productMs < afterMs) return false;
     }
     if (query.capturedBefore) {
-      if (!capturedKey || capturedKey > query.capturedBefore) return false;
+      const beforeMs = parseCaptureFilterBound(query.capturedBefore, "before");
+      if (beforeMs == null || productMs > beforeMs) return false;
     }
   }
 
@@ -474,6 +614,7 @@ export function formatPriceChip(
 export function buildActiveChips(
   query: BrowseQueryState,
   extents: PriceExtents | null,
+  products: Product[] = [],
 ): BrowseChip[] {
   const chips: BrowseChip[] = [];
 
@@ -503,18 +644,29 @@ export function buildActiveChips(
       label: query.storeLabeled ? "Store: labeled" : "Store: unknown",
     });
   }
-  if (query.capturedAfter) {
-    chips.push({ id: "capturedAfter", label: `After ${query.capturedAfter}` });
-  }
-  if (query.capturedBefore) {
-    chips.push({ id: "capturedBefore", label: `Before ${query.capturedBefore}` });
+  if (isRecentTripRange(query, products)) {
+    chips.push({ id: "recentTrip", label: "Recent trip" });
+  } else {
+    if (query.capturedAfter) {
+      chips.push({ id: "capturedAfter", label: `After ${formatCaptureBoundChip(query.capturedAfter)}` });
+    }
+    if (query.capturedBefore) {
+      chips.push({
+        id: "capturedBefore",
+        label: `Before ${formatCaptureBoundChip(query.capturedBefore)}`,
+      });
+    }
   }
 
   return chips;
 }
 
-export function countActiveChips(query: BrowseQueryState, extents: PriceExtents | null): number {
-  return buildActiveChips(query, extents).length;
+export function countActiveChips(
+  query: BrowseQueryState,
+  extents: PriceExtents | null,
+  products: Product[] = [],
+): number {
+  return buildActiveChips(query, extents, products).length;
 }
 
 export function removeChip(query: BrowseQueryState, chipId: string): BrowseQueryState {
@@ -523,6 +675,7 @@ export function removeChip(query: BrowseQueryState, chipId: string): BrowseQuery
   if (chipId === "onSale") return { ...query, onSale: null };
   if (chipId === "hasPrice") return { ...query, hasPrice: null };
   if (chipId === "storeLabeled") return { ...query, storeLabeled: null };
+  if (chipId === "recentTrip") return { ...query, capturedAfter: null, capturedBefore: null };
   if (chipId === "capturedAfter") return { ...query, capturedAfter: null };
   if (chipId === "capturedBefore") return { ...query, capturedBefore: null };
   if (chipId.startsWith("store:")) {
@@ -645,13 +798,56 @@ export function browseQueryToSearchParams(query: BrowseQueryState): URLSearchPar
   return params;
 }
 
+export interface BrowseHistoryState {
+  browseQuery: BrowseQueryState;
+  browseSearch: string;
+  scrollY: number;
+}
+
+export function isBrowseHistoryState(state: unknown): state is BrowseHistoryState {
+  if (!state || typeof state !== "object") return false;
+  const record = state as Record<string, unknown>;
+  return (
+    typeof record.browseSearch === "string" &&
+    typeof record.scrollY === "number" &&
+    record.browseQuery != null &&
+    typeof record.browseQuery === "object"
+  );
+}
+
+export function browseQueryToUrl(query: BrowseQueryState, href: string = window.location.href): string {
+  const params = browseQueryToSearchParams(query);
+  const url = new URL(href);
+  url.search = params.toString();
+  return url.toString();
+}
+
+/**
+ * Snapshot the current browse view onto the current history entry, then push a
+ * new entry for the escape destination so browser Back restores the snapshot.
+ */
+export function pushBrowseEscapeNavigation(
+  prior: BrowseHistoryState,
+  nextQuery: BrowseQueryState,
+): void {
+  const priorUrl = browseQueryToUrl(prior.browseQuery);
+  window.history.replaceState(prior, "", priorUrl);
+  const nextUrl = browseQueryToUrl(nextQuery);
+  window.history.pushState(
+    { browseQuery: nextQuery, browseSearch: "", scrollY: 0 } satisfies BrowseHistoryState,
+    "",
+    nextUrl,
+  );
+}
+
 export function syncBrowseQueryToUrl(query: BrowseQueryState) {
   const params = browseQueryToSearchParams(query);
   const next = params.toString();
   const url = new URL(window.location.href);
   if (next) url.search = next;
   else url.search = "";
-  window.history.replaceState(null, "", url.toString());
+  // Preserve history.state so related-product escape/back keeps working.
+  window.history.replaceState(window.history.state, "", url.toString());
 }
 
 export function loadBrowseViewPrefsFromStorage(): Partial<BrowseViewPrefs> | null {

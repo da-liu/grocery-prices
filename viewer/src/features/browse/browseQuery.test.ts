@@ -1,20 +1,28 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
   EMPTY_BROWSE_QUERY,
+  SESSION_GAP_MS,
   browseQueryToSearchParams,
   buildActiveChips,
   buildCapturedDateHistogram,
   buildPriceHistogram,
+  clusterPhotosByTime,
   countActiveChips,
   filterProducts,
   getPriceExtents,
+  hasActiveSession,
+  isBrowseHistoryState,
+  isRecentTripRange,
   loadBrowseViewPrefsFromStorage,
   mergeBrowseQuery,
+  newestSessionImageIds,
   photoGroupLinkLabel,
   photoGroupNeedsStoreLabel,
   photoGroupTitle,
   photoTimesByImage,
   parseBrowseQueryFromSearch,
+  pushBrowseEscapeNavigation,
+  recentTripRange,
   roundPrice,
   removeChip,
   saveBrowseViewPrefsToStorage,
@@ -347,6 +355,163 @@ describe("url sync", () => {
     expect(parsed.priceMin).toBe(2.5);
     expect(parsed.onSale).toBe(true);
     expect(parsed.capturedAfter).toBe("2026-01-01");
+  });
+
+  it("round-trips datetime capture bounds", () => {
+    const query = {
+      ...EMPTY_BROWSE_QUERY,
+      capturedAfter: "2026-07-12T15:00:00.000Z",
+      capturedBefore: "2026-07-12T16:10:00.000Z",
+    };
+    const params = browseQueryToSearchParams(query).toString();
+    const parsed = parseBrowseQueryFromSearch(`?${params}`);
+    expect(parsed.capturedAfter).toBe("2026-07-12T15:00:00.000Z");
+    expect(parsed.capturedBefore).toBe("2026-07-12T16:10:00.000Z");
+  });
+});
+
+describe("session clustering", () => {
+  const base = Date.parse("2026-07-12T15:00:00Z");
+
+  function timedPhoto(
+    imageId: string,
+    offsetMin: number,
+    opts?: { createdOnly?: boolean },
+  ): Product {
+    const iso = new Date(base + offsetMin * 60_000).toISOString();
+    return makeProduct({
+      id: imageId,
+      product_name: imageId,
+      image_id: imageId,
+      ...(opts?.createdOnly ? { created_at: iso } : { captured_at: iso }),
+    });
+  }
+
+  it("keeps photos within the gap in one cluster", () => {
+    const products = [
+      timedPhoto("a", 0),
+      timedPhoto("b", 20),
+      timedPhoto("c", 39),
+    ];
+    const clusters = clusterPhotosByTime(products, SESSION_GAP_MS);
+    expect(clusters).toHaveLength(1);
+    expect(clusters[0].imageIds.sort()).toEqual(["a", "b", "c"]);
+  });
+
+  it("splits when consecutive gap exceeds 40 minutes", () => {
+    const products = [
+      timedPhoto("a", 0),
+      timedPhoto("b", 30),
+      timedPhoto("c", 71), // 41 min after b
+      timedPhoto("d", 80),
+    ];
+    const clusters = clusterPhotosByTime(products, SESSION_GAP_MS);
+    expect(clusters).toHaveLength(2);
+    expect(clusters[0].imageIds.sort()).toEqual(["a", "b"]);
+    expect(clusters[1].imageIds.sort()).toEqual(["c", "d"]);
+  });
+
+  it("uses created_at when captured_at is missing", () => {
+    const products = [timedPhoto("upload", 0, { createdOnly: true })];
+    expect(newestSessionImageIds(products).has("upload")).toBe(true);
+  });
+
+  it("skips photos with no timestamp", () => {
+    const products = [
+      makeProduct({ id: "x", product_name: "X", image_id: "no-time" }),
+      timedPhoto("a", 0),
+    ];
+    const clusters = clusterPhotosByTime(products);
+    expect(clusters).toHaveLength(1);
+    expect(clusters[0].imageIds).toEqual(["a"]);
+  });
+
+  it("recent trip range filters to the newest cluster via capture bounds", () => {
+    const products = [
+      timedPhoto("old-a", 0),
+      timedPhoto("old-b", 10),
+      timedPhoto("new-a", 100),
+      timedPhoto("new-b", 110),
+    ];
+    const trip = recentTripRange(products);
+    expect(trip).not.toBeNull();
+    const rows = filterProducts(products, { ...EMPTY_BROWSE_QUERY, ...trip! }, "");
+    expect(rows.map((p) => p.image_id).sort()).toEqual(["new-a", "new-b"]);
+    expect(isRecentTripRange({ ...EMPTY_BROWSE_QUERY, ...trip! }, products)).toBe(true);
+  });
+
+  it("hasActiveSession when newest cluster is recent", () => {
+    const products = [timedPhoto("a", 0), timedPhoto("b", 10)];
+    expect(hasActiveSession(products, base + 20 * 60_000)).toBe(true);
+    expect(hasActiveSession(products, base + 60 * 60_000)).toBe(false);
+  });
+
+  it("builds and removes recent trip chip from capture bounds", () => {
+    const products = [timedPhoto("a", 0), timedPhoto("b", 10)];
+    const trip = recentTripRange(products)!;
+    const query = { ...EMPTY_BROWSE_QUERY, ...trip };
+    const chips = buildActiveChips(query, null, products);
+    expect(chips.some((c) => c.id === "recentTrip" && c.label === "Recent trip")).toBe(true);
+    expect(removeChip(query, "recentTrip")).toMatchObject({
+      capturedAfter: null,
+      capturedBefore: null,
+    });
+  });
+});
+
+describe("browse history state", () => {
+  it("accepts valid navigation snapshots", () => {
+    expect(
+      isBrowseHistoryState({
+        browseQuery: EMPTY_BROWSE_QUERY,
+        browseSearch: "milk",
+        scrollY: 120,
+      }),
+    ).toBe(true);
+    expect(isBrowseHistoryState(null)).toBe(false);
+    expect(isBrowseHistoryState({ browseSearch: "x" })).toBe(false);
+  });
+
+  it("pushBrowseEscapeNavigation snapshots prior then pushes next", () => {
+    const states: unknown[] = [];
+    const urls: string[] = [];
+    const history = {
+      state: null as unknown,
+      replaceState(state: unknown, _title: string, url?: string) {
+        this.state = state;
+        states.push({ op: "replace", state });
+        if (url) urls.push(url);
+      },
+      pushState(state: unknown, _title: string, url?: string) {
+        this.state = state;
+        states.push({ op: "push", state });
+        if (url) urls.push(url);
+      },
+    };
+    vi.stubGlobal("window", {
+      location: { href: "http://localhost:5173/" },
+      history,
+    });
+
+    const prior = {
+      browseQuery: {
+        ...EMPTY_BROWSE_QUERY,
+        capturedAfter: "2026-07-12T15:00:00.000Z",
+        capturedBefore: "2026-07-12T15:40:00.000Z",
+      },
+      browseSearch: "",
+      scrollY: 40,
+    };
+    const next = { ...EMPTY_BROWSE_QUERY, viewMode: "products" as const };
+    pushBrowseEscapeNavigation(prior, next);
+
+    expect(states[0]).toEqual({ op: "replace", state: prior });
+    expect(states[1]).toMatchObject({
+      op: "push",
+      state: { browseQuery: next, browseSearch: "", scrollY: 0 },
+    });
+    expect(urls[0]).toContain("capturedAfter=");
+    vi.unstubAllGlobals();
   });
 });
 

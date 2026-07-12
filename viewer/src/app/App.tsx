@@ -50,6 +50,7 @@ function BrowseRoute() {
         <BrowseQueryChips
           query={catalog.browseQuery}
           extents={catalog.priceExtentsForChips}
+          products={catalog.products}
           onChange={catalog.setBrowseQuery}
         />
       )}

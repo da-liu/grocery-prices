@@ -5,16 +5,18 @@ import {
   buildActiveChips,
   removeChip,
 } from "./browseQuery";
+import type { Product } from "@/shared/types/types";
 import "./BrowseQueryChips.css";
 
 interface BrowseQueryChipsProps {
   query: BrowseQueryState;
   extents: PriceExtents | null;
+  products: Product[];
   onChange: (query: BrowseQueryState) => void;
 }
 
-export function BrowseQueryChips({ query, extents, onChange }: BrowseQueryChipsProps) {
-  const chips = buildActiveChips(query, extents);
+export function BrowseQueryChips({ query, extents, products, onChange }: BrowseQueryChipsProps) {
+  const chips = buildActiveChips(query, extents, products);
   if (chips.length === 0) return null;
 
   function handleRemove(chip: BrowseChip) {

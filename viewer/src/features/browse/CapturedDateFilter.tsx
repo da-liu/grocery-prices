@@ -19,12 +19,20 @@ interface CapturedDateFilterProps {
   onChange: (next: { capturedAfter: string | null; capturedBefore: string | null }) => void;
 }
 
+function dateInputValue(bound: string | null): string {
+  if (!bound) return "";
+  const day = bound.slice(0, 10);
+  return /^\d{4}-\d{2}-\d{2}$/.test(day) ? day : "";
+}
+
 export function CapturedDateFilter({
   products,
   capturedAfter,
   capturedBefore,
   onChange,
 }: CapturedDateFilterProps) {
+  const chartAfter = dateInputValue(capturedAfter) || null;
+  const chartBefore = dateInputValue(capturedBefore) || null;
   const [customOpen, setCustomOpen] = useState(
     () =>
       matchDatePreset(capturedAfter, capturedBefore) === null &&
@@ -34,7 +42,7 @@ export function CapturedDateFilter({
   const timeByImage = photoTimesByImage(products);
   const bins = buildCapturedDateHistogram(timeByImage);
   const extents = getDateExtents(timeByImage);
-  const activePreset = matchDatePreset(capturedAfter, capturedBefore);
+  const activePreset = matchDatePreset(chartAfter, chartBefore);
 
   function applyPreset(id: DatePresetId) {
     onChange(datePresetRange(id));
@@ -63,8 +71,8 @@ export function CapturedDateFilter({
         <CapturedDateRangeChart
           bins={bins}
           extents={extents}
-          capturedAfter={capturedAfter}
-          capturedBefore={capturedBefore}
+          capturedAfter={chartAfter}
+          capturedBefore={chartBefore}
           onChange={(next) => {
             onChange(next);
             if (matchDatePreset(next.capturedAfter, next.capturedBefore) === null) {
@@ -88,11 +96,11 @@ export function CapturedDateFilter({
             <input
               type="date"
               name="browse-captured-after"
-              value={capturedAfter ?? ""}
+              value={dateInputValue(capturedAfter)}
               onChange={(e) =>
                 onChange({
                   capturedAfter: e.target.value || null,
-                  capturedBefore,
+                  capturedBefore: dateInputValue(capturedBefore) || null,
                 })
               }
             />
@@ -102,10 +110,10 @@ export function CapturedDateFilter({
             <input
               type="date"
               name="browse-captured-before"
-              value={capturedBefore ?? ""}
+              value={dateInputValue(capturedBefore)}
               onChange={(e) =>
                 onChange({
-                  capturedAfter,
+                  capturedAfter: dateInputValue(capturedAfter) || null,
                   capturedBefore: e.target.value || null,
                 })
               }

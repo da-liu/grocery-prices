@@ -26,11 +26,15 @@ import {
   countActiveChips,
   filterProducts,
   getPriceExtents,
+  hasActiveSession,
+  isBrowseHistoryState,
   loadBrowseQueryFromStorage,
   loadBrowseViewPrefsFromStorage,
   mergeBrowseQuery,
   parseBrowseQueryFromSearch,
   productsForPriceHistogram,
+  pushBrowseEscapeNavigation,
+  recentTripRange,
   saveBrowseQueryToStorage,
   sortProducts,
   syncBrowseQueryToUrl,
@@ -55,7 +59,7 @@ interface CatalogContextValue {
   showOnboarding: boolean;
   setShowOnboarding: (show: boolean) => void;
   finishOnboarding: () => Promise<void>;
-  refreshProducts: (options?: { silent?: boolean }) => Promise<void>;
+  refreshProducts: (options?: { silent?: boolean }) => Promise<Product[] | void>;
   handleUploadSuccess: (info?: { imageId?: string; productCount?: number }) => Promise<void>;
   browseSearch: string;
   setBrowseSearch: (search: string) => void;
@@ -136,13 +140,19 @@ export function CatalogProvider({ user, refreshAuth, children }: CatalogProvider
   const [highlightPhotoGroupId, setHighlightPhotoGroupId] = useState<string | null>(null);
   const [multiProductTipImageId, setMultiProductTipImageId] = useState<string | null>(null);
 
+  const browseQueryRef = useRef(browseQuery);
+  browseQueryRef.current = browseQuery;
+
   const refreshProducts = useCallback(
-    (options?: { silent?: boolean }) => {
+    (options?: { silent?: boolean }): Promise<Product[] | void> => {
       if (!user) return Promise.resolve();
       if (!options?.silent) setProductsLoading(true);
       setError(null);
       return fetchProducts()
-        .then((rows) => setProducts(rows))
+        .then((rows) => {
+          setProducts(rows);
+          return rows;
+        })
         .catch((e: Error) => setError(e.message))
         .finally(() => setProductsLoading(false));
     },
@@ -155,7 +165,13 @@ export function CatalogProvider({ user, refreshAuth, children }: CatalogProvider
         setMultiProductTipImageId(info.imageId);
       }
       await refreshAuth();
-      await refreshProducts({ silent: true });
+      const rows = await refreshProducts({ silent: true });
+      if (rows && hasActiveSession(rows)) {
+        const trip = recentTripRange(rows);
+        if (trip) {
+          setBrowseQuery({ ...browseQueryRef.current, ...trip });
+        }
+      }
       setShowOnboarding(false);
     },
     [refreshAuth, refreshProducts],
@@ -172,9 +188,6 @@ export function CatalogProvider({ user, refreshAuth, children }: CatalogProvider
     }
   }, [user, refreshProducts]);
 
-  const browseQueryRef = useRef(browseQuery);
-  browseQueryRef.current = browseQuery;
-
   useEffect(() => {
     const id = window.setTimeout(() => {
       saveBrowseQueryToStorage(browseQuery);
@@ -190,6 +203,20 @@ export function CatalogProvider({ user, refreshAuth, children }: CatalogProvider
     };
     window.addEventListener("pagehide", flush);
     return () => window.removeEventListener("pagehide", flush);
+  }, []);
+
+  useEffect(() => {
+    const onPopState = (event: PopStateEvent) => {
+      if (!isBrowseHistoryState(event.state)) return;
+      const { browseQuery: restoredQuery, browseSearch: restoredSearch, scrollY } = event.state;
+      setBrowseQuery(mergeBrowseQuery(EMPTY_BROWSE_QUERY, restoredQuery));
+      setBrowseSearch(restoredSearch);
+      window.requestAnimationFrame(() => {
+        window.scrollTo(0, scrollY);
+      });
+    };
+    window.addEventListener("popstate", onPopState);
+    return () => window.removeEventListener("popstate", onPopState);
   }, []);
 
   const resetBrowseUi = useCallback(() => {
@@ -221,8 +248,8 @@ export function CatalogProvider({ user, refreshAuth, children }: CatalogProvider
   }, [products, browseQuery, browseSearch]);
 
   const activeChipCount = useMemo(
-    () => countActiveChips(browseQuery, priceExtentsForChips),
-    [browseQuery, priceExtentsForChips],
+    () => countActiveChips(browseQuery, priceExtentsForChips, products),
+    [browseQuery, priceExtentsForChips, products],
   );
 
   const navigateToProduct = useCallback(
@@ -235,15 +262,24 @@ export function CatalogProvider({ user, refreshAuth, children }: CatalogProvider
       }).some((product) => product.id === productId);
 
       if (!visible) {
+        const nextQuery: BrowseQueryState = { ...EMPTY_BROWSE_QUERY, viewMode: "products" };
+        pushBrowseEscapeNavigation(
+          {
+            browseQuery,
+            browseSearch,
+            scrollY: window.scrollY,
+          },
+          nextQuery,
+        );
         setBrowseSearch("");
-        setBrowseQuery({ ...EMPTY_BROWSE_QUERY, viewMode: "products" });
+        setBrowseQuery(nextQuery);
       } else if (browseQuery.viewMode === "photos") {
         setBrowseQuery({ ...browseQuery, viewMode: "products" });
       }
 
       window.setTimeout(() => {
         document.getElementById(`product-${productId}`)?.scrollIntoView({
-          behavior: "smooth",
+          behavior: "instant",
           block: "center",
         });
         setHighlightProductId(productId);
@@ -260,15 +296,24 @@ export function CatalogProvider({ user, refreshAuth, children }: CatalogProvider
       }).some((product) => product.image_id === imageId);
 
       if (!visible) {
+        const nextQuery: BrowseQueryState = { ...EMPTY_BROWSE_QUERY, viewMode: "photos" };
+        pushBrowseEscapeNavigation(
+          {
+            browseQuery,
+            browseSearch,
+            scrollY: window.scrollY,
+          },
+          nextQuery,
+        );
         setBrowseSearch("");
-        setBrowseQuery({ ...EMPTY_BROWSE_QUERY, viewMode: "photos" });
+        setBrowseQuery(nextQuery);
       } else if (browseQuery.viewMode !== "photos") {
         setBrowseQuery({ ...browseQuery, viewMode: "photos" });
       }
 
       window.setTimeout(() => {
         document.getElementById(`photo-${imageId}`)?.scrollIntoView({
-          behavior: "smooth",
+          behavior: "instant",
           block: "center",
         });
         setHighlightPhotoGroupId(imageId);

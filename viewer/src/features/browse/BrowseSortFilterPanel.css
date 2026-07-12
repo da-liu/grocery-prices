@@ -377,6 +377,35 @@
   box-shadow: 0 1px 2px var(--shadow-md);
 }
 
+.browse-filter-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+}
+
+.browse-filter-pill {
+  padding: 0.35rem 0.7rem;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--surface);
+  color: var(--text-secondary);
+  font: inherit;
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+
+.browse-filter-pill.active {
+  border-color: var(--accent-bar);
+  background: var(--accent-bg);
+  color: var(--accent-strong);
+  font-weight: 600;
+}
+
+.browse-filter-pill:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
 @media (min-width: 768px) {
   .browse-filter-backdrop {
     align-items: flex-start;

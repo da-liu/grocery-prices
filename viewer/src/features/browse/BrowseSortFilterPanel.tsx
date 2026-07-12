@@ -6,8 +6,10 @@ import {
   SORT_OPTIONS,
   buildPriceHistogram,
   getPriceExtents,
+  isRecentTripRange,
   productsForPriceHistogram,
   productsForDateHistogram,
+  recentTripRange,
   roundPrice,
   toggleListValue,
   type BrowseQueryState,
@@ -156,6 +158,18 @@ export function BrowseSortFilterPanel({
     onChange(EMPTY_BROWSE_QUERY);
   }
 
+  const tripRange = recentTripRange(products);
+  const tripActive = isRecentTripRange(query, products);
+
+  function toggleRecentTrip() {
+    if (tripActive) {
+      onChange({ ...query, capturedAfter: null, capturedBefore: null });
+      return;
+    }
+    if (!tripRange) return;
+    onChange({ ...query, ...tripRange });
+  }
+
   return (
     <div className="browse-filter-backdrop" onClick={onClose}>
       <div
@@ -216,6 +230,25 @@ export function BrowseSortFilterPanel({
               </div>
             </fieldset>
           )}
+
+          <fieldset className="browse-filter-group">
+            <legend>Recent trip</legend>
+            <p className="browse-filter-hint">
+              Shows only your newest shopping trip. Photos stay in one trip when each is within
+              40 minutes of the previous one; a longer gap starts a new trip.
+            </p>
+            <div className="browse-filter-pills">
+              <button
+                type="button"
+                className={`browse-filter-pill${tripActive ? " active" : ""}`}
+                aria-pressed={tripActive}
+                disabled={!tripRange && !tripActive}
+                onClick={toggleRecentTrip}
+              >
+                Recent trip
+              </button>
+            </div>
+          </fieldset>
 
           <fieldset className="browse-filter-group">
             <legend>Sort</legend>
